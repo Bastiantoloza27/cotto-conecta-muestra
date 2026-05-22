@@ -19,10 +19,18 @@ export default function SplashScreen({ children }) {
   if (!show) return children;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gradient-to-br from-[hsl(268,40%,14%)] via-[hsl(268,38%,20%)] to-[hsl(268,30%,12%)]">
-      {/* Decorative circles */}
-      <div className="absolute top-16 right-16 w-48 h-48 rounded-full bg-[hsl(10,65%,60%)] opacity-10 blur-3xl" />
-      <div className="absolute bottom-20 left-10 w-64 h-64 rounded-full bg-[hsl(268,45%,55%)] opacity-15 blur-3xl" />
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center">
+      {/* Video background */}
+      <video
+        src="https://media.base44.com/videos/public/6a10daaa13888870642a70ef/f9e9d64a2_VIDEOCENACOTOLENGO2025-22_5_20267_41pm.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-[hsl(268,40%,10%)]/70" />
 
       <div className="relative flex flex-col items-center gap-8 px-8 text-center">
         {/* Logo */}
