@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
 import AppLayout from '@/components/layout/AppLayout';
+import SplashScreen from '@/components/SplashScreen';
 import Dashboard from '@/pages/Dashboard';
 import Residents from '@/pages/Residents';
 import ResidentProfile from '@/pages/ResidentProfile';
@@ -70,10 +71,12 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <AuthenticatedApp />
-        </Router>
-        <Toaster />
+        <SplashScreen>
+          <Router>
+            <AuthenticatedApp />
+          </Router>
+          <Toaster />
+        </SplashScreen>
       </QueryClientProvider>
     </AuthProvider>
   )
