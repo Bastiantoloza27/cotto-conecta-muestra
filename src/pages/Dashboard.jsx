@@ -5,7 +5,7 @@ import { es } from "date-fns/locale";
 import { Link } from "react-router-dom";
 import {
   Users, AlertTriangle, Calendar, Pill, BookOpen,
-  Heart, ArrowRight, Clock, Activity
+  Heart, ArrowRight, Clock, Activity, ClipboardPlus
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,19 @@ export default function Dashboard() {
     queryFn: () => base44.entities.Incident.filter({ status: "abierto" }),
   });
 
+  const { data: allMedications = [] } = useQuery({
+    queryKey: ["meds-alerts"],
+    queryFn: () => base44.entities.Medication.filter({ status: "activo" }),
+  });
+
+  const { data: waitingAdmissions = [] } = useQuery({
+    queryKey: ["admissions-waiting"],
+    queryFn: () => base44.entities.Admission.filter({ status: "en_espera" }),
+  });
+
+  const criticalMeds = allMedications.filter(m => m.stock_remaining > 0 && m.stock_remaining < 5);
+  const lowMeds = allMedications.filter(m => m.stock_remaining >= 5 && m.stock_remaining < 10);
+
   const greeting = () => {
     const h = new Date().getHours();
     if (h < 12) return "Buenos días";
@@ -66,9 +79,9 @@ export default function Dashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
         <StatCard label="Residentes activos" value={residents.length} icon={Users} />
-        <StatCard label="Incidentes hoy" value={incidents.length} icon={AlertTriangle} />
         <StatCard label="Actividades hoy" value={activities.length} icon={Calendar} />
         <StatCard label="Alertas abiertas" value={openIncidents.length} icon={Activity} />
+        <StatCard label="En lista de espera" value={waitingAdmissions.length} icon={ClipboardPlus} />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -180,6 +193,45 @@ export default function Dashboard() {
             )}
           </div>
 
+          {/* Medication alerts */}
+          {(criticalMeds.length > 0 || lowMeds.length > 0) && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base font-semibold flex items-center gap-2">
+                  <Pill className="w-4 h-4 text-primary" />
+                  Alertas medicación
+                </h2>
+                <Link to="/medicacion">
+                  <Button variant="ghost" size="sm" className="text-xs">Ver</Button>
+                </Link>
+              </div>
+              <div className="space-y-1.5">
+                {criticalMeds.map(m => (
+                  <Card key={m.id} className="p-2.5 border-red-200 bg-red-50">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-red-800 truncate">{m.name}</p>
+                        <p className="text-[11px] text-red-600">{m.resident_name} · Stock: {m.stock_remaining}</p>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+                {lowMeds.map(m => (
+                  <Card key={m.id} className="p-2.5 border-amber-200 bg-amber-50">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-amber-800 truncate">{m.name}</p>
+                        <p className="text-[11px] text-amber-600">{m.resident_name} · Stock: {m.stock_remaining}</p>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Quick actions */}
           <div>
             <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
@@ -202,9 +254,9 @@ export default function Dashboard() {
                   💊 Medicación
                 </Button>
               </Link>
-              <Link to="/residentes">
+              <Link to="/admisiones">
                 <Button variant="outline" size="sm" className="w-full text-xs h-9">
-                  👥 Residentes
+                  📋 Admisiones
                 </Button>
               </Link>
             </div>

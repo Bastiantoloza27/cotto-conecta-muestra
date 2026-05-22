@@ -1,0 +1,112 @@
+{
+  "name": "Admission",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "Nombre completo del solicitante/candidato"
+    },
+    "rut": {
+      "type": "string"
+    },
+    "date_of_birth": {
+      "type": "string",
+      "format": "date"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "femenino",
+        "masculino",
+        "otro"
+      ]
+    },
+    "request_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de solicitud"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "en_espera",
+        "en_evaluacion",
+        "aprobado",
+        "ingresado",
+        "descartado"
+      ],
+      "default": "en_espera"
+    },
+    "demand_type": {
+      "type": "string",
+      "enum": [
+        "gran_dependencia",
+        "dependencia_severa",
+        "dependencia_moderada",
+        "dependencia_leve"
+      ],
+      "description": "Tipo de demanda / nivel de dependencia esperado"
+    },
+    "origin": {
+      "type": "string",
+      "description": "Procedencia / c\u00f3mo lleg\u00f3 la solicitud"
+    },
+    "how_found_us": {
+      "type": "string",
+      "description": "C\u00f3mo nos conoci\u00f3"
+    },
+    "family_contact_name": {
+      "type": "string"
+    },
+    "family_contact_phone": {
+      "type": "string"
+    },
+    "family_contact_relation": {
+      "type": "string"
+    },
+    "pre_diagnoses": {
+      "type": "string",
+      "description": "Diagn\u00f3sticos previos conocidos"
+    },
+    "pre_medications": {
+      "type": "string",
+      "description": "Medicamentos actuales"
+    },
+    "disability_type": {
+      "type": "string",
+      "enum": [
+        "fisica",
+        "intelectual",
+        "sensorial",
+        "psiquica",
+        "multiple",
+        "otra"
+      ]
+    },
+    "senadis_registered": {
+      "type": "boolean",
+      "default": false
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "alta",
+        "media",
+        "baja"
+      ],
+      "default": "media"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "admission_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha real de ingreso (si se concret\u00f3)"
+    }
+  },
+  "required": [
+    "full_name",
+    "request_date"
+  ]
+}

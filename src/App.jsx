@@ -19,6 +19,7 @@ import Shifts from '@/pages/Shifts';
 import Pastoral from '@/pages/Pastoral';
 import Inventory from '@/pages/Inventory';
 import SenadisReport from '@/pages/SenadisReport';
+import Admissions from '@/pages/Admissions';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -58,6 +59,7 @@ const AuthenticatedApp = () => {
         <Route path="/pastoral" element={<Pastoral />} />
         <Route path="/inventario" element={<Inventory />} />
         <Route path="/senadis" element={<SenadisReport />} />
+        <Route path="/admisiones" element={<Admissions />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

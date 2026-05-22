@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Pill, Clock, AlertCircle } from "lucide-react";
+import { Plus, Pill, Clock, AlertCircle, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -13,12 +13,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 
+// Stock semaphore helpers
+function StockIndicator({ stock }) {
+  if (!stock && stock !== 0) return null;
+  const critical = stock < 5;
+  const low = stock < 10;
+  return (
+    <Badge
+      variant="outline"
+      className={`text-[10px] gap-1 ${
+        critical ? "bg-red-50 text-red-700 border-red-300" :
+        low      ? "bg-amber-50 text-amber-700 border-amber-200" :
+                   "bg-green-50 text-green-700 border-green-200"
+      }`}
+    >
+      {critical && <AlertTriangle className="w-2.5 h-2.5" />}
+      Stock: {stock}
+    </Badge>
+  );
+}
+
 export default function Medications() {
   const [showForm, setShowForm] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("activo");
   const [form, setForm] = useState({
     resident_id: "", resident_name: "", name: "", dosage: "", frequency: "diario",
     schedule_times: "", route: "oral", prescribing_doctor: "", start_date: "",
-    status: "activo", notes: "", stock_remaining: 0,
+    status: "activo", notes: "", stock_remaining: "",
   });
   const queryClient = useQueryClient();
 
@@ -48,15 +69,20 @@ export default function Medications() {
     set("resident_name", r?.preferred_name || r?.full_name || "");
   };
 
+  const filtered = statusFilter === "todos"
+    ? medications
+    : medications.filter(m => m.status === statusFilter);
+
   // Group by resident
   const grouped = {};
-  medications.forEach((m) => {
+  filtered.forEach((m) => {
     const key = m.resident_name || "Sin asignar";
     if (!grouped[key]) grouped[key] = [];
     grouped[key].push(m);
   });
 
-  const lowStock = medications.filter((m) => m.status === "activo" && m.stock_remaining > 0 && m.stock_remaining < 10);
+  const critical = medications.filter(m => m.status === "activo" && m.stock_remaining > 0 && m.stock_remaining < 5);
+  const lowStock = medications.filter(m => m.status === "activo" && m.stock_remaining >= 5 && m.stock_remaining < 10);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
@@ -68,18 +94,46 @@ export default function Medications() {
         actionIcon={Plus}
       />
 
-      {lowStock.length > 0 && (
-        <Card className="p-3 mb-6 border-amber-200 bg-amber-50">
+      {/* Semaphore alerts */}
+      {critical.length > 0 && (
+        <Card className="p-3 mb-3 border-red-200 bg-red-50">
           <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-amber-600" />
+            <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+            <p className="text-sm text-red-800 font-medium">
+              🔴 Stock crítico (&lt;5): {critical.map(m => `${m.name} (${m.resident_name})`).join(", ")}
+            </p>
+          </div>
+        </Card>
+      )}
+      {lowStock.length > 0 && (
+        <Card className="p-3 mb-5 border-amber-200 bg-amber-50">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
             <p className="text-sm text-amber-800 font-medium">
-              {lowStock.length} medicamento(s) con stock bajo
+              🟡 Stock bajo (&lt;10): {lowStock.map(m => `${m.name} (${m.resident_name})`).join(", ")}
             </p>
           </div>
         </Card>
       )}
 
-      {medications.length === 0 ? (
+      {/* Filter tabs */}
+      <div className="flex gap-1 mb-5 bg-muted rounded-lg p-1 w-fit">
+        {[["activo", "Activos"], ["suspendido", "Suspendidos"], ["completado", "Completados"], ["todos", "Todos"]].map(([val, label]) => (
+          <button
+            key={val}
+            onClick={() => setStatusFilter(val)}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              statusFilter === val
+                ? "bg-background shadow text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
         <EmptyState
           icon={Pill}
           title="Sin medicamentos registrados"
@@ -92,33 +146,38 @@ export default function Medications() {
           {Object.entries(grouped).map(([name, meds]) => (
             <div key={name}>
               <h3 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">{name[0]}</div>
+                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                  {name[0]}
+                </div>
                 {name}
               </h3>
               <div className="space-y-2 ml-8">
                 {meds.map((m) => (
-                  <Card key={m.id} className="p-3">
-                    <div className="flex items-center justify-between">
-                      <div>
+                  <Card key={m.id} className={`p-3 ${m.stock_remaining > 0 && m.stock_remaining < 5 ? "border-red-200" : m.stock_remaining > 0 && m.stock_remaining < 10 ? "border-amber-100" : ""}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
                         <p className="text-sm font-semibold flex items-center gap-1.5">
-                          <Pill className="w-3.5 h-3.5 text-primary" /> {m.name}
+                          <Pill className="w-3.5 h-3.5 text-primary shrink-0" />
+                          {m.name}
                         </p>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {m.dosage} · {m.frequency?.replace("_", " ")} · {m.route}
+                          {m.dosage} · {m.frequency?.replace(/_/g, " ")} · {m.route}
                         </p>
                         {m.schedule_times && (
                           <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                            <Clock className="w-3 h-3" /> {m.schedule_times}
+                            <Clock className="w-3 h-3 shrink-0" /> {m.schedule_times}
                           </p>
                         )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {m.stock_remaining > 0 && (
-                          <Badge variant="outline" className={`text-[10px] ${m.stock_remaining < 10 ? "bg-amber-50 text-amber-700 border-amber-200" : ""}`}>
-                            Stock: {m.stock_remaining}
-                          </Badge>
+                        {m.prescribing_doctor && (
+                          <p className="text-[11px] text-muted-foreground mt-0.5">Dr/a. {m.prescribing_doctor}</p>
                         )}
-                        <Badge variant={m.status === "activo" ? "default" : "secondary"} className="capitalize text-[10px]">
+                      </div>
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        {m.stock_remaining > 0 && <StockIndicator stock={m.stock_remaining} />}
+                        <Badge
+                          variant={m.status === "activo" ? "default" : "secondary"}
+                          className="capitalize text-[10px]"
+                        >
                           {m.status}
                         </Badge>
                       </div>
@@ -134,7 +193,7 @@ export default function Medications() {
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>💊 Agregar medicamento</DialogTitle></DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(form); }} className="space-y-4 mt-2">
+          <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate({ ...form, stock_remaining: Number(form.stock_remaining) || 0 }); }} className="space-y-4 mt-2">
             <div>
               <Label>Persona residente *</Label>
               <Select value={form.resident_id} onValueChange={handleResident}>
@@ -191,9 +250,15 @@ export default function Medications() {
                 </Select>
               </div>
             </div>
-            <div>
-              <Label>Médico prescriptor</Label>
-              <Input value={form.prescribing_doctor} onChange={(e) => set("prescribing_doctor", e.target.value)} />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Médico prescriptor</Label>
+                <Input value={form.prescribing_doctor} onChange={(e) => set("prescribing_doctor", e.target.value)} />
+              </div>
+              <div>
+                <Label>Stock inicial</Label>
+                <Input type="number" value={form.stock_remaining} onChange={(e) => set("stock_remaining", e.target.value)} placeholder="0" />
+              </div>
             </div>
             <div>
               <Label>Notas</Label>
