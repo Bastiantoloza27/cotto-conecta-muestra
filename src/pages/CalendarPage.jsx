@@ -64,6 +64,7 @@ export default function CalendarPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [editingEvent, setEditingEvent] = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -86,6 +87,14 @@ export default function CalendarPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["calendar-events", calendarType] });
       setSelectedEvent(null);
+    },
+  });
+
+  const updateEventMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.CalendarEvent.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["calendar-events", calendarType] });
+      setEditingEvent(null);
     },
   });
 

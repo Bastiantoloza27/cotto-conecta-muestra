@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, BookOpen, Filter } from "lucide-react";
+import { Plus, BookOpen, Filter, Pencil, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ const categoryEmojis = {
 
 export default function DailyLogs() {
   const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState("todas");
   const queryClient = useQueryClient();
 
@@ -46,6 +47,19 @@ export default function DailyLogs() {
       queryClient.invalidateQueries({ queryKey: ["daily-logs"] });
       setShowForm(false);
     },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.DailyLog.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["daily-logs"] });
+      setEditing(null);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.DailyLog.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["daily-logs"] }),
   });
 
   const filtered = categoryFilter === "todas"
@@ -133,6 +147,14 @@ export default function DailyLogs() {
                           {log.created_by && <span>· {log.created_by}</span>}
                         </div>
                       </div>
+                      <div className="flex gap-1 shrink-0">
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditing(log)}>
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => { if (confirm("¿Eliminar este registro?")) deleteMutation.mutate(log.id); }}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   </Card>
                 ))}
@@ -149,6 +171,17 @@ export default function DailyLogs() {
         isLoading={createMutation.isPending}
         residents={residents}
       />
+
+      {editing && (
+        <DailyLogFormDialog
+          open={!!editing}
+          onClose={() => setEditing(null)}
+          onSubmit={(data) => updateMutation.mutate({ id: editing.id, data })}
+          isLoading={updateMutation.isPending}
+          residents={residents}
+          initial={editing}
+        />
+      )}
     </div>
   );
 }

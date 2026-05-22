@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, ClipboardList, Target } from "lucide-react";
+import { Plus, ClipboardList, Target, Pencil, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -22,13 +22,16 @@ const statusColors = {
   cerrado: "bg-muted text-muted-foreground",
 };
 
+const emptyForm = {
+  resident_id: "", resident_name: "", title: "", area: "autonomia",
+  description: "", start_date: "", target_date: "", status: "activo",
+  progress: 0, supports: "", responsible: "", observations: "",
+};
+
 export default function SupportPlans() {
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({
-    resident_id: "", resident_name: "", title: "", area: "autonomia",
-    description: "", start_date: "", target_date: "", status: "activo",
-    progress: 0, supports: "", responsible: "", observations: "",
-  });
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState(emptyForm);
   const queryClient = useQueryClient();
 
   const { data: plans = [] } = useQuery({
@@ -46,7 +49,21 @@ export default function SupportPlans() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["support-plans"] });
       setShowForm(false);
+      setForm(emptyForm);
     },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.SupportPlan.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["support-plans"] });
+      setEditing(null);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.SupportPlan.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["support-plans"] }),
   });
 
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
@@ -100,10 +117,66 @@ export default function SupportPlans() {
                   </div>
                   {p.responsible && <p className="text-[11px] text-muted-foreground mt-1.5">Responsable: {p.responsible}</p>}
                 </div>
+                <div className="flex gap-1 shrink-0">
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditing(p)}>
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => { if (confirm("¿Eliminar este plan?")) deleteMutation.mutate(p.id); }}>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
               </div>
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Edit dialog */}
+      {editing && (
+        <Dialog open={!!editing} onOpenChange={() => setEditing(null)}>
+          <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+            <DialogHeader><DialogTitle>✏️ Editar plan de apoyo</DialogTitle></DialogHeader>
+            <form onSubmit={(e) => { e.preventDefault(); updateMutation.mutate({ id: editing.id, data: editing }); }} className="space-y-4 mt-2">
+              <div><Label>Objetivo *</Label><Input value={editing.title} onChange={(e) => setEditing(p => ({ ...p, title: e.target.value }))} required /></div>
+              <div><Label>Área *</Label>
+                <Select value={editing.area} onValueChange={(v) => setEditing(p => ({ ...p, area: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="autonomia">Autonomía</SelectItem>
+                    <SelectItem value="salud">Salud</SelectItem>
+                    <SelectItem value="social">Social</SelectItem>
+                    <SelectItem value="emocional">Emocional</SelectItem>
+                    <SelectItem value="espiritual">Espiritual</SelectItem>
+                    <SelectItem value="comunicacion">Comunicación</SelectItem>
+                    <SelectItem value="movilidad">Movilidad</SelectItem>
+                    <SelectItem value="cognitivo">Cognitivo</SelectItem>
+                    <SelectItem value="otro">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>Estado</Label>
+                <Select value={editing.status} onValueChange={(v) => setEditing(p => ({ ...p, status: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="activo">Activo</SelectItem>
+                    <SelectItem value="en_pausa">En pausa</SelectItem>
+                    <SelectItem value="logrado">Logrado</SelectItem>
+                    <SelectItem value="reformulado">Reformulado</SelectItem>
+                    <SelectItem value="cerrado">Cerrado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>Avance (%)</Label><Input type="number" min={0} max={100} value={editing.progress || 0} onChange={(e) => setEditing(p => ({ ...p, progress: Number(e.target.value) }))} /></div>
+              <div><Label>Descripción</Label><Textarea value={editing.description || ""} onChange={(e) => setEditing(p => ({ ...p, description: e.target.value }))} rows={2} /></div>
+              <div><Label>Apoyos necesarios</Label><Textarea value={editing.supports || ""} onChange={(e) => setEditing(p => ({ ...p, supports: e.target.value }))} rows={2} /></div>
+              <div><Label>Responsable</Label><Input value={editing.responsible || ""} onChange={(e) => setEditing(p => ({ ...p, responsible: e.target.value }))} /></div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+                <Button type="submit" disabled={updateMutation.isPending}>{updateMutation.isPending ? "Guardando..." : "Actualizar"}</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       )}
 
       <Dialog open={showForm} onOpenChange={setShowForm}>

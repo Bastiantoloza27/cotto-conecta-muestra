@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, ClipboardPlus, Search, Clock } from "lucide-react";
+import { Plus, ClipboardPlus, Search, Clock, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,11 @@ export default function Admissions() {
       queryClient.invalidateQueries({ queryKey: ["admissions"] });
       setSelected(null);
     },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Admission.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admissions"] }),
   });
 
   const filtered = admissions.filter((a) => {
@@ -156,7 +161,10 @@ export default function Admissions() {
                     {a.origin && ` · ${a.origin}`}
                   </p>
                 </div>
-                <Button variant="ghost" size="sm" className="text-xs shrink-0">Ver</Button>
+                <div className="flex gap-1 shrink-0">
+                  <Button variant="ghost" size="sm" className="text-xs">Ver</Button>
+                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive h-8 w-8 p-0" onClick={(e) => { e.stopPropagation(); if (confirm("¿Eliminar solicitud?")) deleteMutation.mutate(a.id); }}><Trash2 className="w-3.5 h-3.5" /></Button>
+                </div>
               </div>
             </Card>
           ))}

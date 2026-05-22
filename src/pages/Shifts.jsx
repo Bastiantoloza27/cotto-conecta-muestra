@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, addDays, startOfWeek } from "date-fns";
 import { es } from "date-fns/locale";
-import { Plus, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Clock, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ const statusEmojis = { programado: "📋", presente: "✅", ausente: "❌", reem
 export default function Shifts() {
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({
     staff_name: "", date: format(new Date(), "yyyy-MM-dd"),
     shift_type: "manana", area: "", status: "programado", notes: "",
@@ -44,6 +45,19 @@ export default function Shifts() {
       queryClient.invalidateQueries({ queryKey: ["shifts"] });
       setShowForm(false);
     },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.StaffShift.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shifts"] });
+      setEditing(null);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.StaffShift.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["shifts"] }),
   });
 
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
@@ -91,10 +105,14 @@ export default function Shifts() {
               </p>
               <div className="space-y-1">
                 {dayShifts.map((s) => (
-                  <div key={s.id} className={`text-[11px] p-1.5 rounded border ${shiftColors[s.shift_type] || "bg-muted"}`}>
+                  <div key={s.id} className={`text-[11px] p-1.5 rounded border ${shiftColors[s.shift_type] || "bg-muted"} group relative`}>
                     <span className="mr-1">{statusEmojis[s.status] || ""}</span>
                     <span className="font-medium">{s.staff_name}</span>
                     <span className="block text-[10px] opacity-75 capitalize">{s.shift_type} {s.area && `· ${s.area}`}</span>
+                    <div className="absolute top-0.5 right-0.5 hidden group-hover:flex gap-0.5">
+                      <button onClick={() => setEditing(s)} className="p-0.5 rounded bg-white/70 hover:bg-white"><Pencil className="w-2.5 h-2.5" /></button>
+                      <button onClick={() => { if (confirm("¿Eliminar turno?")) deleteMutation.mutate(s.id); }} className="p-0.5 rounded bg-white/70 hover:bg-white text-destructive"><Trash2 className="w-2.5 h-2.5" /></button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -102,6 +120,48 @@ export default function Shifts() {
           );
         })}
       </div>
+
+      {editing && (
+        <Dialog open={!!editing} onOpenChange={() => setEditing(null)}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader><DialogTitle>✏️ Editar turno</DialogTitle></DialogHeader>
+            <form onSubmit={(e) => { e.preventDefault(); updateMutation.mutate({ id: editing.id, data: editing }); }} className="space-y-4 mt-2">
+              <div><Label>Nombre *</Label><Input value={editing.staff_name} onChange={(e) => setEditing(p => ({ ...p, staff_name: e.target.value }))} required /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Fecha</Label><Input type="date" value={editing.date} onChange={(e) => setEditing(p => ({ ...p, date: e.target.value }))} /></div>
+                <div><Label>Turno</Label>
+                  <Select value={editing.shift_type} onValueChange={(v) => setEditing(p => ({ ...p, shift_type: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="manana">Mañana</SelectItem>
+                      <SelectItem value="tarde">Tarde</SelectItem>
+                      <SelectItem value="noche">Noche</SelectItem>
+                      <SelectItem value="largo">Largo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div><Label>Estado</Label>
+                <Select value={editing.status} onValueChange={(v) => setEditing(p => ({ ...p, status: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="programado">Programado</SelectItem>
+                    <SelectItem value="presente">Presente</SelectItem>
+                    <SelectItem value="ausente">Ausente</SelectItem>
+                    <SelectItem value="reemplazo">Reemplazo</SelectItem>
+                    <SelectItem value="licencia">Licencia</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>Área</Label><Input value={editing.area || ""} onChange={(e) => setEditing(p => ({ ...p, area: e.target.value }))} /></div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+                <Button type="submit" disabled={updateMutation.isPending}>{updateMutation.isPending ? "Guardando..." : "Actualizar"}</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-sm">

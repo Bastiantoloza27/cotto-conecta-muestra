@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Package, AlertCircle } from "lucide-react";
+import { Plus, Package, AlertCircle, Pencil, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -19,6 +19,7 @@ const catEmojis = {
 
 export default function Inventory() {
   const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({
     name: "", category: "otro", current_stock: 0, minimum_stock: 0,
     unit: "", location: "", notes: "",
@@ -36,6 +37,19 @@ export default function Inventory() {
       queryClient.invalidateQueries({ queryKey: ["inventory"] });
       setShowForm(false);
     },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.InventoryItem.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      setEditing(null);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.InventoryItem.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["inventory"] }),
   });
 
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
@@ -93,7 +107,11 @@ export default function Inventory() {
                     <Card key={item.id} className={`p-3 ${isLow ? "border-amber-200" : ""}`}>
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium">{item.name}</p>
-                        {isLow && <AlertCircle className="w-3.5 h-3.5 text-amber-600" />}
+                        <div className="flex items-center gap-1">
+                          {isLow && <AlertCircle className="w-3.5 h-3.5 text-amber-600" />}
+                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setEditing(item)}><Pencil className="w-3 h-3" /></Button>
+                          <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => { if (confirm("¿Eliminar item?")) deleteMutation.mutate(item.id); }}><Trash2 className="w-3 h-3" /></Button>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className={`text-lg font-bold ${isLow ? "text-amber-600" : "text-foreground"}`}>
@@ -114,6 +132,42 @@ export default function Inventory() {
             </div>
           ))}
         </div>
+      )}
+
+      {editing && (
+        <Dialog open={!!editing} onOpenChange={() => setEditing(null)}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader><DialogTitle>✏️ Editar item</DialogTitle></DialogHeader>
+            <form onSubmit={(e) => { e.preventDefault(); updateMutation.mutate({ id: editing.id, data: editing }); }} className="space-y-4 mt-2">
+              <div><Label>Nombre *</Label><Input value={editing.name} onChange={(e) => setEditing(p => ({ ...p, name: e.target.value }))} required /></div>
+              <div><Label>Categoría</Label>
+                <Select value={editing.category} onValueChange={(v) => setEditing(p => ({ ...p, category: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="panales">🧷 Pañales</SelectItem>
+                    <SelectItem value="medicamentos">💊 Medicamentos</SelectItem>
+                    <SelectItem value="alimentos">🍎 Alimentos</SelectItem>
+                    <SelectItem value="aseo">🧹 Aseo</SelectItem>
+                    <SelectItem value="ropa">👕 Ropa</SelectItem>
+                    <SelectItem value="materiales">📦 Materiales</SelectItem>
+                    <SelectItem value="equipamiento">🔧 Equipamiento</SelectItem>
+                    <SelectItem value="otro">📋 Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div><Label>Stock actual</Label><Input type="number" value={editing.current_stock || 0} onChange={(e) => setEditing(p => ({ ...p, current_stock: Number(e.target.value) }))} /></div>
+                <div><Label>Stock mínimo</Label><Input type="number" value={editing.minimum_stock || 0} onChange={(e) => setEditing(p => ({ ...p, minimum_stock: Number(e.target.value) }))} /></div>
+                <div><Label>Unidad</Label><Input value={editing.unit || ""} onChange={(e) => setEditing(p => ({ ...p, unit: e.target.value }))} /></div>
+              </div>
+              <div><Label>Ubicación</Label><Input value={editing.location || ""} onChange={(e) => setEditing(p => ({ ...p, location: e.target.value }))} /></div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+                <Button type="submit" disabled={updateMutation.isPending}>{updateMutation.isPending ? "Guardando..." : "Actualizar"}</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       )}
 
       <Dialog open={showForm} onOpenChange={setShowForm}>

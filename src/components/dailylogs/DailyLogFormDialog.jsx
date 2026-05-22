@@ -8,8 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 
-export default function DailyLogFormDialog({ open, onClose, onSubmit, isLoading, residents = [] }) {
-  const [form, setForm] = useState({
+export default function DailyLogFormDialog({ open, onClose, onSubmit, isLoading, residents = [], initial }) {
+  const [form, setForm] = useState(initial || {
     resident_id: "", resident_name: "", date: format(new Date(), "yyyy-MM-dd"),
     time: format(new Date(), "HH:mm"), category: "otro", mood: "",
     title: "", description: "", shift: "manana", is_important: false,
@@ -32,7 +32,7 @@ export default function DailyLogFormDialog({ open, onClose, onSubmit, isLoading,
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>📝 Nuevo registro</DialogTitle>
+          <DialogTitle>{initial ? "✏️ Editar registro" : "📝 Nuevo registro"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div>
@@ -118,7 +118,7 @@ export default function DailyLogFormDialog({ open, onClose, onSubmit, isLoading,
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Guardando..." : "Registrar"}
+              {isLoading ? "Guardando..." : (initial ? "Actualizar" : "Registrar")}
             </Button>
           </div>
         </form>

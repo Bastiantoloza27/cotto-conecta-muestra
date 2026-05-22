@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Calendar, MapPin, User } from "lucide-react";
+import { Plus, Calendar, MapPin, User, Pencil, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -26,12 +26,15 @@ const statusColors = {
   cancelada: "bg-red-50 text-red-700 border-red-200",
 };
 
+const emptyActivity = {
+  title: "", description: "", type: "taller", date: format(new Date(), "yyyy-MM-dd"),
+  time_start: "", time_end: "", location: "", responsible: "", status: "programada", notes: "",
+};
+
 export default function Activities() {
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({
-    title: "", description: "", type: "taller", date: format(new Date(), "yyyy-MM-dd"),
-    time_start: "", time_end: "", location: "", responsible: "", status: "programada", notes: "",
-  });
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState(emptyActivity);
   const queryClient = useQueryClient();
 
   const { data: activities = [] } = useQuery({
@@ -44,7 +47,21 @@ export default function Activities() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       setShowForm(false);
+      setForm(emptyActivity);
     },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Activity.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
+      setEditing(null);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Activity.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["activities"] }),
   });
 
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
@@ -88,10 +105,72 @@ export default function Activities() {
                     {act.responsible && <span className="flex items-center gap-1"><User className="w-3 h-3" /> {act.responsible}</span>}
                   </div>
                 </div>
+                <div className="flex gap-1 shrink-0">
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditing(act)}>
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => { if (confirm("¿Eliminar esta actividad?")) deleteMutation.mutate(act.id); }}>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
               </div>
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Edit Dialog */}
+      {editing && (
+        <Dialog open={!!editing} onOpenChange={() => setEditing(null)}>
+          <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+            <DialogHeader><DialogTitle>✏️ Editar actividad</DialogTitle></DialogHeader>
+            <form onSubmit={(e) => { e.preventDefault(); updateMutation.mutate({ id: editing.id, data: editing }); }} className="space-y-4 mt-2">
+              <div><Label>Título *</Label><Input value={editing.title} onChange={(e) => setEditing(p => ({ ...p, title: e.target.value }))} required /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Tipo</Label>
+                  <Select value={editing.type} onValueChange={(v) => setEditing(p => ({ ...p, type: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="taller">🎨 Taller</SelectItem>
+                      <SelectItem value="voluntariado">🤝 Voluntariado</SelectItem>
+                      <SelectItem value="celebracion">🎉 Celebración</SelectItem>
+                      <SelectItem value="salida">🚌 Salida</SelectItem>
+                      <SelectItem value="pastoral">🕊️ Pastoral</SelectItem>
+                      <SelectItem value="visita">👋 Visita</SelectItem>
+                      <SelectItem value="recreacion">🎮 Recreación</SelectItem>
+                      <SelectItem value="terapia">💆 Terapia</SelectItem>
+                      <SelectItem value="otro">📋 Otro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Estado</Label>
+                  <Select value={editing.status} onValueChange={(v) => setEditing(p => ({ ...p, status: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="programada">Programada</SelectItem>
+                      <SelectItem value="en_curso">En curso</SelectItem>
+                      <SelectItem value="completada">Completada</SelectItem>
+                      <SelectItem value="cancelada">Cancelada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Fecha</Label><Input type="date" value={editing.date || ""} onChange={(e) => setEditing(p => ({ ...p, date: e.target.value }))} /></div>
+                <div><Label>Hora inicio</Label><Input type="time" value={editing.time_start || ""} onChange={(e) => setEditing(p => ({ ...p, time_start: e.target.value }))} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Lugar</Label><Input value={editing.location || ""} onChange={(e) => setEditing(p => ({ ...p, location: e.target.value }))} /></div>
+                <div><Label>Responsable</Label><Input value={editing.responsible || ""} onChange={(e) => setEditing(p => ({ ...p, responsible: e.target.value }))} /></div>
+              </div>
+              <div><Label>Descripción</Label><Textarea value={editing.description || ""} onChange={(e) => setEditing(p => ({ ...p, description: e.target.value }))} rows={2} /></div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+                <Button type="submit" disabled={updateMutation.isPending}>{updateMutation.isPending ? "Guardando..." : "Actualizar"}</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       )}
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
