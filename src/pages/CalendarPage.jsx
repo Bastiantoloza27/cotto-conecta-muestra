@@ -348,7 +348,7 @@ export default function CalendarPage() {
                 <p className="text-xs text-muted-foreground">Registrado por: {selectedEvent.author_name}</p>
               )}
             </div>
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-between pt-2">
               <Button
                 variant="destructive"
                 size="sm"
@@ -357,8 +357,69 @@ export default function CalendarPage() {
               >
                 Eliminar
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setSelectedEvent(null)}>Cerrar</Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => { setEditingEvent({ ...selectedEvent }); setSelectedEvent(null); }}>Editar</Button>
+                <Button variant="outline" size="sm" onClick={() => setSelectedEvent(null)}>Cerrar</Button>
+              </div>
             </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Edit event dialog */}
+      {editingEvent && (
+        <Dialog open={!!editingEvent} onOpenChange={() => setEditingEvent(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Editar evento</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={(e) => { e.preventDefault(); updateEventMutation.mutate({ id: editingEvent.id, data: editingEvent }); }} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label>Título *</Label>
+                <Input value={editingEvent.title} onChange={e => setEditingEvent({ ...editingEvent, title: e.target.value })} required />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Fecha *</Label>
+                  <Input type="date" value={editingEvent.date} onChange={e => setEditingEvent({ ...editingEvent, date: e.target.value })} required />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Categoría</Label>
+                  <Select value={editingEvent.category} onValueChange={v => setEditingEvent({ ...editingEvent, category: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Hora inicio</Label>
+                  <Input type="time" value={editingEvent.time || ""} onChange={e => setEditingEvent({ ...editingEvent, time: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Hora término</Label>
+                  <Input type="time" value={editingEvent.end_time || ""} onChange={e => setEditingEvent({ ...editingEvent, end_time: e.target.value })} />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Descripción</Label>
+                <Input value={editingEvent.description || ""} onChange={e => setEditingEvent({ ...editingEvent, description: e.target.value })} placeholder="Detalles opcionales" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Registrado por</Label>
+                <Input value={editingEvent.author_name || ""} onChange={e => setEditingEvent({ ...editingEvent, author_name: e.target.value })} placeholder="Tu nombre" />
+              </div>
+              <div className="flex justify-end gap-2 pt-1">
+                <Button type="button" variant="outline" onClick={() => setEditingEvent(null)}>Cancelar</Button>
+                <Button type="submit" disabled={updateEventMutation.isPending}>
+                  {updateEventMutation.isPending ? "Guardando..." : "Guardar cambios"}
+                </Button>
+              </div>
+            </form>
           </DialogContent>
         </Dialog>
       )}
