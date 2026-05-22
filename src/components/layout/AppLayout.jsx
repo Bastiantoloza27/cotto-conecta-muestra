@@ -21,7 +21,12 @@ export default function AppLayout() {
           >
             <Menu className="w-5 h-5" />
           </Button>
-          <span className="text-sm font-semibold">Providentia</span>
+          <img
+            src="https://media.base44.com/images/public/6a10daaa13888870642a70ef/2440d15f9_image.png"
+            alt="Pequeño Cottolengo"
+            className="h-7 w-7 object-contain rounded"
+          />
+          <span className="text-sm font-semibold ml-2">Pequeño Cottolengo</span>
         </header>
         <main className="flex-1 overflow-y-auto">
           <Outlet />

@@ -116,18 +116,20 @@ export default function Sidebar({ open, onClose }) {
         open ? "translate-x-0" : "-translate-x-full"
       )}>
         {/* Brand */}
-        <div className="flex items-center justify-between px-5 h-16 border-b border-sidebar-border">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Heart className="w-4 h-4 text-primary-foreground" />
-            </div>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-sidebar-border">
+          <div className="flex items-center gap-3">
+            <img
+              src="https://media.base44.com/images/public/6a10daaa13888870642a70ef/2440d15f9_image.png"
+              alt="Pequeño Cottolengo Quintero"
+              className="w-10 h-10 object-contain rounded-lg bg-white p-0.5"
+            />
             <div>
-              <h1 className="text-[15px] font-semibold text-sidebar-foreground tracking-tight">Providentia</h1>
-              <p className="text-[10px] text-muted-foreground leading-none">Gestión Residencial</p>
+              <h1 className="text-[13px] font-bold text-sidebar-foreground tracking-tight leading-tight">Pequeño Cottolengo</h1>
+              <p className="text-[10px] text-sidebar-foreground/50 leading-none">Quintero · Gestión Residencial</p>
             </div>
           </div>
           <button onClick={onClose} className="lg:hidden p-1 rounded hover:bg-sidebar-accent">
-            <X className="w-4 h-4 text-muted-foreground" />
+            <X className="w-4 h-4 text-sidebar-foreground/50" />
           </button>
         </div>
 
@@ -145,7 +147,7 @@ export default function Sidebar({ open, onClose }) {
 
         {/* Footer */}
         <div className="px-4 py-3 border-t border-sidebar-border">
-          <p className="text-[10px] text-muted-foreground text-center">
+          <p className="text-[10px] text-sidebar-foreground/40 text-center">
             Providentia v1.0 · Cuidado con dignidad
           </p>
         </div>
