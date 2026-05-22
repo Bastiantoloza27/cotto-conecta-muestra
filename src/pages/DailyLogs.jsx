@@ -77,8 +77,8 @@ export default function DailyLogs() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
       <PageHeader
-        title="Bitácora Diaria"
-        subtitle="Registro continuo de la vida en comunidad"
+        title="Bitácora"
+        subtitle="Registro continuo del cuidado en comunidad"
         action={() => setShowForm(true)}
         actionLabel="Nuevo registro"
         actionIcon={Plus}
@@ -144,7 +144,7 @@ export default function DailyLogs() {
                         <div className="flex items-center gap-2 mt-2 text-[11px] text-muted-foreground">
                           {log.time && <span>🕐 {log.time}</span>}
                           {log.shift && <span>· Turno {log.shift}</span>}
-                          {log.created_by && <span>· {log.created_by}</span>}
+                          {log.registered_by && <span>· 👤 {log.registered_by}</span>}
                         </div>
                       </div>
                       <div className="flex gap-1 shrink-0">

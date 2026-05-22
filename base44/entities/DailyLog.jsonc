@@ -62,6 +62,10 @@
       "type": "boolean",
       "default": false
     },
+    "registered_by": {
+      "type": "string",
+      "description": "Nombre del funcionario que registra"
+    },
     "tags": {
       "type": "string",
       "description": "Etiquetas separadas por coma"

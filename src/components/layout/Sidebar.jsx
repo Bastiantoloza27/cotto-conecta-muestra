@@ -19,8 +19,13 @@ const navGroups = [
     items: [
       { label: "Residentes", icon: Users, path: "/residentes" },
       { label: "Admisiones", icon: ClipboardPlus, path: "/admisiones" },
-      { label: "Bitácora", icon: BookOpen, path: "/bitacora" },
       { label: "Plan de Apoyos", icon: ClipboardList, path: "/planes" },
+    ]
+  },
+  {
+    label: "Cuidadoras",
+    items: [
+      { label: "Bitácora", icon: BookOpen, path: "/bitacora" },
     ]
   },
   {
