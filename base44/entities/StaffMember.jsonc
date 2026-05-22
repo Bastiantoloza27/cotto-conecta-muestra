@@ -1,0 +1,105 @@
+{
+  "name": "StaffMember",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "Nombre completo del funcionario"
+    },
+    "rut": {
+      "type": "string"
+    },
+    "photo_url": {
+      "type": "string",
+      "description": "Foto del funcionario"
+    },
+    "position": {
+      "type": "string",
+      "description": "Cargo o puesto",
+      "enum": [
+        "director",
+        "enfermero",
+        "tecnico_enfermeria",
+        "kinesiologo",
+        "terapeuta_ocupacional",
+        "psicologo",
+        "trabajador_social",
+        "nutricionista",
+        "medico",
+        "auxiliar_cuidado",
+        "auxiliar_aseo",
+        "administrativo",
+        "capellan",
+        "voluntario",
+        "otro"
+      ]
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "salud",
+        "cuidado",
+        "administracion",
+        "pastoral",
+        "servicios_generales",
+        "otro"
+      ]
+    },
+    "responsibilities": {
+      "type": "string",
+      "description": "Descripci\u00f3n de responsabilidades y funciones"
+    },
+    "shift_type": {
+      "type": "string",
+      "enum": [
+        "manana",
+        "tarde",
+        "noche",
+        "mixto",
+        "administrativo"
+      ],
+      "description": "Turno habitual"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "admission_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de incorporaci\u00f3n"
+    },
+    "contract_type": {
+      "type": "string",
+      "enum": [
+        "planta",
+        "contrata",
+        "honorarios",
+        "voluntario"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "activo",
+        "licencia",
+        "vacaciones",
+        "inactivo"
+      ],
+      "default": "activo"
+    },
+    "specializations": {
+      "type": "string",
+      "description": "Especializaciones o habilidades destacadas"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "full_name",
+    "position"
+  ]
+}

@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, BookOpen, AlertTriangle, Calendar, Pill,
   Heart, Church, BarChart3, Package, ClipboardList, Clock, X,
-  ChevronDown, ChevronRight, ClipboardPlus, Activity
+  ChevronDown, ChevronRight, ClipboardPlus, Activity, UserCog
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +40,7 @@ const navGroups = [
   {
     label: "Gestión",
     items: [
+      { label: "Personal", icon: UserCog, path: "/personal" },
       { label: "Calendario", icon: Calendar, path: "/calendario" },
       { label: "Turnos", icon: Clock, path: "/turnos" },
       { label: "Inventario", icon: Package, path: "/inventario" },
