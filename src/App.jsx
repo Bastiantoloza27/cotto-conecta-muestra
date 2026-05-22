@@ -21,6 +21,7 @@ import Pastoral from '@/pages/Pastoral';
 import Inventory from '@/pages/Inventory';
 import SenadisReport from '@/pages/SenadisReport';
 import Admissions from '@/pages/Admissions';
+import CalendarPage from '@/pages/CalendarPage';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -61,6 +62,7 @@ const AuthenticatedApp = () => {
         <Route path="/inventario" element={<Inventory />} />
         <Route path="/senadis" element={<SenadisReport />} />
         <Route path="/admisiones" element={<Admissions />} />
+        <Route path="/calendario" element={<CalendarPage />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

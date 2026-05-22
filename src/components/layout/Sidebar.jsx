@@ -40,6 +40,7 @@ const navGroups = [
   {
     label: "Gestión",
     items: [
+      { label: "Calendario", icon: Calendar, path: "/calendario" },
       { label: "Turnos", icon: Clock, path: "/turnos" },
       { label: "Inventario", icon: Package, path: "/inventario" },
       { label: "Evidencia SENADIS", icon: BarChart3, path: "/senadis" },

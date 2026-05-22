@@ -1,0 +1,65 @@
+{
+  "name": "CalendarEvent",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo del evento"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descripci\u00f3n o detalle"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "time": {
+      "type": "string",
+      "description": "Hora del evento (ej: 09:30)"
+    },
+    "end_time": {
+      "type": "string",
+      "description": "Hora de t\u00e9rmino"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "administrativo",
+        "reunion",
+        "capacitacion",
+        "salud",
+        "visita",
+        "actividad",
+        "recordatorio",
+        "otro"
+      ],
+      "default": "administrativo"
+    },
+    "calendar_type": {
+      "type": "string",
+      "enum": [
+        "general",
+        "direccion"
+      ],
+      "default": "general",
+      "description": "general = todos los funcionarios, direccion = solo Director"
+    },
+    "author_name": {
+      "type": "string"
+    },
+    "color": {
+      "type": "string",
+      "description": "Color del evento para la UI"
+    },
+    "is_all_day": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "title",
+    "date",
+    "calendar_type"
+  ]
+}
