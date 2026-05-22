@@ -63,24 +63,37 @@ export default function Dashboard() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-8 flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm text-muted-foreground">
-            {format(new Date(), "EEEE d 'de' MMMM, yyyy", { locale: es })}
-          </p>
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-1">
-            {greeting()} 👋
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Resumen del día en la comunidad
-          </p>
-        </div>
-        <img
-          src="https://media.base44.com/images/public/6a10daaa13888870642a70ef/2440d15f9_image.png"
-          alt="Pequeño Cottolengo Quintero"
-          className="w-16 h-16 sm:w-20 sm:h-20 object-contain shrink-0"
+      {/* Header with video background */}
+      <div className="mb-8 relative rounded-2xl overflow-hidden">
+        <video
+          src="https://media.base44.com/videos/public/6a10daaa13888870642a70ef/f9e9d64a2_VIDEOCENACOTOLENGO2025-22_5_20267_41pm.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
         />
+        {/* Dark overlay for readability */}
+        <div className="absolute inset-0 bg-black/55" />
+        {/* Content */}
+        <div className="relative z-10 flex items-start justify-between gap-4 p-6 sm:p-8">
+          <div>
+            <p className="text-sm text-white/70">
+              {format(new Date(), "EEEE d 'de' MMMM, yyyy", { locale: es })}
+            </p>
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-1 text-white">
+              {greeting()} 👋
+            </h1>
+            <p className="text-sm text-white/70 mt-1">
+              Resumen del día en la comunidad
+            </p>
+          </div>
+          <img
+            src="https://media.base44.com/images/public/6a10daaa13888870642a70ef/2440d15f9_image.png"
+            alt="Pequeño Cottolengo Quintero"
+            className="w-16 h-16 sm:w-20 sm:h-20 object-contain shrink-0"
+          />
+        </div>
       </div>
 
       {/* Stats */}
