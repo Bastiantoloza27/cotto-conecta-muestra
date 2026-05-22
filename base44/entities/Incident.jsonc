@@ -1,0 +1,76 @@
+{
+  "name": "Incident",
+  "type": "object",
+  "properties": {
+    "resident_id": {
+      "type": "string"
+    },
+    "resident_name": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "time": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "caida",
+        "agresion",
+        "crisis",
+        "accidente",
+        "derivacion",
+        "fuga",
+        "autolesion",
+        "otro"
+      ]
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "leve",
+        "moderado",
+        "grave",
+        "critico"
+      ],
+      "default": "leve"
+    },
+    "description": {
+      "type": "string"
+    },
+    "actions_taken": {
+      "type": "string"
+    },
+    "witnesses": {
+      "type": "string"
+    },
+    "follow_up": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "abierto",
+        "en_seguimiento",
+        "cerrado"
+      ],
+      "default": "abierto"
+    },
+    "notified_family": {
+      "type": "boolean",
+      "default": false
+    },
+    "notified_authority": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "resident_id",
+    "type",
+    "description"
+  ]
+}

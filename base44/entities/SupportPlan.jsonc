@@ -1,0 +1,75 @@
+{
+  "name": "SupportPlan",
+  "type": "object",
+  "properties": {
+    "resident_id": {
+      "type": "string"
+    },
+    "resident_name": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string",
+      "description": "Objetivo del plan"
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "autonomia",
+        "salud",
+        "social",
+        "emocional",
+        "espiritual",
+        "comunicacion",
+        "movilidad",
+        "cognitivo",
+        "otro"
+      ]
+    },
+    "description": {
+      "type": "string"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "target_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "activo",
+        "en_pausa",
+        "logrado",
+        "reformulado",
+        "cerrado"
+      ],
+      "default": "activo"
+    },
+    "progress": {
+      "type": "number",
+      "description": "Porcentaje de avance 0-100"
+    },
+    "supports": {
+      "type": "string",
+      "description": "Apoyos activos necesarios"
+    },
+    "evaluations": {
+      "type": "string",
+      "description": "Notas de evaluaci\u00f3n"
+    },
+    "responsible": {
+      "type": "string"
+    },
+    "observations": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "resident_id",
+    "title",
+    "area"
+  ]
+}

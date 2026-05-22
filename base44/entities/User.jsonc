@@ -1,0 +1,26 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "director",
+        "coordinador",
+        "enfermeria",
+        "cuidador",
+        "pastoral",
+        "voluntariado",
+        "administracion",
+        "supervisor_externo"
+      ],
+      "default": "cuidador"
+    },
+    "area": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    }
+  }
+}

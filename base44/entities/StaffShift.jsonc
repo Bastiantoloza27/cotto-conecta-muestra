@@ -1,0 +1,50 @@
+{
+  "name": "StaffShift",
+  "type": "object",
+  "properties": {
+    "staff_email": {
+      "type": "string"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "shift_type": {
+      "type": "string",
+      "enum": [
+        "manana",
+        "tarde",
+        "noche",
+        "largo"
+      ]
+    },
+    "area": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "programado",
+        "presente",
+        "ausente",
+        "reemplazo",
+        "licencia"
+      ],
+      "default": "programado"
+    },
+    "replacement_name": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "staff_name",
+    "date",
+    "shift_type"
+  ]
+}

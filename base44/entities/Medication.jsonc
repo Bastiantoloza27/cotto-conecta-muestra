@@ -1,0 +1,78 @@
+{
+  "name": "Medication",
+  "type": "object",
+  "properties": {
+    "resident_id": {
+      "type": "string"
+    },
+    "resident_name": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "description": "Nombre del medicamento"
+    },
+    "dosage": {
+      "type": "string"
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "cada_6h",
+        "cada_8h",
+        "cada_12h",
+        "diario",
+        "semanal",
+        "sos",
+        "otro"
+      ]
+    },
+    "schedule_times": {
+      "type": "string",
+      "description": "Horarios: ej 08:00, 14:00, 20:00"
+    },
+    "route": {
+      "type": "string",
+      "enum": [
+        "oral",
+        "sublingual",
+        "topica",
+        "inyectable",
+        "inhalatoria",
+        "rectal",
+        "otra"
+      ]
+    },
+    "prescribing_doctor": {
+      "type": "string"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "activo",
+        "suspendido",
+        "completado"
+      ],
+      "default": "activo"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "stock_remaining": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "resident_id",
+    "name",
+    "dosage"
+  ]
+}

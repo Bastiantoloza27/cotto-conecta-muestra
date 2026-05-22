@@ -1,0 +1,75 @@
+{
+  "name": "DailyLog",
+  "type": "object",
+  "properties": {
+    "resident_id": {
+      "type": "string",
+      "description": "ID de la persona residente"
+    },
+    "resident_name": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "time": {
+      "type": "string",
+      "description": "Hora del registro"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "alimentacion",
+        "emocional",
+        "sueno",
+        "comportamiento",
+        "actividad",
+        "salud",
+        "higiene",
+        "social",
+        "espiritual",
+        "otro"
+      ],
+      "default": "otro"
+    },
+    "mood": {
+      "type": "string",
+      "enum": [
+        "muy_bien",
+        "bien",
+        "regular",
+        "bajo",
+        "critico"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descripci\u00f3n del registro"
+    },
+    "shift": {
+      "type": "string",
+      "enum": [
+        "manana",
+        "tarde",
+        "noche"
+      ]
+    },
+    "is_important": {
+      "type": "boolean",
+      "default": false
+    },
+    "tags": {
+      "type": "string",
+      "description": "Etiquetas separadas por coma"
+    }
+  },
+  "required": [
+    "resident_id",
+    "category",
+    "description"
+  ]
+}

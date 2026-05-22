@@ -1,0 +1,70 @@
+{
+  "name": "Activity",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "taller",
+        "voluntariado",
+        "celebracion",
+        "salida",
+        "pastoral",
+        "visita",
+        "recreacion",
+        "terapia",
+        "otro"
+      ]
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "time_start": {
+      "type": "string"
+    },
+    "time_end": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "responsible": {
+      "type": "string"
+    },
+    "participants_count": {
+      "type": "number"
+    },
+    "resident_ids": {
+      "type": "string",
+      "description": "IDs de residentes participantes, separados por coma"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "programada",
+        "en_curso",
+        "completada",
+        "cancelada"
+      ],
+      "default": "programada"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "photo_url": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "type",
+    "date"
+  ]
+}

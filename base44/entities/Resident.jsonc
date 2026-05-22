@@ -1,0 +1,131 @@
+{
+  "name": "Resident",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "Nombre completo de la persona residente"
+    },
+    "preferred_name": {
+      "type": "string",
+      "description": "Nombre con el que prefiere ser llamado/a"
+    },
+    "photo_url": {
+      "type": "string",
+      "description": "Foto de perfil"
+    },
+    "date_of_birth": {
+      "type": "string",
+      "format": "date"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "femenino",
+        "masculino",
+        "otro"
+      ]
+    },
+    "rut": {
+      "type": "string",
+      "description": "RUT chileno"
+    },
+    "admission_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "activo",
+        "alta",
+        "hospitalizado",
+        "fallecido",
+        "traslado"
+      ],
+      "default": "activo"
+    },
+    "dependency_level": {
+      "type": "string",
+      "enum": [
+        "leve",
+        "moderada",
+        "severa",
+        "gran_dependencia"
+      ],
+      "default": "moderada"
+    },
+    "room": {
+      "type": "string"
+    },
+    "blood_type": {
+      "type": "string",
+      "enum": [
+        "A+",
+        "A-",
+        "B+",
+        "B-",
+        "AB+",
+        "AB-",
+        "O+",
+        "O-"
+      ]
+    },
+    "diagnoses": {
+      "type": "string",
+      "description": "Diagn\u00f3sticos principales"
+    },
+    "allergies": {
+      "type": "string"
+    },
+    "personal_history": {
+      "type": "string",
+      "description": "Historia de vida resumida"
+    },
+    "preferences": {
+      "type": "string",
+      "description": "Preferencias, gustos, rutinas preferidas"
+    },
+    "communication_notes": {
+      "type": "string",
+      "description": "C\u00f3mo se comunica, apoyos necesarios"
+    },
+    "spirituality_notes": {
+      "type": "string",
+      "description": "Creencias, pr\u00e1cticas espirituales"
+    },
+    "family_contact_name": {
+      "type": "string"
+    },
+    "family_contact_phone": {
+      "type": "string"
+    },
+    "family_contact_relation": {
+      "type": "string"
+    },
+    "emergency_contact": {
+      "type": "string"
+    },
+    "senadis_registered": {
+      "type": "boolean",
+      "default": false
+    },
+    "disability_type": {
+      "type": "string",
+      "enum": [
+        "fisica",
+        "intelectual",
+        "sensorial",
+        "psiquica",
+        "multiple",
+        "otra"
+      ]
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "full_name"
+  ]
+}

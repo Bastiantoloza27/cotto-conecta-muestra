@@ -1,0 +1,45 @@
+{
+  "name": "InventoryItem",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "panales",
+        "medicamentos",
+        "alimentos",
+        "aseo",
+        "ropa",
+        "materiales",
+        "equipamiento",
+        "otro"
+      ]
+    },
+    "current_stock": {
+      "type": "number"
+    },
+    "minimum_stock": {
+      "type": "number"
+    },
+    "unit": {
+      "type": "string"
+    },
+    "last_restock_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "location": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "category"
+  ]
+}
