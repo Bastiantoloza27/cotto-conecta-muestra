@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, BookOpen, Calendar, Pill,
   Heart, Church, BarChart3, Package, ClipboardList, Clock, X,
-  ChevronDown, ChevronRight, ClipboardPlus, Activity, UserCog, Megaphone, Settings, Stethoscope, Wallet
+  ChevronDown, ChevronRight, ClipboardPlus, Activity, UserCog, Megaphone, Settings, Stethoscope, Wallet, UsersRound
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { base44 } from "@/api/base44Client";
@@ -53,6 +53,7 @@ const NAV_GROUPS_USER = [
       { label: "Inventario", icon: Package, path: "/inventario" },
       { label: "Evidencia SENADIS", icon: BarChart3, path: "/senadis" },
       { label: "Control de Gastos", icon: Wallet, path: "/gastos" },
+      { label: "Reuniones de Equipo", icon: UsersRound, path: "/reuniones" },
       { label: "Mis Avisos", icon: Megaphone, path: "/mis-avisos", badgeKey: "avisos" },
     ]
   }
@@ -102,6 +103,7 @@ const NAV_GROUPS_ADMIN = [
       { label: "Inventario", icon: Package, path: "/inventario" },
       { label: "Evidencia SENADIS", icon: BarChart3, path: "/senadis" },
       { label: "Control de Gastos", icon: Wallet, path: "/gastos" },
+      { label: "Reuniones de Equipo", icon: UsersRound, path: "/reuniones" },
       { label: "Mis Avisos", icon: Megaphone, path: "/mis-avisos", badgeKey: "avisos" },
     ]
   },

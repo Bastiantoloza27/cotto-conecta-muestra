@@ -25,6 +25,7 @@ import CalendarPage from '@/pages/CalendarPage';
 import Staff from '@/pages/Staff';
 import InformesMedico from '@/pages/InformesMedico';
 import ControlGastos from '@/pages/ControlGastos';
+import Reuniones from '@/pages/Reuniones';
 import AvisosDirector from '@/pages/AvisosDirector';
 import MisAvisos from '@/pages/MisAvisos';
 import ConfiguracionSlackPage from '@/pages/ConfiguracionSlackPage';
@@ -76,6 +77,7 @@ const AuthenticatedApp = () => {
         <Route path="/mis-avisos" element={<MisAvisos />} />
         <Route path="/slack-config" element={<AdminRoute><ConfiguracionSlackPage /></AdminRoute>} />
         <Route path="/gastos" element={<ControlGastos />} />
+        <Route path="/reuniones" element={<Reuniones />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

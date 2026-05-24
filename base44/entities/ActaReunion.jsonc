@@ -1,0 +1,83 @@
+{
+  "name": "ActaReunion",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo de la reuni\u00f3n"
+    },
+    "fecha": {
+      "type": "string",
+      "format": "date"
+    },
+    "hora_inicio": {
+      "type": "string",
+      "description": "Hora de inicio (ej: 09:00)"
+    },
+    "hora_termino": {
+      "type": "string",
+      "description": "Hora de t\u00e9rmino"
+    },
+    "lugar": {
+      "type": "string",
+      "description": "Lugar donde se realiz\u00f3 la reuni\u00f3n"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "equipo_completo",
+        "salud",
+        "cuidado",
+        "administracion",
+        "pastoral",
+        "directiva",
+        "otra"
+      ],
+      "description": "Tipo de reuni\u00f3n"
+    },
+    "convocante": {
+      "type": "string",
+      "description": "Nombre del convocante / quien dirige"
+    },
+    "participantes": {
+      "type": "string",
+      "description": "Lista de participantes (JSON array stringificado)"
+    },
+    "orden_del_dia": {
+      "type": "string",
+      "description": "Puntos del orden del d\u00eda (JSON array stringificado)"
+    },
+    "acuerdos": {
+      "type": "string",
+      "description": "Acuerdos y compromisos tomados"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones generales"
+    },
+    "proxima_reunion": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha sugerida pr\u00f3xima reuni\u00f3n"
+    },
+    "estado": {
+      "type": "string",
+      "enum": [
+        "borrador",
+        "finalizada"
+      ],
+      "default": "borrador"
+    },
+    "autor_email": {
+      "type": "string"
+    },
+    "autor_nombre": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "titulo",
+    "fecha",
+    "tipo"
+  ]
+}
