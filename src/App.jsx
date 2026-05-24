@@ -23,6 +23,9 @@ import SenadisReport from '@/pages/SenadisReport';
 import Admissions from '@/pages/Admissions';
 import CalendarPage from '@/pages/CalendarPage';
 import Staff from '@/pages/Staff';
+import AvisosDirector from '@/pages/AvisosDirector';
+import MisAvisos from '@/pages/MisAvisos';
+import ConfiguracionSlackPage from '@/pages/ConfiguracionSlackPage';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -65,6 +68,9 @@ const AuthenticatedApp = () => {
         <Route path="/admisiones" element={<Admissions />} />
         <Route path="/calendario" element={<CalendarPage />} />
         <Route path="/personal" element={<Staff />} />
+        <Route path="/avisos" element={<AvisosDirector />} />
+        <Route path="/mis-avisos" element={<MisAvisos />} />
+        <Route path="/slack-config" element={<ConfiguracionSlackPage />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

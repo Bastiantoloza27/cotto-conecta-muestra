@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, BookOpen, AlertTriangle, Calendar, Pill,
   Heart, Church, BarChart3, Package, ClipboardList, Clock, X,
-  ChevronDown, ChevronRight, ClipboardPlus, Activity, UserCog
+  ChevronDown, ChevronRight, ClipboardPlus, Activity, UserCog, Megaphone, Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +50,9 @@ const navGroups = [
       { label: "Turnos", icon: Clock, path: "/turnos" },
       { label: "Inventario", icon: Package, path: "/inventario" },
       { label: "Evidencia SENADIS", icon: BarChart3, path: "/senadis" },
+      { label: "Avisos del Director", icon: Megaphone, path: "/avisos" },
+      { label: "Mis Avisos", icon: Megaphone, path: "/mis-avisos" },
+      { label: "Config. Slack", icon: Settings, path: "/slack-config" },
     ]
   }
 ];
