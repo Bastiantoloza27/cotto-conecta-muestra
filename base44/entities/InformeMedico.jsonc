@@ -1,0 +1,61 @@
+{
+  "name": "InformeMedico",
+  "type": "object",
+  "properties": {
+    "fecha_visita": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de la visita m\u00e9dica"
+    },
+    "medico_nombre": {
+      "type": "string",
+      "description": "Nombre del m\u00e9dico que realiza la visita"
+    },
+    "residente_ids": {
+      "type": "string",
+      "description": "IDs de residentes atendidos, separados por coma"
+    },
+    "residente_nombres": {
+      "type": "string",
+      "description": "Nombres de los residentes atendidos"
+    },
+    "tipo_intervencion": {
+      "type": "string",
+      "enum": [
+        "control_rutina",
+        "urgencia",
+        "seguimiento",
+        "evaluacion_inicial",
+        "alta_medica",
+        "otro"
+      ],
+      "description": "Tipo de intervenci\u00f3n realizada"
+    },
+    "descripcion_intervencion": {
+      "type": "string",
+      "description": "Descripci\u00f3n detallada de la intervenci\u00f3n m\u00e9dica"
+    },
+    "cambios_medicacion": {
+      "type": "string",
+      "description": "Cambios en medicaci\u00f3n (si los hay)"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones generales"
+    },
+    "firma_medico": {
+      "type": "string",
+      "description": "Firma o nombre completo del m\u00e9dico (confirmaci\u00f3n)"
+    },
+    "notificado_director": {
+      "type": "boolean",
+      "default": false,
+      "description": "Si se notific\u00f3 al Director"
+    }
+  },
+  "required": [
+    "fecha_visita",
+    "medico_nombre",
+    "descripcion_intervencion"
+  ]
+}

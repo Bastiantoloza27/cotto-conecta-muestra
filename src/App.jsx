@@ -23,6 +23,7 @@ import SenadisReport from '@/pages/SenadisReport';
 import Admissions from '@/pages/Admissions';
 import CalendarPage from '@/pages/CalendarPage';
 import Staff from '@/pages/Staff';
+import InformesMedico from '@/pages/InformesMedico';
 import AvisosDirector from '@/pages/AvisosDirector';
 import MisAvisos from '@/pages/MisAvisos';
 import ConfiguracionSlackPage from '@/pages/ConfiguracionSlackPage';
@@ -61,6 +62,7 @@ const AuthenticatedApp = () => {
         <Route path="/planes" element={<SupportPlans />} />
         <Route path="/medicacion" element={<Medications />} />
         <Route path="/incidentes" element={<Incidents />} />
+        <Route path="/informes-medico" element={<InformesMedico />} />
         <Route path="/actividades" element={<Activities />} />
         <Route path="/turnos" element={<Shifts />} />
         <Route path="/pastoral" element={<Pastoral />} />

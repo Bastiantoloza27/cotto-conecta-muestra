@@ -4,8 +4,8 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Link } from "react-router-dom";
 import {
-  Users, AlertTriangle, Calendar, Pill, BookOpen,
-  Heart, ArrowRight, Clock, Activity, ClipboardPlus
+  Users, Calendar, Pill, BookOpen,
+  Heart, ArrowRight, Clock, Activity, ClipboardPlus, Stethoscope, FileText
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,11 +21,6 @@ export default function Dashboard() {
     queryFn: () => base44.entities.Resident.filter({ status: "activo" }),
   });
 
-  const { data: incidents = [] } = useQuery({
-    queryKey: ["incidents-today"],
-    queryFn: () => base44.entities.Incident.filter({ date: today }),
-  });
-
   const { data: activities = [] } = useQuery({
     queryKey: ["activities-today"],
     queryFn: () => base44.entities.Activity.filter({ date: today }),
@@ -36,9 +31,9 @@ export default function Dashboard() {
     queryFn: () => base44.entities.DailyLog.list("-created_date", 8),
   });
 
-  const { data: openIncidents = [] } = useQuery({
-    queryKey: ["open-incidents"],
-    queryFn: () => base44.entities.Incident.filter({ status: "abierto" }),
+  const { data: informesMedicos = [] } = useQuery({
+    queryKey: ["informes-medico-dashboard"],
+    queryFn: () => base44.entities.InformeMedico.list("-fecha_visita", 5),
   });
 
   const { data: allMedications = [] } = useQuery({
@@ -53,6 +48,7 @@ export default function Dashboard() {
 
   const criticalMeds = allMedications.filter(m => m.stock_remaining > 0 && m.stock_remaining < 5);
   const lowMeds = allMedications.filter(m => m.stock_remaining >= 5 && m.stock_remaining < 10);
+  const ultimoInforme = informesMedicos[0] || null;
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -100,7 +96,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
         <StatCard label="Residentes activos" value={residents.length} icon={Users} />
         <StatCard label="Actividades hoy" value={activities.length} icon={Calendar} />
-        <StatCard label="Alertas abiertas" value={openIncidents.length} icon={Activity} />
+        <StatCard label="Informes médicos" value={informesMedicos.length} icon={Stethoscope} />
         <StatCard label="En lista de espera" value={waitingAdmissions.length} icon={ClipboardPlus} />
       </div>
 
@@ -152,35 +148,42 @@ export default function Dashboard() {
 
         {/* Right sidebar */}
         <div className="space-y-6">
-          {/* Incidents */}
+          {/* Last medical report */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-base font-semibold flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-destructive" />
-                Incidentes abiertos
+                <Stethoscope className="w-4 h-4 text-primary" />
+                Último informe médico
               </h2>
-              <Link to="/incidentes">
-                <Button variant="ghost" size="sm" className="text-xs">Ver</Button>
+              <Link to="/informes-medico">
+                <Button variant="ghost" size="sm" className="text-xs">Ver todos</Button>
               </Link>
             </div>
-            {openIncidents.length === 0 ? (
+            {!ultimoInforme ? (
               <Card className="p-4 text-center">
-                <p className="text-xs text-muted-foreground">Sin incidentes abiertos ✓</p>
+                <p className="text-xs text-muted-foreground">Sin informes registrados</p>
               </Card>
             ) : (
-              <div className="space-y-2">
-                {openIncidents.slice(0, 4).map((inc) => (
-                  <Card key={inc.id} className="p-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-destructive shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{inc.resident_name || "—"}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{inc.type} · {inc.severity}</p>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
+              <Card className="p-3 border-primary/20 bg-primary/5">
+                <div className="flex items-start gap-2">
+                  <FileText className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold">
+                      {format(new Date(ultimoInforme.fecha_visita + "T12:00:00"), "dd 'de' MMMM yyyy", { locale: es })}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">👨‍⚕️ {ultimoInforme.medico_nombre}</p>
+                    {ultimoInforme.residente_nombres && (
+                      <p className="text-xs text-muted-foreground truncate">👤 {ultimoInforme.residente_nombres}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{ultimoInforme.descripcion_intervencion}</p>
+                    <Link to="/informes-medico">
+                      <Button variant="link" size="sm" className="h-auto p-0 text-xs mt-1 gap-1">
+                        Ver informe <ArrowRight className="w-3 h-3" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </Card>
             )}
           </div>
 
@@ -264,9 +267,9 @@ export default function Dashboard() {
                   📝 Nuevo registro
                 </Button>
               </Link>
-              <Link to="/incidentes?nuevo=1">
+              <Link to="/informes-medico">
                 <Button variant="outline" size="sm" className="w-full text-xs h-9">
-                  ⚠️ Incidente
+                  🩺 Informe Médico
                 </Button>
               </Link>
               <Link to="/medicacion">

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, Users, BookOpen, AlertTriangle, Calendar, Pill,
+  LayoutDashboard, Users, BookOpen, Calendar, Pill,
   Heart, Church, BarChart3, Package, ClipboardList, Clock, X,
-  ChevronDown, ChevronRight, ClipboardPlus, Activity, UserCog, Megaphone, Settings
+  ChevronDown, ChevronRight, ClipboardPlus, Activity, UserCog, Megaphone, Settings, Stethoscope
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { base44 } from "@/api/base44Client";
@@ -34,7 +34,7 @@ const NAV_GROUPS_USER = [
     label: "Salud",
     items: [
       { label: "Medicación", icon: Pill, path: "/medicacion" },
-      { label: "Incidentes", icon: AlertTriangle, path: "/incidentes" },
+      { label: "Informes del Médico", icon: Stethoscope, path: "/informes-medico" },
     ]
   },
   {
@@ -82,7 +82,7 @@ const NAV_GROUPS_ADMIN = [
     label: "Salud",
     items: [
       { label: "Medicación", icon: Pill, path: "/medicacion" },
-      { label: "Incidentes", icon: AlertTriangle, path: "/incidentes" },
+      { label: "Informes del Médico", icon: Stethoscope, path: "/informes-medico" },
     ]
   },
   {
