@@ -112,22 +112,48 @@ export default function AvisosDirector() {
 
   const sendSlack = async (avisoData, webhooks) => {
     const emoji = avisoData.prioridad === "urgente" ? "🚨" : avisoData.prioridad === "importante" ? "⚠️" : "📢";
-    const prioridadLabel = { informativo: "Informativo", importante: "Importante", urgente: "Urgente" };
-    const text = [
-      `${emoji} *Nuevo aviso del Director*`,
-      `*Título:* ${avisoData.titulo}`,
-      `*Prioridad:* ${prioridadLabel[avisoData.prioridad] || avisoData.prioridad}`,
-      `*Áreas:* ${avisoData.areas_destino}`,
-      ``,
-      avisoData.mensaje,
-    ].join("\n");
+    const prioridadLabel = { informativo: "Informativo", importante: "Importante ⚠️", urgente: "URGENTE 🚨" };
+    const colorBar = avisoData.prioridad === "urgente" ? "#E53E3E" : avisoData.prioridad === "importante" ? "#DD6B20" : "#38A169";
+    const areasText = avisoData.areas_destino === "todos" ? "Todo el equipo" : avisoData.areas_destino;
+
+    const payload = {
+      text: `${emoji} Nuevo aviso del Director: ${avisoData.titulo}`,
+      attachments: [
+        {
+          color: colorBar,
+          blocks: [
+            {
+              type: "header",
+              text: { type: "plain_text", text: `${emoji} ${avisoData.titulo}`, emoji: true },
+            },
+            {
+              type: "section",
+              fields: [
+                { type: "mrkdwn", text: `*Prioridad:*\n${prioridadLabel[avisoData.prioridad] || avisoData.prioridad}` },
+                { type: "mrkdwn", text: `*Destinatarios:*\n${areasText}` },
+              ],
+            },
+            {
+              type: "section",
+              text: { type: "mrkdwn", text: `*Mensaje:*\n${avisoData.mensaje}` },
+            },
+            {
+              type: "context",
+              elements: [
+                { type: "mrkdwn", text: `Publicado por *${avisoData.autor || "Director"}* · Providentia` },
+              ],
+            },
+          ],
+        },
+      ],
+    };
 
     await Promise.allSettled(
       webhooks.map(w =>
         fetch(w.webhook_url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify(payload),
         })
       )
     );
