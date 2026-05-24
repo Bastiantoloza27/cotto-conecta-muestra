@@ -7,8 +7,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { base44 } from "@/api/base44Client";
+import { useRole } from "@/hooks/useRole";
 
-const navGroups = [
+const NAV_GROUPS_USER = [
   {
     label: null,
     items: [
@@ -51,8 +52,61 @@ const navGroups = [
       { label: "Turnos", icon: Clock, path: "/turnos" },
       { label: "Inventario", icon: Package, path: "/inventario" },
       { label: "Evidencia SENADIS", icon: BarChart3, path: "/senadis" },
-      { label: "Avisos del Director", icon: Megaphone, path: "/avisos" },
       { label: "Mis Avisos", icon: Megaphone, path: "/mis-avisos", badgeKey: "avisos" },
+    ]
+  }
+];
+
+const NAV_GROUPS_ADMIN = [
+  {
+    label: null,
+    items: [
+      { label: "Inicio", icon: LayoutDashboard, path: "/" },
+    ]
+  },
+  {
+    label: "Personas",
+    items: [
+      { label: "Residentes", icon: Users, path: "/residentes" },
+      { label: "Admisiones", icon: ClipboardPlus, path: "/admisiones" },
+      { label: "Plan de Apoyos", icon: ClipboardList, path: "/planes" },
+    ]
+  },
+  {
+    label: "Cuidadoras",
+    items: [
+      { label: "Bitácora", icon: BookOpen, path: "/bitacora" },
+    ]
+  },
+  {
+    label: "Salud",
+    items: [
+      { label: "Medicación", icon: Pill, path: "/medicacion" },
+      { label: "Incidentes", icon: AlertTriangle, path: "/incidentes" },
+    ]
+  },
+  {
+    label: "Comunidad",
+    items: [
+      { label: "Actividades", icon: Calendar, path: "/actividades" },
+      { label: "Pastoral", icon: Church, path: "/pastoral" },
+    ]
+  },
+  {
+    label: "Gestión",
+    items: [
+      { label: "Personal", icon: UserCog, path: "/personal" },
+      { label: "Calendario", icon: Calendar, path: "/calendario" },
+      { label: "Turnos", icon: Clock, path: "/turnos" },
+      { label: "Inventario", icon: Package, path: "/inventario" },
+      { label: "Evidencia SENADIS", icon: BarChart3, path: "/senadis" },
+      { label: "Mis Avisos", icon: Megaphone, path: "/mis-avisos", badgeKey: "avisos" },
+    ]
+  },
+  {
+    label: "Dirección",
+    items: [
+      { label: "Avisos del Director", icon: Megaphone, path: "/avisos" },
       { label: "Config. Slack", icon: Settings, path: "/slack-config" },
     ]
   }
@@ -121,6 +175,8 @@ function NavItem({ item, isActive, onClose, badges }) {
 
 export default function Sidebar({ open, onClose }) {
   const location = useLocation();
+  const { isAdmin } = useRole();
+  const navGroups = isAdmin ? NAV_GROUPS_ADMIN : NAV_GROUPS_USER;
   const [badges, setBadges] = useState({ avisos: 0 });
 
   useEffect(() => {

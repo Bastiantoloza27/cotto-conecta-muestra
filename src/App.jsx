@@ -26,6 +26,7 @@ import Staff from '@/pages/Staff';
 import AvisosDirector from '@/pages/AvisosDirector';
 import MisAvisos from '@/pages/MisAvisos';
 import ConfiguracionSlackPage from '@/pages/ConfiguracionSlackPage';
+import AdminRoute from '@/components/AdminRoute';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -68,9 +69,9 @@ const AuthenticatedApp = () => {
         <Route path="/admisiones" element={<Admissions />} />
         <Route path="/calendario" element={<CalendarPage />} />
         <Route path="/personal" element={<Staff />} />
-        <Route path="/avisos" element={<AvisosDirector />} />
+        <Route path="/avisos" element={<AdminRoute><AvisosDirector /></AdminRoute>} />
         <Route path="/mis-avisos" element={<MisAvisos />} />
-        <Route path="/slack-config" element={<ConfiguracionSlackPage />} />
+        <Route path="/slack-config" element={<AdminRoute><ConfiguracionSlackPage /></AdminRoute>} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

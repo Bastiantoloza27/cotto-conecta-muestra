@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameMonth, isSameDay, addMonths, subMonths, parseISO } from "date-fns";
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useRole } from "@/hooks/useRole";
 
 const CATEGORY_COLORS = {
   administrativo: "bg-violet-100 text-violet-800 border-violet-200",
@@ -58,6 +59,7 @@ const EMPTY_FORM = {
 };
 
 export default function CalendarPage() {
+  const { isAdmin } = useRole();
   const [calendarType, setCalendarType] = useState("general");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
@@ -150,17 +152,19 @@ export default function CalendarPage() {
         </Button>
       </div>
 
-      {/* Calendar type tabs */}
-      <Tabs value={calendarType} onValueChange={setCalendarType} className="mb-6">
-        <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="general" className="gap-2 flex-1 sm:flex-none">
-            <Users className="w-4 h-4" /> Calendario General
-          </TabsTrigger>
-          <TabsTrigger value="direccion" className="gap-2 flex-1 sm:flex-none">
-            <Building2 className="w-4 h-4" /> Dirección
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {/* Calendar type tabs — tab Dirección solo para admin */}
+      {isAdmin && (
+        <Tabs value={calendarType} onValueChange={setCalendarType} className="mb-6">
+          <TabsList className="w-full sm:w-auto">
+            <TabsTrigger value="general" className="gap-2 flex-1 sm:flex-none">
+              <Users className="w-4 h-4" /> Calendario General
+            </TabsTrigger>
+            <TabsTrigger value="direccion" className="gap-2 flex-1 sm:flex-none">
+              <Building2 className="w-4 h-4" /> Dirección
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Calendar grid */}
