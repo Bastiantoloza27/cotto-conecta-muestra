@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Send, Archive, Eye, Megaphone } from "lucide-react";
+import { Plus, Send, Archive, Eye, Megaphone, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -39,6 +39,7 @@ const AREAS = ["salud", "cuidado", "administracion", "pastoral", "servicios_gene
 
 export default function AvisosDirector() {
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null); // null = nuevo, string = editando
   const [form, setForm] = useState(EMPTY_FORM);
   const [filtroEstado, setFiltroEstado] = useState("todos");
   const [sending, setSending] = useState(false);
@@ -76,6 +77,11 @@ export default function AvisosDirector() {
 
   const createAvisoMutation = useMutation({
     mutationFn: (data) => base44.entities.AvisoDirector.create(data),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.AvisoDirector.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["avisos-director"] }),
   });
 
   const updateAvisoMutation = useMutation({
@@ -174,15 +180,36 @@ export default function AvisosDirector() {
     );
   };
 
-  const handleGuardarBorrador = async () => {
-    await createAvisoMutation.mutateAsync({
-      ...form,
-      autor: user?.full_name || user?.email || "Director",
-      estado: "borrador",
+  const openEdit = (aviso) => {
+    setEditingId(aviso.id);
+    setForm({
+      titulo: aviso.titulo,
+      mensaje: aviso.mensaje,
+      prioridad: aviso.prioridad,
+      areas_destino: aviso.areas_destino,
+      requiere_confirmacion: aviso.requiere_confirmacion || false,
     });
-    queryClient.invalidateQueries({ queryKey: ["avisos-director"] });
+    setShowForm(true);
+  };
+
+  const closeForm = () => {
     setShowForm(false);
+    setEditingId(null);
     setForm(EMPTY_FORM);
+  };
+
+  const handleGuardarBorrador = async () => {
+    if (editingId) {
+      await updateAvisoMutation.mutateAsync({ id: editingId, data: { ...form } });
+    } else {
+      await createAvisoMutation.mutateAsync({
+        ...form,
+        autor: user?.full_name || user?.email || "Director",
+        estado: "borrador",
+      });
+      queryClient.invalidateQueries({ queryKey: ["avisos-director"] });
+    }
+    closeForm();
   };
 
   const handleEnviar = async () => {
@@ -258,7 +285,7 @@ export default function AvisosDirector() {
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">Comunica novedades al equipo</p>
         </div>
-        <Button onClick={() => setShowForm(true)}>
+        <Button onClick={() => { setEditingId(null); setForm(EMPTY_FORM); setShowForm(true); }}>
           <Plus className="w-4 h-4 mr-1" /> Nuevo aviso
         </Button>
       </div>
@@ -337,17 +364,27 @@ export default function AvisosDirector() {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
                   {aviso.estado === "borrador" && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs h-7"
-                      disabled={sending}
-                      onClick={() => handlePublicar(aviso)}
-                    >
-                      <Send className="w-3 h-3 mr-1" /> Publicar
-                    </Button>
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7"
+                        onClick={() => openEdit(aviso)}
+                      >
+                        <Pencil className="w-3 h-3 mr-1" /> Editar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7"
+                        disabled={sending}
+                        onClick={() => handlePublicar(aviso)}
+                      >
+                        <Send className="w-3 h-3 mr-1" /> Publicar
+                      </Button>
+                    </>
                   )}
                   {aviso.estado === "enviado" && (
                     <Button
@@ -359,6 +396,14 @@ export default function AvisosDirector() {
                       <Archive className="w-3 h-3 mr-1" /> Archivar
                     </Button>
                   )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => { if (confirm("¿Eliminar este aviso?")) deleteMutation.mutate(aviso.id); }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
                 </div>
               </div>
             </Card>
@@ -366,11 +411,11 @@ export default function AvisosDirector() {
         </div>
       )}
 
-      {/* Formulario nuevo aviso */}
-      <Dialog open={showForm} onOpenChange={v => { if (!v) { setShowForm(false); setForm(EMPTY_FORM); } }}>
+      {/* Formulario nuevo / editar aviso */}
+      <Dialog open={showForm} onOpenChange={v => { if (!v) closeForm(); }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Nuevo aviso</DialogTitle>
+            <DialogTitle>{editingId ? "Editar aviso" : "Nuevo aviso"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
             <div>
@@ -425,21 +470,26 @@ export default function AvisosDirector() {
               <Label className="text-sm">Requiere confirmación de lectura</Label>
             </div>
             <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" size="sm" onClick={closeForm}>
+                Cancelar
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleGuardarBorrador}
-                disabled={!form.titulo || !form.mensaje || createAvisoMutation.isPending}
+                disabled={!form.titulo || !form.mensaje || createAvisoMutation.isPending || updateAvisoMutation.isPending}
               >
-                Guardar borrador
+                {editingId ? "Guardar cambios" : "Guardar borrador"}
               </Button>
-              <Button
-                size="sm"
-                onClick={handleEnviar}
-                disabled={!form.titulo || !form.mensaje || sending}
-              >
-                {sending ? "Enviando..." : <><Send className="w-3.5 h-3.5 mr-1" /> Enviar ahora</>}
-              </Button>
+              {!editingId && (
+                <Button
+                  size="sm"
+                  onClick={handleEnviar}
+                  disabled={!form.titulo || !form.mensaje || sending}
+                >
+                  {sending ? "Enviando..." : <><Send className="w-3.5 h-3.5 mr-1" /> Enviar ahora</>}
+                </Button>
+              )}
             </div>
           </div>
         </DialogContent>
