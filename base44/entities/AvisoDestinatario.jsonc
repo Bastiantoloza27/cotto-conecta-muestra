@@ -1,0 +1,36 @@
+{
+  "name": "AvisoDestinatario",
+  "type": "object",
+  "properties": {
+    "aviso_id": {
+      "type": "string",
+      "description": "ID del AvisoDirector"
+    },
+    "aviso_titulo": {
+      "type": "string"
+    },
+    "usuario_email": {
+      "type": "string",
+      "description": "Email del destinatario"
+    },
+    "area": {
+      "type": "string",
+      "description": "\u00c1rea del destinatario al momento del env\u00edo"
+    },
+    "leido_en": {
+      "type": "string",
+      "description": "Fecha/hora en que se marc\u00f3 como le\u00eddo (ISO string)"
+    },
+    "confirmado_en": {
+      "type": "string",
+      "description": "Fecha/hora en que se confirm\u00f3 la lectura (ISO string)"
+    },
+    "comentario": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "aviso_id",
+    "usuario_email"
+  ]
+}

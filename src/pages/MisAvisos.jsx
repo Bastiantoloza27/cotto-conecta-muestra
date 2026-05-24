@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Megaphone, CheckCircle2 } from "lucide-react";
@@ -25,7 +25,7 @@ const prioridadLabel = {
 };
 
 export default function MisAvisos() {
-  const [confirmDialog, setConfirmDialog] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null); // { destinatario, aviso }
   const [comentario, setComentario] = useState("");
   const queryClient = useQueryClient();
 
@@ -34,56 +34,60 @@ export default function MisAvisos() {
     queryFn: () => base44.auth.me(),
   });
 
-  const { data: staffMembers = [] } = useQuery({
-    queryKey: ["staff-members"],
-    queryFn: () => base44.entities.StaffMember.list(),
+  // Mis entradas en AvisoDestinatario
+  const { data: misDestinatarios = [] } = useQuery({
+    queryKey: ["mis-destinatarios", user?.email],
+    queryFn: () => user?.email
+      ? base44.entities.AvisoDestinatario.filter({ usuario_email: user.email }, "-created_date", 100)
+      : Promise.resolve([]),
+    enabled: !!user?.email,
+    refetchInterval: 30000, // polling cada 30s
   });
 
-  const miStaff = staffMembers.find(s => s.email === user?.email);
-  const miArea = miStaff?.area;
-
+  // Cargar los avisos correspondientes
   const { data: avisos = [] } = useQuery({
     queryKey: ["avisos-enviados"],
     queryFn: () => base44.entities.AvisoDirector.filter({ estado: "enviado" }, "-created_date", 100),
+    refetchInterval: 30000,
   });
 
-  const { data: misConfirmaciones = [] } = useQuery({
-    queryKey: ["mis-confirmaciones", user?.email],
-    queryFn: () => user?.email
-      ? base44.entities.ConfirmacionLectura.filter({ usuario_email: user.email })
-      : Promise.resolve([]),
-    enabled: !!user?.email,
-  });
-
-  const confirmMutation = useMutation({
-    mutationFn: (data) => base44.entities.ConfirmacionLectura.create(data),
+  const updateDestinatarioMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.AvisoDestinatario.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["mis-confirmaciones"] });
+      queryClient.invalidateQueries({ queryKey: ["mis-destinatarios"] });
       setConfirmDialog(null);
       setComentario("");
     },
   });
 
-  const misAvisosIds = new Set(misConfirmaciones.map(c => c.aviso_id));
+  // Map avisos by id for quick lookup
+  const avisosMap = Object.fromEntries(avisos.map(a => [a.id, a]));
 
-  const avisosVisibles = avisos.filter(a => {
-    const areas = (a.areas_destino || "").split(",").map(s => s.trim().toLowerCase());
-    return areas.includes("todos") || (miArea && areas.includes(miArea.toLowerCase()));
-  });
+  // Filtrar solo destinatarios que tienen aviso válido
+  const misAvisos = misDestinatarios
+    .filter(d => avisosMap[d.aviso_id])
+    .map(d => ({ destinatario: d, aviso: avisosMap[d.aviso_id] }));
 
-  const avisosNoLeidos = avisosVisibles.filter(a =>
-    a.requiere_confirmacion && !misAvisosIds.has(a.id)
-  ).length;
+  const noLeidos = misAvisos.filter(({ destinatario }) => !destinatario.leido_en).length;
+
+  // Marcar como leído al montar (los no leídos)
+  useEffect(() => {
+    if (!user?.email) return;
+    misDestinatarios.forEach(d => {
+      if (!d.leido_en) {
+        base44.entities.AvisoDestinatario.update(d.id, { leido_en: new Date().toISOString() });
+      }
+    });
+  }, [misDestinatarios.length, user?.email]);
 
   const handleConfirmar = () => {
-    if (!confirmDialog || !user) return;
-    confirmMutation.mutate({
-      aviso_id: confirmDialog.id,
-      aviso_titulo: confirmDialog.titulo,
-      funcionario_id: miStaff?.id || user.email,
-      funcionario_nombre: miStaff?.full_name || user.full_name || user.email,
-      usuario_email: user.email,
-      comentario,
+    if (!confirmDialog) return;
+    updateDestinatarioMutation.mutate({
+      id: confirmDialog.destinatario.id,
+      data: {
+        confirmado_en: new Date().toISOString(),
+        comentario,
+      },
     });
   };
 
@@ -93,9 +97,9 @@ export default function MisAvisos() {
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Megaphone className="w-6 h-6 text-primary" /> Mis Avisos
-            {avisosNoLeidos > 0 && (
+            {noLeidos > 0 && (
               <span className="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5 ml-1">
-                {avisosNoLeidos}
+                {noLeidos}
               </span>
             )}
           </h1>
@@ -103,19 +107,22 @@ export default function MisAvisos() {
         </div>
       </div>
 
-      {avisosVisibles.length === 0 ? (
+      {misAvisos.length === 0 ? (
         <EmptyState
           icon={Megaphone}
           title="Sin avisos"
-          description="No hay avisos para tu área en este momento"
+          description="No hay avisos para ti en este momento"
         />
       ) : (
         <div className="space-y-3">
-          {avisosVisibles.map((aviso) => {
-            const yaConfirmo = misAvisosIds.has(aviso.id);
-            const noLeido = aviso.requiere_confirmacion && !yaConfirmo;
+          {misAvisos.map(({ destinatario, aviso }) => {
+            const yaConfirmo = !!destinatario.confirmado_en;
+            const noLeido = !destinatario.leido_en;
             return (
-              <Card key={aviso.id} className={`p-4 transition-shadow ${noLeido ? "border-l-4 border-l-red-400" : ""}`}>
+              <Card
+                key={destinatario.id}
+                className={`p-4 transition-shadow ${noLeido ? "border-l-4 border-l-red-400" : ""}`}
+              >
                 <div className="flex items-start gap-3">
                   {noLeido && <div className="w-2 h-2 rounded-full bg-red-500 mt-1.5 shrink-0" />}
                   <div className="flex-1 min-w-0">
@@ -125,7 +132,7 @@ export default function MisAvisos() {
                         {prioridadLabel[aviso.prioridad]}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-2">{aviso.mensaje}</p>
+                    <p className="text-sm text-muted-foreground mb-2 whitespace-pre-wrap">{aviso.mensaje}</p>
                     <div className="flex items-center gap-3 text-[11px] text-muted-foreground mb-3">
                       <span>Por {aviso.autor || "Director"}</span>
                       {aviso.created_date && (
@@ -136,13 +143,18 @@ export default function MisAvisos() {
                       yaConfirmo ? (
                         <div className="flex items-center gap-1.5 text-xs text-green-700 font-medium">
                           <CheckCircle2 className="w-4 h-4" /> Lectura confirmada
+                          {destinatario.confirmado_en && (
+                            <span className="text-muted-foreground font-normal">
+                              · {format(new Date(destinatario.confirmado_en), "d MMM HH:mm", { locale: es })}
+                            </span>
+                          )}
                         </div>
                       ) : (
                         <Button
                           size="sm"
                           variant="outline"
                           className="text-xs h-7 border-primary/40 text-primary hover:bg-primary/10"
-                          onClick={() => setConfirmDialog(aviso)}
+                          onClick={() => setConfirmDialog({ destinatario, aviso })}
                         >
                           <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Confirmar lectura
                         </Button>
@@ -161,7 +173,7 @@ export default function MisAvisos() {
           <DialogHeader>
             <DialogTitle>Confirmar lectura</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground mb-3">{confirmDialog?.titulo}</p>
+          <p className="text-sm text-muted-foreground mb-3">{confirmDialog?.aviso?.titulo}</p>
           <div className="space-y-3">
             <div>
               <Label className="text-xs">Comentario (opcional)</Label>
@@ -176,8 +188,8 @@ export default function MisAvisos() {
               <Button variant="outline" size="sm" onClick={() => { setConfirmDialog(null); setComentario(""); }}>
                 Cancelar
               </Button>
-              <Button size="sm" onClick={handleConfirmar} disabled={confirmMutation.isPending}>
-                {confirmMutation.isPending ? "Guardando..." : "Confirmar"}
+              <Button size="sm" onClick={handleConfirmar} disabled={updateDestinatarioMutation.isPending}>
+                {updateDestinatarioMutation.isPending ? "Guardando..." : "Confirmar"}
               </Button>
             </div>
           </div>

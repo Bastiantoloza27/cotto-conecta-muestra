@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, BookOpen, AlertTriangle, Calendar, Pill,
@@ -6,6 +6,7 @@ import {
   ChevronDown, ChevronRight, ClipboardPlus, Activity, UserCog, Megaphone, Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { base44 } from "@/api/base44Client";
 
 const navGroups = [
   {
@@ -51,13 +52,13 @@ const navGroups = [
       { label: "Inventario", icon: Package, path: "/inventario" },
       { label: "Evidencia SENADIS", icon: BarChart3, path: "/senadis" },
       { label: "Avisos del Director", icon: Megaphone, path: "/avisos" },
-      { label: "Mis Avisos", icon: Megaphone, path: "/mis-avisos" },
+      { label: "Mis Avisos", icon: Megaphone, path: "/mis-avisos", badgeKey: "avisos" },
       { label: "Config. Slack", icon: Settings, path: "/slack-config" },
     ]
   }
 ];
 
-function NavGroup({ group, currentPath, onClose }) {
+function NavGroup({ group, currentPath, onClose, badges }) {
   const hasActive = group.items.some(i => currentPath === i.path);
   const [open, setOpen] = useState(hasActive || group.label === null);
 
@@ -65,7 +66,7 @@ function NavGroup({ group, currentPath, onClose }) {
     return (
       <div className="space-y-0.5 mb-1">
         {group.items.map((item) => (
-          <NavItem key={item.path} item={item} isActive={currentPath === item.path} onClose={onClose} />
+          <NavItem key={item.path} item={item} isActive={currentPath === item.path} onClose={onClose} badges={badges} />
         ))}
       </div>
     );
@@ -86,7 +87,7 @@ function NavGroup({ group, currentPath, onClose }) {
       {open && (
         <div className="space-y-0.5">
           {group.items.map((item) => (
-            <NavItem key={item.path} item={item} isActive={currentPath === item.path} onClose={onClose} />
+            <NavItem key={item.path} item={item} isActive={currentPath === item.path} onClose={onClose} badges={badges} />
           ))}
         </div>
       )}
@@ -94,7 +95,8 @@ function NavGroup({ group, currentPath, onClose }) {
   );
 }
 
-function NavItem({ item, isActive, onClose }) {
+function NavItem({ item, isActive, onClose, badges }) {
+  const badgeCount = item.badgeKey ? badges[item.badgeKey] : 0;
   return (
     <Link
       to={item.path}
@@ -107,13 +109,35 @@ function NavItem({ item, isActive, onClose }) {
       )}
     >
       <item.icon className={cn("w-4 h-4 flex-shrink-0", isActive && "text-primary")} />
-      {item.label}
+      <span className="flex-1">{item.label}</span>
+      {badgeCount > 0 && (
+        <span className="bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+          {badgeCount}
+        </span>
+      )}
     </Link>
   );
 }
 
 export default function Sidebar({ open, onClose }) {
   const location = useLocation();
+  const [badges, setBadges] = useState({ avisos: 0 });
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchBadges = async () => {
+      try {
+        const me = await base44.auth.me();
+        if (!me?.email || cancelled) return;
+        const destinatarios = await base44.entities.AvisoDestinatario.filter({ usuario_email: me.email });
+        const noLeidos = destinatarios.filter(d => !d.leido_en).length;
+        if (!cancelled) setBadges({ avisos: noLeidos });
+      } catch { /* silencioso */ }
+    };
+    fetchBadges();
+    const interval = setInterval(fetchBadges, 30000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
 
   return (
     <>
@@ -151,6 +175,7 @@ export default function Sidebar({ open, onClose }) {
               group={group}
               currentPath={location.pathname}
               onClose={onClose}
+              badges={badges}
             />
           ))}
         </nav>

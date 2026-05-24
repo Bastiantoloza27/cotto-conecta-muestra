@@ -33,8 +33,9 @@ const EMPTY_FORM = {
   prioridad: "informativo",
   areas_destino: "todos",
   requiere_confirmacion: false,
-  residente_relacionado_nombre: "",
 };
+
+const AREAS = ["salud", "cuidado", "administracion", "pastoral", "servicios_generales", "otro"];
 
 export default function AvisosDirector() {
   const [showForm, setShowForm] = useState(false);
@@ -53,9 +54,9 @@ export default function AvisosDirector() {
     queryFn: () => base44.entities.AvisoDirector.list("-created_date", 100),
   });
 
-  const { data: confirmaciones = [] } = useQuery({
-    queryKey: ["todas-confirmaciones"],
-    queryFn: () => base44.entities.ConfirmacionLectura.list(),
+  const { data: destinatarios = [] } = useQuery({
+    queryKey: ["todos-destinatarios"],
+    queryFn: () => base44.entities.AvisoDestinatario.list(),
   });
 
   const { data: slackConfigs = [] } = useQuery({
@@ -63,23 +64,59 @@ export default function AvisosDirector() {
     queryFn: () => base44.entities.ConfiguracionSlack.filter({ activo: true }),
   });
 
-  const createMutation = useMutation({
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ["all-users"],
+    queryFn: () => base44.entities.User.list(),
+  });
+
+  const { data: staffMembers = [] } = useQuery({
+    queryKey: ["staff-members"],
+    queryFn: () => base44.entities.StaffMember.list(),
+  });
+
+  const createAvisoMutation = useMutation({
     mutationFn: (data) => base44.entities.AvisoDirector.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["avisos-director"] });
-    },
   });
 
-  const updateMutation = useMutation({
+  const updateAvisoMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.AvisoDirector.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["avisos-director"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["avisos-director"] }),
   });
 
-  const sendSlack = async (aviso, webhooks) => {
-    const emoji = aviso.prioridad === "urgente" ? "🚨" : aviso.prioridad === "importante" ? "⚠️" : "📢";
-    const text = `${emoji} *${aviso.titulo}*\n${aviso.mensaje}\n_Áreas: ${aviso.areas_destino}_`;
+  const createDestinatarioMutation = useMutation({
+    mutationFn: (data) => base44.entities.AvisoDestinatario.create(data),
+  });
+
+  // Filtra los webhooks de Slack relevantes para el área del aviso
+  const getWebhooksParaArea = (area) => {
+    if (area === "todos") return slackConfigs;
+    return slackConfigs.filter(w => !w.area || w.area === area || w.area === "todos");
+  };
+
+  // Resuelve los usuarios destinatarios según el área
+  const resolverDestinatarios = (areasDestino) => {
+    if (areasDestino === "todos") return allUsers;
+    // Buscar por área en StaffMembers y cruzar con usuarios
+    const staffDelArea = staffMembers.filter(s => {
+      const areas = areasDestino.split(",").map(a => a.trim());
+      return areas.includes(s.area);
+    });
+    const emailsStaff = new Set(staffDelArea.map(s => s.email).filter(Boolean));
+    return allUsers.filter(u => emailsStaff.has(u.email));
+  };
+
+  const sendSlack = async (avisoData, webhooks) => {
+    const emoji = avisoData.prioridad === "urgente" ? "🚨" : avisoData.prioridad === "importante" ? "⚠️" : "📢";
+    const prioridadLabel = { informativo: "Informativo", importante: "Importante", urgente: "Urgente" };
+    const text = [
+      `${emoji} *Nuevo aviso del Director*`,
+      `*Título:* ${avisoData.titulo}`,
+      `*Prioridad:* ${prioridadLabel[avisoData.prioridad] || avisoData.prioridad}`,
+      `*Áreas:* ${avisoData.areas_destino}`,
+      ``,
+      avisoData.mensaje,
+    ].join("\n");
+
     await Promise.allSettled(
       webhooks.map(w =>
         fetch(w.webhook_url, {
@@ -91,52 +128,80 @@ export default function AvisosDirector() {
     );
   };
 
+  const crearDestinatarios = async (avisoId, avisoTitulo, areasDestino) => {
+    const usuarios = resolverDestinatarios(areasDestino);
+    await Promise.allSettled(
+      usuarios.map(u => {
+        const staffInfo = staffMembers.find(s => s.email === u.email);
+        return createDestinatarioMutation.mutateAsync({
+          aviso_id: avisoId,
+          aviso_titulo: avisoTitulo,
+          usuario_email: u.email,
+          area: staffInfo?.area || "",
+        });
+      })
+    );
+  };
+
   const handleGuardarBorrador = async () => {
-    await createMutation.mutateAsync({
+    await createAvisoMutation.mutateAsync({
       ...form,
       autor: user?.full_name || user?.email || "Director",
       estado: "borrador",
     });
+    queryClient.invalidateQueries({ queryKey: ["avisos-director"] });
     setShowForm(false);
     setForm(EMPTY_FORM);
   };
 
   const handleEnviar = async () => {
     setSending(true);
-    let slackOk = true;
+    const webhooks = getWebhooksParaArea(form.areas_destino);
+    let slackOk = false;
     try {
-      if (slackConfigs.length > 0) {
-        await sendSlack(form, slackConfigs);
+      if (webhooks.length > 0) {
+        await sendSlack(form, webhooks);
+        slackOk = true;
       }
-    } catch {
-      slackOk = false;
-    }
-    await createMutation.mutateAsync({
+    } catch { slackOk = false; }
+
+    const aviso = await createAvisoMutation.mutateAsync({
       ...form,
       autor: user?.full_name || user?.email || "Director",
       estado: "enviado",
-      slack_enviado: slackOk && slackConfigs.length > 0,
-      slack_error: !slackOk,
+      slack_enviado: slackOk,
+      slack_error: webhooks.length > 0 && !slackOk,
     });
+
+    // Crear registros de destinatarios para "Mis Avisos"
+    await crearDestinatarios(aviso.id, form.titulo, form.areas_destino);
+
+    queryClient.invalidateQueries({ queryKey: ["avisos-director"] });
+    queryClient.invalidateQueries({ queryKey: ["todos-destinatarios"] });
     setSending(false);
     setShowForm(false);
     setForm(EMPTY_FORM);
   };
 
   const handleArchivar = async (aviso) => {
-    await updateMutation.mutateAsync({ id: aviso.id, data: { estado: "archivado" } });
+    await updateAvisoMutation.mutateAsync({ id: aviso.id, data: { estado: "archivado" } });
   };
 
   const handlePublicar = async (aviso) => {
     setSending(true);
-    let slackOk = true;
+    const webhooks = getWebhooksParaArea(aviso.areas_destino);
+    let slackOk = false;
     try {
-      if (slackConfigs.length > 0) await sendSlack(aviso, slackConfigs);
+      if (webhooks.length > 0) { await sendSlack(aviso, webhooks); slackOk = true; }
     } catch { slackOk = false; }
-    await updateMutation.mutateAsync({
+
+    await updateAvisoMutation.mutateAsync({
       id: aviso.id,
-      data: { estado: "enviado", slack_enviado: slackOk && slackConfigs.length > 0, slack_error: !slackOk },
+      data: { estado: "enviado", slack_enviado: slackOk, slack_error: webhooks.length > 0 && !slackOk },
     });
+
+    await crearDestinatarios(aviso.id, aviso.titulo, aviso.areas_destino);
+    queryClient.invalidateQueries({ queryKey: ["todos-destinatarios"] });
     setSending(false);
   };
 
@@ -145,7 +210,13 @@ export default function AvisosDirector() {
     : avisos.filter(a => a.estado === filtroEstado);
 
   const countConfirmaciones = (avisoId) =>
-    confirmaciones.filter(c => c.aviso_id === avisoId).length;
+    destinatarios.filter(d => d.aviso_id === avisoId && d.confirmado_en).length;
+
+  const countLeidos = (avisoId) =>
+    destinatarios.filter(d => d.aviso_id === avisoId && d.leido_en).length;
+
+  const countTotal = (avisoId) =>
+    destinatarios.filter(d => d.aviso_id === avisoId).length;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
@@ -161,17 +232,27 @@ export default function AvisosDirector() {
         </Button>
       </div>
 
-      {/* Filtros */}
+      {/* Tabs de filtro */}
       <div className="flex gap-2 mb-5 flex-wrap">
-        {["todos", "borrador", "enviado", "archivado"].map(f => (
+        {[
+          { key: "todos", label: "Todos" },
+          { key: "borrador", label: "Borrador" },
+          { key: "enviado", label: "Enviado" },
+          { key: "archivado", label: "Archivado" },
+        ].map(f => (
           <Button
-            key={f}
+            key={f.key}
             size="sm"
-            variant={filtroEstado === f ? "default" : "outline"}
-            onClick={() => setFiltroEstado(f)}
-            className="capitalize text-xs"
+            variant={filtroEstado === f.key ? "default" : "outline"}
+            onClick={() => setFiltroEstado(f.key)}
+            className="text-xs"
           >
-            {f === "todos" ? "Todos" : f.charAt(0).toUpperCase() + f.slice(1)}
+            {f.label}
+            {f.key !== "todos" && (
+              <span className="ml-1.5 bg-white/20 rounded-full px-1.5 text-[10px]">
+                {avisos.filter(a => a.estado === f.key).length}
+              </span>
+            )}
           </Button>
         ))}
       </div>
@@ -179,7 +260,7 @@ export default function AvisosDirector() {
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground text-sm">Cargando...</div>
       ) : avisosFiltrados.length === 0 ? (
-        <EmptyState icon={Megaphone} title="Sin avisos" description="Aún no hay avisos creados" />
+        <EmptyState icon={Megaphone} title="Sin avisos" description="Aún no hay avisos en esta categoría" />
       ) : (
         <div className="space-y-3">
           {avisosFiltrados.map(aviso => (
@@ -194,17 +275,34 @@ export default function AvisosDirector() {
                     <Badge variant="outline" className={`text-[10px] ${estadoBadge[aviso.estado]}`}>
                       {aviso.estado}
                     </Badge>
+                    {aviso.slack_enviado && (
+                      <Badge variant="outline" className="text-[10px] bg-purple-50 text-purple-700 border-purple-200">
+                        Slack ✓
+                      </Badge>
+                    )}
+                    {aviso.slack_error && (
+                      <Badge variant="outline" className="text-[10px] bg-red-50 text-red-700 border-red-200">
+                        Slack ✗
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground mb-1 line-clamp-2">{aviso.mensaje}</p>
-                  <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                  <div className="flex items-center gap-3 text-[11px] text-muted-foreground flex-wrap">
                     <span>Áreas: {aviso.areas_destino}</span>
                     {aviso.created_date && (
                       <span>{format(new Date(aviso.created_date), "d MMM yyyy", { locale: es })}</span>
                     )}
-                    {aviso.requiere_confirmacion && (
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-3 h-3" /> {countConfirmaciones(aviso.id)} confirmaciones
-                      </span>
+                    {aviso.estado === "enviado" && (
+                      <>
+                        <span className="flex items-center gap-1">
+                          <Eye className="w-3 h-3" /> {countLeidos(aviso.id)}/{countTotal(aviso.id)} leídos
+                        </span>
+                        {aviso.requiere_confirmacion && (
+                          <span className="flex items-center gap-1 text-green-700">
+                            ✓ {countConfirmaciones(aviso.id)} confirmados
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -265,9 +363,7 @@ export default function AvisosDirector() {
               <div>
                 <Label className="text-xs mb-1 block">Prioridad</Label>
                 <Select value={form.prioridad} onValueChange={v => setForm(f => ({ ...f, prioridad: v }))}>
-                  <SelectTrigger className="text-sm h-9">
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger className="text-sm h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="informativo">Informativo</SelectItem>
                     <SelectItem value="importante">Importante</SelectItem>
@@ -278,16 +374,14 @@ export default function AvisosDirector() {
               <div>
                 <Label className="text-xs mb-1 block">Áreas destino</Label>
                 <Select value={form.areas_destino} onValueChange={v => setForm(f => ({ ...f, areas_destino: v }))}>
-                  <SelectTrigger className="text-sm h-9">
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger className="text-sm h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="salud">Salud</SelectItem>
-                    <SelectItem value="cuidado">Cuidado</SelectItem>
-                    <SelectItem value="administracion">Administración</SelectItem>
-                    <SelectItem value="pastoral">Pastoral</SelectItem>
-                    <SelectItem value="servicios_generales">Servicios Generales</SelectItem>
+                    {AREAS.map(a => (
+                      <SelectItem key={a} value={a}>
+                        {a.charAt(0).toUpperCase() + a.slice(1).replace("_", " ")}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -300,10 +394,19 @@ export default function AvisosDirector() {
               <Label className="text-sm">Requiere confirmación de lectura</Label>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" size="sm" onClick={handleGuardarBorrador} disabled={!form.titulo || !form.mensaje || createMutation.isPending}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleGuardarBorrador}
+                disabled={!form.titulo || !form.mensaje || createAvisoMutation.isPending}
+              >
                 Guardar borrador
               </Button>
-              <Button size="sm" onClick={handleEnviar} disabled={!form.titulo || !form.mensaje || sending}>
+              <Button
+                size="sm"
+                onClick={handleEnviar}
+                disabled={!form.titulo || !form.mensaje || sending}
+              >
                 {sending ? "Enviando..." : <><Send className="w-3.5 h-3.5 mr-1" /> Enviar ahora</>}
               </Button>
             </div>
