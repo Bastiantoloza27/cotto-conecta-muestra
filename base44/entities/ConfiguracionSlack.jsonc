@@ -1,0 +1,34 @@
+{
+  "name": "ConfiguracionSlack",
+  "type": "object",
+  "properties": {
+    "nombre_canal": {
+      "type": "string",
+      "description": "Nombre del canal de Slack"
+    },
+    "webhook_url": {
+      "type": "string",
+      "description": "URL del Incoming Webhook de Slack"
+    },
+    "descripcion": {
+      "type": "string"
+    },
+    "activo": {
+      "type": "boolean",
+      "default": true
+    },
+    "area": {
+      "type": "string",
+      "description": "\u00c1rea destino (vac\u00edo = todos)"
+    },
+    "solo_urgentes": {
+      "type": "boolean",
+      "default": false,
+      "description": "Si est\u00e1 activo, solo recibe avisos urgentes"
+    }
+  },
+  "required": [
+    "nombre_canal",
+    "webhook_url"
+  ]
+}

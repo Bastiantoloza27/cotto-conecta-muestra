@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import EmptyState from "@/components/shared/EmptyState";
 
-const EMPTY_FORM = { nombre_canal: "", webhook_url: "", descripcion: "", activo: true };
+const EMPTY_FORM = { nombre_canal: "", webhook_url: "", descripcion: "", activo: true, solo_urgentes: false };
 
 export default function ConfiguracionSlackPage() {
   const [showForm, setShowForm] = useState(false);
@@ -100,6 +100,11 @@ export default function ConfiguracionSlackPage() {
                     <Badge variant="outline" className={config.activo ? "bg-green-50 text-green-700 border-green-200 text-[10px]" : "bg-gray-100 text-gray-500 text-[10px]"}>
                       {config.activo ? "Activo" : "Inactivo"}
                     </Badge>
+                    {config.solo_urgentes && (
+                      <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-[10px]">
+                        🚨 Solo urgentes
+                      </Badge>
+                    )}
                     {testResult[config.id] === "ok" && (
                       <span className="flex items-center gap-1 text-xs text-green-600"><CheckCircle2 className="w-3 h-3" /> OK</span>
                     )}
@@ -178,6 +183,16 @@ export default function ConfiguracionSlackPage() {
                 onCheckedChange={v => setForm(f => ({ ...f, activo: v }))}
               />
               <Label className="text-sm">Activo</Label>
+            </div>
+            <div className="flex items-center gap-3">
+              <Switch
+                checked={form.solo_urgentes}
+                onCheckedChange={v => setForm(f => ({ ...f, solo_urgentes: v }))}
+              />
+              <div>
+                <Label className="text-sm">Solo avisos urgentes 🚨</Label>
+                <p className="text-[11px] text-muted-foreground">Este canal solo recibirá notificaciones de prioridad urgente</p>
+              </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" size="sm" onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }}>

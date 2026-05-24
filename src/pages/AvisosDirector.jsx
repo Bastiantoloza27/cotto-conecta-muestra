@@ -87,10 +87,15 @@ export default function AvisosDirector() {
     mutationFn: (data) => base44.entities.AvisoDestinatario.create(data),
   });
 
-  // Filtra los webhooks de Slack relevantes para el área del aviso
-  const getWebhooksParaArea = (area) => {
-    if (area === "todos") return slackConfigs;
-    return slackConfigs.filter(w => !w.area || w.area === area || w.area === "todos");
+  // Filtra los webhooks de Slack relevantes para el área y prioridad del aviso
+  const getWebhooksParaArea = (area, prioridad) => {
+    return slackConfigs.filter(w => {
+      // Filtro por área
+      const areaMatch = area === "todos" || !w.area || w.area === area || w.area === "todos";
+      // Si el webhook es solo_urgentes, solo aplica cuando la prioridad sea urgente
+      const urgenciaMatch = !w.solo_urgentes || prioridad === "urgente";
+      return areaMatch && urgenciaMatch;
+    });
   };
 
   // Resuelve los usuarios destinatarios según el área
@@ -156,7 +161,7 @@ export default function AvisosDirector() {
 
   const handleEnviar = async () => {
     setSending(true);
-    const webhooks = getWebhooksParaArea(form.areas_destino);
+    const webhooks = getWebhooksParaArea(form.areas_destino, form.prioridad);
     let slackOk = false;
     try {
       if (webhooks.length > 0) {
@@ -189,7 +194,7 @@ export default function AvisosDirector() {
 
   const handlePublicar = async (aviso) => {
     setSending(true);
-    const webhooks = getWebhooksParaArea(aviso.areas_destino);
+    const webhooks = getWebhooksParaArea(aviso.areas_destino, aviso.prioridad);
     let slackOk = false;
     try {
       if (webhooks.length > 0) { await sendSlack(aviso, webhooks); slackOk = true; }
