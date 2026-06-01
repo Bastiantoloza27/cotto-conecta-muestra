@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Pill, Clock, AlertCircle, AlertTriangle, Send, Settings } from "lucide-react";
+import { Plus, Pill, Clock, AlertCircle, AlertTriangle, Send, Settings, Pencil, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -38,17 +38,19 @@ const WEBHOOK_KEY = "providentia_slack_webhook";
 
 export default function Medications() {
   const [showForm, setShowForm] = useState(false);
+  const [editingMed, setEditingMed] = useState(null);
   const [showWebhookConfig, setShowWebhookConfig] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState(() => localStorage.getItem(WEBHOOK_KEY) || "");
   const [webhookInput, setWebhookInput] = useState(() => localStorage.getItem(WEBHOOK_KEY) || "");
   const [sendingId, setSendingId] = useState(null);
   const [statusFilter, setStatusFilter] = useState("activo");
   const { toast } = useToast();
-  const [form, setForm] = useState({
+  const EMPTY_FORM = {
     resident_id: "", resident_name: "", name: "", dosage: "", frequency: "diario",
     schedule_times: "", route: "oral", prescribing_doctor: "", start_date: "",
     status: "activo", notes: "", stock_remaining: "",
-  });
+  };
+  const [form, setForm] = useState(EMPTY_FORM);
   const queryClient = useQueryClient();
 
   const { data: medications = [] } = useQuery({
@@ -66,8 +68,53 @@ export default function Medications() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["medications"] });
       setShowForm(false);
+      setForm(EMPTY_FORM);
     },
   });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Medication.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["medications"] });
+      setShowForm(false);
+      setEditingMed(null);
+      setForm(EMPTY_FORM);
+      toast({ title: "Medicamento actualizado" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Medication.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["medications"] });
+      toast({ title: "Medicamento eliminado" });
+    },
+  });
+
+  const openEdit = (med) => {
+    setEditingMed(med);
+    setForm({
+      resident_id: med.resident_id || "",
+      resident_name: med.resident_name || "",
+      name: med.name || "",
+      dosage: med.dosage || "",
+      frequency: med.frequency || "diario",
+      schedule_times: med.schedule_times || "",
+      route: med.route || "oral",
+      prescribing_doctor: med.prescribing_doctor || "",
+      start_date: med.start_date || "",
+      status: med.status || "activo",
+      notes: med.notes || "",
+      stock_remaining: med.stock_remaining ?? "",
+    });
+    setShowForm(true);
+  };
+
+  const handleDelete = (med) => {
+    if (confirm(`¿Eliminar "${med.name}" de ${med.resident_name}? Esta acción no se puede deshacer.`)) {
+      deleteMutation.mutate(med.id);
+    }
+  };
 
   const saveWebhook = () => {
     localStorage.setItem(WEBHOOK_KEY, webhookInput);
@@ -132,7 +179,7 @@ export default function Medications() {
             <Settings className="w-3.5 h-3.5" />
             Slack
           </Button>
-          <Button onClick={() => setShowForm(true)} className="gap-2">
+          <Button onClick={() => { setEditingMed(null); setForm(EMPTY_FORM); setShowForm(true); }} className="gap-2">
             <Plus className="w-4 h-4" />
             Agregar medicamento
           </Button>
@@ -225,16 +272,35 @@ export default function Medications() {
                         >
                           {m.status}
                         </Badge>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-2 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
-                          onClick={() => notifySlack(m)}
-                          disabled={sendingId === m.id}
-                        >
-                          <Send className="w-2.5 h-2.5" />
-                          {sendingId === m.id ? "Enviando..." : "Notificar"}
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+                            onClick={() => notifySlack(m)}
+                            disabled={sendingId === m.id}
+                          >
+                            <Send className="w-2.5 h-2.5" />
+                            {sendingId === m.id ? "..." : "Slack"}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-muted-foreground hover:text-foreground"
+                            onClick={() => openEdit(m)}
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-muted-foreground hover:text-destructive"
+                            onClick={() => handleDelete(m)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </Card>
@@ -270,20 +336,28 @@ export default function Medications() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showForm} onOpenChange={setShowForm}>
+      <Dialog open={showForm} onOpenChange={(v) => { setShowForm(v); if (!v) { setEditingMed(null); setForm(EMPTY_FORM); } }}>
         <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>💊 Agregar medicamento</DialogTitle></DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate({ ...form, stock_remaining: Number(form.stock_remaining) || 0 }); }} className="space-y-4 mt-2">
+          <DialogHeader><DialogTitle>{editingMed ? "✏️ Editar medicamento" : "💊 Agregar medicamento"}</DialogTitle></DialogHeader>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const data = { ...form, stock_remaining: Number(form.stock_remaining) || 0 };
+            if (editingMed) {
+              updateMutation.mutate({ id: editingMed.id, data });
+            } else {
+              createMutation.mutate(data);
+            }
+          }} className="space-y-4 mt-2">
             <div>
-              <Label>Persona residente *</Label>
-              <Select value={form.resident_id} onValueChange={handleResident}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                <SelectContent>
-                  {residents.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>{r.preferred_name || r.full_name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <Label>Persona residente *</Label>
+            <Select value={form.resident_id} onValueChange={handleResident} disabled={!!editingMed}>
+              <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+              <SelectContent>
+                {residents.map((r) => (
+                  <SelectItem key={r.id} value={r.id}>{r.preferred_name || r.full_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             </div>
             <div>
               <Label>Medicamento *</Label>
@@ -340,14 +414,27 @@ export default function Medications() {
                 <Input type="number" value={form.stock_remaining} onChange={(e) => set("stock_remaining", e.target.value)} placeholder="0" />
               </div>
             </div>
+            {editingMed && (
+              <div>
+                <Label>Estado</Label>
+                <Select value={form.status} onValueChange={(v) => set("status", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="activo">Activo</SelectItem>
+                    <SelectItem value="suspendido">Suspendido</SelectItem>
+                    <SelectItem value="completado">Completado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <Label>Notas</Label>
               <Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} />
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Guardando..." : "Agregar"}
+              <Button type="button" variant="outline" onClick={() => { setShowForm(false); setEditingMed(null); setForm(EMPTY_FORM); }}>Cancelar</Button>
+              <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                {createMutation.isPending || updateMutation.isPending ? "Guardando..." : editingMed ? "Guardar cambios" : "Agregar"}
               </Button>
             </div>
           </form>
