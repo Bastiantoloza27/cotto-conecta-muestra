@@ -75,6 +75,11 @@ export default function CalendarPage() {
     queryFn: () => base44.entities.CalendarEvent.filter({ calendar_type: calendarType }),
   });
 
+  const { data: staffMembers = [] } = useQuery({
+    queryKey: ["staff-members"],
+    queryFn: () => base44.entities.StaffMember.filter({ status: "activo" }),
+  });
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.CalendarEvent.create(data),
     onSuccess: () => {
@@ -144,7 +149,7 @@ export default function CalendarPage() {
       if (form.description) mensaje += `\n\n${form.description}`;
       if (form.author_name) mensaje += `\n\nRegistrado por: ${form.author_name}`;
 
-      await base44.entities.AvisoDirector.create({
+      const aviso = await base44.entities.AvisoDirector.create({
         titulo: `Nuevo evento: ${form.title}`,
         mensaje,
         prioridad: "informativo",
@@ -153,6 +158,19 @@ export default function CalendarPage() {
         autor: form.author_name || "Sistema",
         estado: "enviado",
       });
+
+      // Crear destinatarios para todos los funcionarios activos con email
+      const staffConEmail = staffMembers.filter(s => s.email);
+      await Promise.allSettled(
+        staffConEmail.map(s =>
+          base44.entities.AvisoDestinatario.create({
+            aviso_id: aviso.id,
+            aviso_titulo: aviso.titulo,
+            usuario_email: s.email,
+            area: s.area || "",
+          })
+        )
+      );
     }
   };
 
