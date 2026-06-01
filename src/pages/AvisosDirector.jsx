@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Send, Archive, Eye, Megaphone, Pencil, Trash2 } from "lucide-react";
+import { Plus, Send, Archive, Eye, Megaphone, Pencil, Trash2, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -165,19 +165,38 @@ export default function AvisosDirector() {
     );
   };
 
-  const crearDestinatarios = async (avisoId, avisoTitulo, areasDestino) => {
+  const enviarEmails = async (avisoData, usuarios) => {
+    const emoji = avisoData.prioridad === "urgente" ? "🚨" : avisoData.prioridad === "importante" ? "⚠️" : "📢";
+    const prioridadLabel = { informativo: "Informativo", importante: "Importante", urgente: "URGENTE" };
+    await Promise.allSettled(
+      usuarios
+        .filter(u => u.email)
+        .map(u =>
+          base44.integrations.Core.SendEmail({
+            from_name: "Pequeño Cottolengo Quintero",
+            to: u.email,
+            subject: `${emoji} ${prioridadLabel[avisoData.prioridad] || ""}: ${avisoData.titulo}`,
+            body: `Hola${u.full_name ? " " + u.full_name.split(" ")[0] : ""},\n\nEl Director ha publicado un nuevo aviso:\n\n📌 ${avisoData.titulo}\n\n${avisoData.mensaje}\n\n---\nPuedes ver y confirmar este aviso en la plataforma Providentia, sección "Mis Avisos".\n\nPequeño Cottolengo Quintero`,
+          })
+        )
+    );
+  };
+
+  const crearDestinatarios = async (avisoId, avisoData, areasDestino) => {
     const usuarios = resolverDestinatarios(areasDestino);
     await Promise.allSettled(
       usuarios.map(u => {
         const staffInfo = staffMembers.find(s => s.email === u.email);
         return createDestinatarioMutation.mutateAsync({
           aviso_id: avisoId,
-          aviso_titulo: avisoTitulo,
+          aviso_titulo: avisoData.titulo,
           usuario_email: u.email,
           area: staffInfo?.area || "",
         });
       })
     );
+    // Enviar emails en paralelo
+    await enviarEmails(avisoData, usuarios);
   };
 
   const openEdit = (aviso) => {
@@ -231,8 +250,8 @@ export default function AvisosDirector() {
       slack_error: webhooks.length > 0 && !slackOk,
     });
 
-    // Crear registros de destinatarios para "Mis Avisos"
-    await crearDestinatarios(aviso.id, form.titulo, form.areas_destino);
+    // Crear registros de destinatarios para "Mis Avisos" + enviar emails
+    await crearDestinatarios(aviso.id, { ...form, autor: user?.full_name || user?.email || "Director" }, form.areas_destino);
 
     queryClient.invalidateQueries({ queryKey: ["avisos-director"] });
     queryClient.invalidateQueries({ queryKey: ["todos-destinatarios"] });
@@ -258,7 +277,7 @@ export default function AvisosDirector() {
       data: { estado: "enviado", slack_enviado: slackOk, slack_error: webhooks.length > 0 && !slackOk },
     });
 
-    await crearDestinatarios(aviso.id, aviso.titulo, aviso.areas_destino);
+    await crearDestinatarios(aviso.id, aviso, aviso.areas_destino);
     queryClient.invalidateQueries({ queryKey: ["todos-destinatarios"] });
     setSending(false);
   };
@@ -285,9 +304,19 @@ export default function AvisosDirector() {
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">Comunica novedades al equipo</p>
         </div>
-        <Button onClick={() => { setEditingId(null); setForm(EMPTY_FORM); setShowForm(true); }}>
-          <Plus className="w-4 h-4 mr-1" /> Nuevo aviso
-        </Button>
+        <div className="flex items-center gap-2">
+          <a
+            href={base44.agents.getWhatsAppConnectURL('avisos_director')}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-green-300 bg-green-50 text-green-700 text-xs font-medium hover:bg-green-100 transition-colors"
+          >
+            <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+          </a>
+          <Button onClick={() => { setEditingId(null); setForm(EMPTY_FORM); setShowForm(true); }}>
+            <Plus className="w-4 h-4 mr-1" /> Nuevo aviso
+          </Button>
+        </div>
       </div>
 
       {/* Tabs de filtro */}
@@ -341,6 +370,11 @@ export default function AvisosDirector() {
                     {aviso.slack_error && (
                       <Badge variant="outline" className="text-[10px] bg-red-50 text-red-700 border-red-200">
                         Slack ✗
+                      </Badge>
+                    )}
+                    {aviso.estado === "enviado" && (
+                      <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+                        Email ✓
                       </Badge>
                     )}
                   </div>
