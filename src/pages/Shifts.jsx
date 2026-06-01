@@ -29,6 +29,7 @@ export default function Shifts() {
   const [form, setForm] = useState({
     staff_name: "", date: format(new Date(), "yyyy-MM-dd"),
     shift_type: "manana", area: "", status: "programado", notes: "",
+    hora_inicio: "", hora_fin: "",
   });
   const queryClient = useQueryClient();
 
@@ -113,7 +114,10 @@ export default function Shifts() {
                   <div key={s.id} className={`text-[11px] p-1.5 rounded border ${shiftColors[s.shift_type] || "bg-muted"} group relative`}>
                     <span className="mr-1">{statusEmojis[s.status] || ""}</span>
                     <span className="font-medium">{s.staff_name}</span>
-                    <span className="block text-[10px] opacity-75 capitalize">{s.shift_type} {s.area && `· ${s.area}`}</span>
+                    <span className="block text-[10px] opacity-75 capitalize">
+                      {s.shift_type}{s.hora_inicio && ` · ${s.hora_inicio}${s.hora_fin ? `–${s.hora_fin}` : ""}`}
+                      {s.area && ` · ${s.area}`}
+                    </span>
                     <div className="absolute top-0.5 right-0.5 hidden group-hover:flex gap-0.5">
                       <button onClick={() => setEditing(s)} className="p-0.5 rounded bg-white/70 hover:bg-white"><Pencil className="w-2.5 h-2.5" /></button>
                       <button onClick={() => { if (confirm("¿Eliminar turno?")) deleteMutation.mutate(s.id); }} className="p-0.5 rounded bg-white/70 hover:bg-white text-destructive"><Trash2 className="w-2.5 h-2.5" /></button>
@@ -174,6 +178,10 @@ export default function Shifts() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Hora inicio</Label><Input type="time" value={editing.hora_inicio || ""} onChange={(e) => setEditing(p => ({ ...p, hora_inicio: e.target.value }))} /></div>
+                <div><Label>Hora fin</Label><Input type="time" value={editing.hora_fin || ""} onChange={(e) => setEditing(p => ({ ...p, hora_fin: e.target.value }))} /></div>
+              </div>
               <div><Label>Área</Label><Input value={editing.area || ""} onChange={(e) => setEditing(p => ({ ...p, area: e.target.value }))} /></div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
@@ -221,6 +229,16 @@ export default function Shifts() {
                     <SelectItem value="largo">Largo</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Hora inicio</Label>
+                <Input type="time" value={form.hora_inicio} onChange={(e) => set("hora_inicio", e.target.value)} />
+              </div>
+              <div>
+                <Label>Hora fin</Label>
+                <Input type="time" value={form.hora_fin} onChange={(e) => set("hora_fin", e.target.value)} />
               </div>
             </div>
             <div>

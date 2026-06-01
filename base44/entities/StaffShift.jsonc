@@ -21,6 +21,14 @@
         "largo"
       ]
     },
+    "hora_inicio": {
+      "type": "string",
+      "description": "Hora de inicio del turno (ej: 08:00)"
+    },
+    "hora_fin": {
+      "type": "string",
+      "description": "Hora de t\u00e9rmino del turno (ej: 16:00)"
+    },
     "area": {
       "type": "string"
     },
