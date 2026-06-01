@@ -30,7 +30,6 @@ import AvisosDirector from '@/pages/AvisosDirector';
 import MisAvisos from '@/pages/MisAvisos';
 import ConfiguracionSlackPage from '@/pages/ConfiguracionSlackPage';
 import AdminRoute from '@/components/AdminRoute';
-import CuidadorRoute from '@/components/CuidadorRoute';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -62,23 +61,23 @@ const AuthenticatedApp = () => {
         <Route path="/residentes" element={<Residents />} />
         <Route path="/residentes/:id" element={<ResidentProfile />} />
         <Route path="/bitacora" element={<DailyLogs />} />
-        <Route path="/planes" element={<CuidadorRoute><SupportPlans /></CuidadorRoute>} />
-        <Route path="/medicacion" element={<CuidadorRoute><Medications /></CuidadorRoute>} />
-        <Route path="/incidentes" element={<CuidadorRoute><Incidents /></CuidadorRoute>} />
-        <Route path="/informes-medico" element={<CuidadorRoute><InformesMedico /></CuidadorRoute>} />
+        <Route path="/planes" element={<SupportPlans />} />
+        <Route path="/medicacion" element={<Medications />} />
+        <Route path="/incidentes" element={<Incidents />} />
+        <Route path="/informes-medico" element={<InformesMedico />} />
         <Route path="/actividades" element={<Activities />} />
-        <Route path="/turnos" element={<CuidadorRoute><Shifts /></CuidadorRoute>} />
+        <Route path="/turnos" element={<Shifts />} />
         <Route path="/pastoral" element={<Pastoral />} />
-        <Route path="/inventario" element={<CuidadorRoute><Inventory /></CuidadorRoute>} />
-        <Route path="/senadis" element={<CuidadorRoute><SenadisReport /></CuidadorRoute>} />
-        <Route path="/admisiones" element={<CuidadorRoute><Admissions /></CuidadorRoute>} />
+        <Route path="/inventario" element={<Inventory />} />
+        <Route path="/senadis" element={<SenadisReport />} />
+        <Route path="/admisiones" element={<Admissions />} />
         <Route path="/calendario" element={<CalendarPage />} />
-        <Route path="/personal" element={<CuidadorRoute><Staff /></CuidadorRoute>} />
+        <Route path="/personal" element={<Staff />} />
         <Route path="/avisos" element={<AdminRoute><AvisosDirector /></AdminRoute>} />
         <Route path="/mis-avisos" element={<MisAvisos />} />
         <Route path="/slack-config" element={<AdminRoute><ConfiguracionSlackPage /></AdminRoute>} />
-        <Route path="/gastos" element={<CuidadorRoute><ControlGastos /></CuidadorRoute>} />
-        <Route path="/reuniones" element={<CuidadorRoute><Reuniones /></CuidadorRoute>} />
+        <Route path="/gastos" element={<ControlGastos />} />
+        <Route path="/reuniones" element={<Reuniones />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
