@@ -104,16 +104,11 @@ export default function AvisosDirector() {
     });
   };
 
-  // Resuelve los usuarios destinatarios según el área
+  // Resuelve los staff destinatarios según el área (usa StaffMembers directamente)
   const resolverDestinatarios = (areasDestino) => {
-    if (areasDestino === "todos") return allUsers;
-    // Buscar por área en StaffMembers y cruzar con usuarios
-    const staffDelArea = staffMembers.filter(s => {
-      const areas = areasDestino.split(",").map(a => a.trim());
-      return areas.includes(s.area);
-    });
-    const emailsStaff = new Set(staffDelArea.map(s => s.email).filter(Boolean));
-    return allUsers.filter(u => emailsStaff.has(u.email));
+    if (areasDestino === "todos") return staffMembers.filter(s => s.email);
+    const areas = areasDestino.split(",").map(a => a.trim());
+    return staffMembers.filter(s => s.email && areas.includes(s.area));
   };
 
   const sendSlack = async (avisoData, webhooks) => {
@@ -183,20 +178,19 @@ export default function AvisosDirector() {
   };
 
   const crearDestinatarios = async (avisoId, avisoData, areasDestino) => {
-    const usuarios = resolverDestinatarios(areasDestino);
+    const staff = resolverDestinatarios(areasDestino);
     await Promise.allSettled(
-      usuarios.map(u => {
-        const staffInfo = staffMembers.find(s => s.email === u.email);
-        return createDestinatarioMutation.mutateAsync({
+      staff.map(s =>
+        createDestinatarioMutation.mutateAsync({
           aviso_id: avisoId,
           aviso_titulo: avisoData.titulo,
-          usuario_email: u.email,
-          area: staffInfo?.area || "",
-        });
-      })
+          usuario_email: s.email,
+          area: s.area || "",
+        })
+      )
     );
-    // Enviar emails en paralelo
-    await enviarEmails(avisoData, usuarios);
+    // Enviar emails directamente a los staff con email registrado
+    await enviarEmails(avisoData, staff.map(s => ({ email: s.email, full_name: s.full_name })));
   };
 
   const openEdit = (aviso) => {
