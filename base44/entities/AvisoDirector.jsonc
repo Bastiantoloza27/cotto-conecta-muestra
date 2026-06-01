@@ -1,0 +1,71 @@
+{
+  "name": "AvisoDirector",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo del aviso"
+    },
+    "mensaje": {
+      "type": "string",
+      "description": "Contenido del aviso"
+    },
+    "prioridad": {
+      "type": "string",
+      "enum": [
+        "informativo",
+        "importante",
+        "urgente"
+      ],
+      "default": "informativo"
+    },
+    "areas_destino": {
+      "type": "string",
+      "description": "\u00c1reas destinatarias separadas por coma (salud, cuidado, administracion, pastoral, servicios_generales, otro, todos)"
+    },
+    "webhook_url": {
+      "type": "string",
+      "description": "URL del webhook de Slack para este aviso"
+    },
+    "residente_relacionado_id": {
+      "type": "string",
+      "description": "ID del residente relacionado (opcional)"
+    },
+    "residente_relacionado_nombre": {
+      "type": "string"
+    },
+    "requiere_confirmacion": {
+      "type": "boolean",
+      "default": false
+    },
+    "autor": {
+      "type": "string",
+      "description": "Nombre/email del autor"
+    },
+    "estado": {
+      "type": "string",
+      "enum": [
+        "borrador",
+        "enviado",
+        "archivado"
+      ],
+      "default": "borrador"
+    },
+    "slack_enviado": {
+      "type": "boolean",
+      "default": false
+    },
+    "slack_error": {
+      "type": "boolean",
+      "default": false
+    },
+    "confirmaciones_count": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "titulo",
+    "mensaje"
+  ]
+}
