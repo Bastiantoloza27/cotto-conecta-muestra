@@ -9,6 +9,41 @@ import { cn } from "@/lib/utils";
 import { base44 } from "@/api/base44Client";
 import { useRole } from "@/hooks/useRole";
 
+const NAV_GROUPS_CUIDADOR = [
+  {
+    label: null,
+    items: [
+      { label: "Inicio", icon: LayoutDashboard, path: "/" },
+    ]
+  },
+  {
+    label: "Personas",
+    items: [
+      { label: "Residentes", icon: Users, path: "/residentes" },
+    ]
+  },
+  {
+    label: "Cuidadoras",
+    items: [
+      { label: "Bitácora", icon: BookOpen, path: "/bitacora" },
+    ]
+  },
+  {
+    label: "Comunidad",
+    items: [
+      { label: "Actividades", icon: Calendar, path: "/actividades" },
+      { label: "Pastoral", icon: Church, path: "/pastoral" },
+    ]
+  },
+  {
+    label: "Gestión",
+    items: [
+      { label: "Calendario", icon: Calendar, path: "/calendario" },
+      { label: "Mis Avisos", icon: Megaphone, path: "/mis-avisos", badgeKey: "avisos" },
+    ]
+  }
+];
+
 const NAV_GROUPS_USER = [
   {
     label: null,
@@ -179,8 +214,8 @@ function NavItem({ item, isActive, onClose, badges }) {
 
 export default function Sidebar({ open, onClose }) {
   const location = useLocation();
-  const { isAdmin } = useRole();
-  const navGroups = isAdmin ? NAV_GROUPS_ADMIN : NAV_GROUPS_USER;
+  const { isAdmin, isCuidador } = useRole();
+  const navGroups = isAdmin ? NAV_GROUPS_ADMIN : isCuidador ? NAV_GROUPS_CUIDADOR : NAV_GROUPS_USER;
   const [badges, setBadges] = useState({ avisos: 0 });
 
   useEffect(() => {

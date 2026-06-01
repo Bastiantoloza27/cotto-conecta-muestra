@@ -12,5 +12,10 @@ export function useRole() {
       .finally(() => setLoading(false));
   }, []);
 
-  return { role, isAdmin: role === "director", loading };
+  return {
+    role,
+    isAdmin: role === "director",
+    isCuidador: role === "cuidador",
+    loading
+  };
 }
