@@ -1,13 +1,14 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useParams, Link } from "react-router-dom";
-import { format } from "date-fns";
-import { ArrowLeft, Heart, Phone, MapPin, Calendar, Brain, MessageCircle, BookOpen, Pill, AlertTriangle, ClipboardList } from "lucide-react";
+import { ArrowLeft, Heart, Phone, MapPin, Calendar, Brain, MessageCircle, Pill, AlertTriangle, ClipboardList, Pencil } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MoodBadge from "@/components/shared/MoodBadge";
+import ResidentEditForm from "@/components/residents/ResidentEditForm";
 
 const depColors = {
   leve: "bg-green-50 text-green-700 border-green-200",
@@ -18,6 +19,7 @@ const depColors = {
 
 export default function ResidentProfile() {
   const { id } = useParams();
+  const [editing, setEditing] = useState(false);
 
   const { data: resident, isLoading } = useQuery({
     queryKey: ["resident", id],
@@ -95,7 +97,17 @@ export default function ResidentProfile() {
             {r.senadis_registered && <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">SENADIS</Badge>}
           </div>
         </div>
+        <Button variant="outline" size="sm" onClick={() => setEditing(true)} className="shrink-0">
+          <Pencil className="w-4 h-4 mr-1.5" /> Editar ficha
+        </Button>
       </div>
+
+      {/* Formulario de edición inline */}
+      {editing && (
+        <div className="mb-8">
+          <ResidentEditForm resident={r} onClose={() => setEditing(false)} />
+        </div>
+      )}
 
       {/* Quick info cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
