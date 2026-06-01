@@ -132,9 +132,28 @@ export default function CalendarPage() {
     setShowForm(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    createMutation.mutate({ ...form, calendar_type: calendarType });
+    await createMutation.mutateAsync({ ...form, calendar_type: calendarType });
+
+    // Solo notificar al personal si es calendario general
+    if (calendarType === "general") {
+      const fecha = form.date ? format(parseISO(form.date), "d 'de' MMMM 'de' yyyy", { locale: es }) : form.date;
+      const horario = form.time ? ` a las ${form.time}${form.end_time ? ` – ${form.end_time}` : ""}` : "";
+      let mensaje = `📅 Se ha registrado un nuevo evento en el calendario:\n\n*${form.title}*\nFecha: ${fecha}${horario}`;
+      if (form.description) mensaje += `\n\n${form.description}`;
+      if (form.author_name) mensaje += `\n\nRegistrado por: ${form.author_name}`;
+
+      await base44.entities.AvisoDirector.create({
+        titulo: `Nuevo evento: ${form.title}`,
+        mensaje,
+        prioridad: "informativo",
+        areas_destino: "todos",
+        requiere_confirmacion: false,
+        autor: form.author_name || "Sistema",
+        estado: "enviado",
+      });
+    }
   };
 
   const WEEK_DAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
