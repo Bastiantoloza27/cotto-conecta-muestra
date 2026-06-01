@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+
+const shiftTypeLabels = { manana: "Mañana", tarde: "Tarde", noche: "Noche", largo: "Largo" };
 import { format, addDays, startOfWeek } from "date-fns";
 import { es } from "date-fns/locale";
 import { Plus, Clock, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
@@ -12,6 +14,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PageHeader from "@/components/shared/PageHeader";
+
+const sendShiftEmail = async (shiftData, staffMembers) => {
+  const member = staffMembers.find(s => s.full_name === shiftData.staff_name);
+  if (!member?.email) return;
+  const horario = shiftData.hora_inicio
+    ? `${shiftData.hora_inicio}${shiftData.hora_fin ? ` – ${shiftData.hora_fin}` : ""}`
+    : shiftTypeLabels[shiftData.shift_type] || shiftData.shift_type;
+  await base44.integrations.Core.SendEmail({
+    to: member.email,
+    subject: `📋 Se te ha asignado un turno – ${shiftData.date}`,
+    body: `Hola ${shiftData.staff_name},\n\nEl Director ha registrado un turno a tu nombre:\n\n• Fecha: ${shiftData.date}\n• Turno: ${shiftTypeLabels[shiftData.shift_type] || shiftData.shift_type}\n• Horario: ${horario}\n• Área: ${shiftData.area || "—"}\n\nSi tienes dudas, comunícate con la administración.\n\nSaludos,\nPequeño Cottolengo Quintero`,
+  });
+};
 
 const shiftColors = {
   manana: "bg-amber-50 text-amber-700 border-amber-200",
@@ -46,7 +61,11 @@ export default function Shifts() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.StaffShift.create(data),
+    mutationFn: async (data) => {
+      const shift = await base44.entities.StaffShift.create(data);
+      await sendShiftEmail(data, staffMembers);
+      return shift;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["shifts"] });
       setShowForm(false);
