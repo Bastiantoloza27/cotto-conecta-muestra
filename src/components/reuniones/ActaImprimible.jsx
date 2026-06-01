@@ -56,14 +56,15 @@ export default function ActaImprimible({ acta, onClose }) {
       </div>
 
       {/* Solo impresión */}
-      <div className="hidden print:block">
+      <div id="acta-print-content" className="hidden print:block">
         <PrintBody acta={acta} participantes={participantes} ordenDia={ordenDia} colsSignatura={colsSignatura} />
       </div>
 
       <style>{`
         @media print {
-          body > * { display: none !important; }
-          .print\\:block { display: block !important; }
+          body * { visibility: hidden !important; }
+          #acta-print-content, #acta-print-content * { visibility: visible !important; }
+          #acta-print-content { position: fixed !important; top: 0; left: 0; width: 100%; }
           @page { margin: 2cm; size: A4; }
         }
       `}</style>
