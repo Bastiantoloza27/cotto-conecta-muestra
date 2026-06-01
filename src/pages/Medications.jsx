@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Pill, Clock, AlertCircle, AlertTriangle, Send, Settings, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pill, Clock, AlertCircle, AlertTriangle, Send, Pencil, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -34,14 +34,9 @@ function StockIndicator({ stock }) {
   );
 }
 
-const WEBHOOK_KEY = "providentia_slack_webhook";
-
 export default function Medications() {
   const [showForm, setShowForm] = useState(false);
   const [editingMed, setEditingMed] = useState(null);
-  const [showWebhookConfig, setShowWebhookConfig] = useState(false);
-  const [webhookUrl, setWebhookUrl] = useState(() => localStorage.getItem(WEBHOOK_KEY) || "");
-  const [webhookInput, setWebhookInput] = useState(() => localStorage.getItem(WEBHOOK_KEY) || "");
   const [sendingId, setSendingId] = useState(null);
   const [statusFilter, setStatusFilter] = useState("activo");
   const { toast } = useToast();
@@ -116,32 +111,18 @@ export default function Medications() {
     }
   };
 
-  const saveWebhook = () => {
-    localStorage.setItem(WEBHOOK_KEY, webhookInput);
-    setWebhookUrl(webhookInput);
-    setShowWebhookConfig(false);
-    toast({ title: "Webhook guardado", description: "Se usará para notificar al equipo en Slack." });
-  };
-
-  const notifySlack = async (med) => {
-    if (!webhookUrl) {
-      setShowWebhookConfig(true);
-      return;
-    }
+  const notifyTeam = async (med) => {
     setSendingId(med.id);
-    const text = `💊 *Actualización de medicamento* — ${med.resident_name}\n` +
-      `• Medicamento: *${med.name}* (${med.dosage})\n` +
-      `• Frecuencia: ${med.frequency?.replace(/_/g, " ")} · Vía: ${med.route}\n` +
-      `• Horarios: ${med.schedule_times || "—"}\n` +
-      `• Estado: ${med.status}${med.stock_remaining != null ? ` · Stock: ${med.stock_remaining}` : ""}\n` +
-      `• Registrado por: ${med.created_by || "sistema"}`;
-    await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    });
+    try {
+      await base44.functions.invoke("notificarCambioMedicamento", {
+        data: med,
+        event: { type: "manual" },
+      });
+      toast({ title: "✅ Notificación enviada", description: `El equipo de salud y dirección fueron notificados sobre ${med.name}.` });
+    } catch {
+      toast({ title: "Error al notificar", description: "No se pudo enviar la notificación.", variant: "destructive" });
+    }
     setSendingId(null);
-    toast({ title: "Notificación enviada", description: `El equipo fue avisado sobre ${med.name}.` });
   };
 
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
@@ -175,10 +156,6 @@ export default function Medications() {
           <p className="text-sm text-muted-foreground mt-0.5">Control de medicamentos, horarios y administración</p>
         </div>
         <div className="flex gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => setShowWebhookConfig(true)} className="gap-1.5">
-            <Settings className="w-3.5 h-3.5" />
-            Slack
-          </Button>
           <Button onClick={() => { setEditingMed(null); setForm(EMPTY_FORM); setShowForm(true); }} className="gap-2">
             <Plus className="w-4 h-4" />
             Agregar medicamento
@@ -277,11 +254,11 @@ export default function Medications() {
                             variant="ghost"
                             size="sm"
                             className="h-6 px-2 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
-                            onClick={() => notifySlack(m)}
+                            onClick={() => notifyTeam(m)}
                             disabled={sendingId === m.id}
                           >
                             <Send className="w-2.5 h-2.5" />
-                            {sendingId === m.id ? "..." : "Slack"}
+                            {sendingId === m.id ? "..." : "Notificar"}
                           </Button>
                           <Button
                             variant="ghost"
@@ -311,30 +288,6 @@ export default function Medications() {
         </div>
       )}
 
-      {/* Slack Webhook Config Dialog */}
-      <Dialog open={showWebhookConfig} onOpenChange={setShowWebhookConfig}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>🔗 Configurar Slack Webhook</DialogTitle></DialogHeader>
-          <div className="space-y-3 mt-2">
-            <p className="text-sm text-muted-foreground">
-              Pega el Incoming Webhook URL de tu canal de Slack. Puedes crearlo en{" "}
-              <a href="https://api.slack.com/apps" target="_blank" rel="noreferrer" className="text-primary underline">api.slack.com/apps</a>.
-            </p>
-            <div>
-              <Label>Webhook URL</Label>
-              <Input
-                value={webhookInput}
-                onChange={(e) => setWebhookInput(e.target.value)}
-                placeholder="https://hooks.slack.com/services/..."
-              />
-            </div>
-            <div className="flex justify-end gap-2 pt-1">
-              <Button variant="outline" onClick={() => setShowWebhookConfig(false)}>Cancelar</Button>
-              <Button onClick={saveWebhook} disabled={!webhookInput}>Guardar</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={showForm} onOpenChange={(v) => { setShowForm(v); if (!v) { setEditingMed(null); setForm(EMPTY_FORM); } }}>
         <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
