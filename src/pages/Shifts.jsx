@@ -39,6 +39,11 @@ export default function Shifts() {
     queryFn: () => base44.entities.StaffShift.list("-date", 200),
   });
 
+  const { data: staffMembers = [] } = useQuery({
+    queryKey: ["staff-members-activos"],
+    queryFn: () => base44.entities.StaffMember.filter({ status: "activo" }, "full_name", 200),
+  });
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.StaffShift.create(data),
     onSuccess: () => {
@@ -126,7 +131,23 @@ export default function Shifts() {
           <DialogContent className="max-w-sm">
             <DialogHeader><DialogTitle>✏️ Editar turno</DialogTitle></DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); updateMutation.mutate({ id: editing.id, data: editing }); }} className="space-y-4 mt-2">
-              <div><Label>Nombre *</Label><Input value={editing.staff_name} onChange={(e) => setEditing(p => ({ ...p, staff_name: e.target.value }))} required /></div>
+              <div>
+                <Label>Trabajador *</Label>
+                <Select
+                  value={editing.staff_name}
+                  onValueChange={(v) => {
+                    const member = staffMembers.find(s => s.full_name === v);
+                    setEditing(p => ({ ...p, staff_name: v, staff_email: member?.email || p.staff_email, area: member?.area || p.area }));
+                  }}
+                >
+                  <SelectTrigger><SelectValue placeholder="Seleccionar personal..." /></SelectTrigger>
+                  <SelectContent>
+                    {staffMembers.map(s => (
+                      <SelectItem key={s.id} value={s.full_name}>{s.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Fecha</Label><Input type="date" value={editing.date} onChange={(e) => setEditing(p => ({ ...p, date: e.target.value }))} /></div>
                 <div><Label>Turno</Label>
@@ -168,8 +189,21 @@ export default function Shifts() {
           <DialogHeader><DialogTitle>📋 Asignar turno</DialogTitle></DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(form); }} className="space-y-4 mt-2">
             <div>
-              <Label>Nombre del trabajador *</Label>
-              <Input value={form.staff_name} onChange={(e) => set("staff_name", e.target.value)} required />
+              <Label>Trabajador *</Label>
+              <Select
+                value={form.staff_name}
+                onValueChange={(v) => {
+                  const member = staffMembers.find(s => s.full_name === v);
+                  setForm(p => ({ ...p, staff_name: v, staff_email: member?.email || "", area: member?.area || p.area }));
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="Seleccionar personal..." /></SelectTrigger>
+                <SelectContent>
+                  {staffMembers.map(s => (
+                    <SelectItem key={s.id} value={s.full_name}>{s.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
