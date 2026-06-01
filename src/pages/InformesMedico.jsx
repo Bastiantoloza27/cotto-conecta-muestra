@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Stethoscope, Plus, Search, Filter, Eye, Pencil, Trash2, FileText } from "lucide-react";
+import { Stethoscope, Plus, Search, Filter, Eye, Pencil, Trash2, FileText, Printer } from "lucide-react";
+import InformeImprimible from "@/components/informes/InformeImprimible";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,7 @@ export default function InformesMedico() {
   const [showForm, setShowForm] = useState(false);
   const [editingInforme, setEditingInforme] = useState(null);
   const [viewingInforme, setViewingInforme] = useState(null);
+  const [printingInforme, setPrintingInforme] = useState(null);
 
   const { data: informes = [], isLoading } = useQuery({
     queryKey: ["informes-medico"],
@@ -182,6 +184,14 @@ export default function InformesMedico() {
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setPrintingInforme(inf)}
+                    >
+                      <Printer className="w-4 h-4" />
+                    </Button>
                     {!isAdmin && (
                       <>
                         <Button
@@ -224,6 +234,14 @@ export default function InformesMedico() {
         <InformeMedicoDetailDialog
           informe={viewingInforme}
           onClose={() => setViewingInforme(null)}
+        />
+      )}
+
+      {/* Print */}
+      {printingInforme && (
+        <InformeImprimible
+          informe={printingInforme}
+          onClose={() => setPrintingInforme(null)}
         />
       )}
     </div>

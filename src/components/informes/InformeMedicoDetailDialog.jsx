@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Stethoscope } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Stethoscope, Printer } from "lucide-react";
+import InformeImprimible from "@/components/informes/InformeImprimible";
 
 const TIPO_LABELS = {
   control_rutina: { label: "Control rutina", color: "bg-blue-100 text-blue-800" },
@@ -24,16 +27,25 @@ function Section({ label, value }) {
 }
 
 export default function InformeMedicoDetailDialog({ informe, onClose }) {
+  const [printing, setPrinting] = useState(false);
   const tipo = TIPO_LABELS[informe.tipo_intervencion] || TIPO_LABELS.otro;
   const fecha = format(new Date(informe.fecha_visita + "T12:00:00"), "EEEE d 'de' MMMM yyyy", { locale: es });
 
   return (
+    <>
+    {printing && <InformeImprimible informe={informe} onClose={() => setPrinting(false)} />}
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Stethoscope className="w-5 h-5 text-primary" />
-            Informe médico
+          <DialogTitle className="flex items-center gap-2 justify-between">
+            <span className="flex items-center gap-2">
+              <Stethoscope className="w-5 h-5 text-primary" />
+              Informe médico
+            </span>
+            <Button variant="outline" size="sm" className="gap-1.5 mr-6" onClick={() => setPrinting(true)}>
+              <Printer className="w-3.5 h-3.5" />
+              Imprimir
+            </Button>
           </DialogTitle>
         </DialogHeader>
 
@@ -70,5 +82,6 @@ export default function InformeMedicoDetailDialog({ informe, onClose }) {
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
