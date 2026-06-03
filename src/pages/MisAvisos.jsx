@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Megaphone, CheckCircle2 } from "lucide-react";
+import { Megaphone, CheckCircle2, Plus, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import EmptyState from "@/components/shared/EmptyState";
+import NuevoAvisoDialog from "@/components/avisos/NuevoAvisoDialog";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -17,16 +18,15 @@ const prioridadBadge = {
   importante: "bg-amber-50 text-amber-700 border-amber-200",
   urgente: "bg-red-50 text-red-700 border-red-200",
 };
-
 const prioridadLabel = {
-  informativo: "Informativo",
-  importante: "Importante",
-  urgente: "Urgente",
+  informativo: "Informativo", importante: "Importante", urgente: "Urgente",
 };
 
 export default function MisAvisos() {
-  const [confirmDialog, setConfirmDialog] = useState(null); // { destinatario, aviso }
+  const [confirmDialog, setConfirmDialog] = useState(null);
   const [comentario, setComentario] = useState("");
+  const [showNuevoAviso, setShowNuevoAviso] = useState(false);
+  const [sending, setSending] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: user } = useQuery({
@@ -34,21 +34,34 @@ export default function MisAvisos() {
     queryFn: () => base44.auth.me(),
   });
 
-  // Mis entradas en AvisoDestinatario
   const { data: misDestinatarios = [] } = useQuery({
     queryKey: ["mis-destinatarios", user?.email],
     queryFn: () => user?.email
       ? base44.entities.AvisoDestinatario.filter({ usuario_email: user.email }, "-created_date", 100)
       : Promise.resolve([]),
     enabled: !!user?.email,
-    refetchInterval: 30000, // polling cada 30s
+    refetchInterval: 30000,
   });
 
-  // Cargar los avisos correspondientes
   const { data: avisos = [] } = useQuery({
     queryKey: ["avisos-enviados"],
     queryFn: () => base44.entities.AvisoDirector.filter({ estado: "enviado" }, "-created_date", 100),
     refetchInterval: 30000,
+  });
+
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ["all-users"],
+    queryFn: () => base44.entities.User.list(),
+  });
+
+  const { data: staffMembers = [] } = useQuery({
+    queryKey: ["staff-members"],
+    queryFn: () => base44.entities.StaffMember.list(),
+  });
+
+  const { data: slackConfigs = [] } = useQuery({
+    queryKey: ["slack-configs"],
+    queryFn: () => base44.entities.ConfiguracionSlack.filter({ activo: true }),
   });
 
   const updateDestinatarioMutation = useMutation({
@@ -60,17 +73,20 @@ export default function MisAvisos() {
     },
   });
 
-  // Map avisos by id for quick lookup
-  const avisosMap = Object.fromEntries(avisos.map(a => [a.id, a]));
+  const createAvisoMutation = useMutation({
+    mutationFn: (data) => base44.entities.AvisoDirector.create(data),
+  });
 
-  // Filtrar solo destinatarios que tienen aviso válido
+  const createDestinatarioMutation = useMutation({
+    mutationFn: (data) => base44.entities.AvisoDestinatario.create(data),
+  });
+
+  const avisosMap = Object.fromEntries(avisos.map(a => [a.id, a]));
   const misAvisos = misDestinatarios
     .filter(d => avisosMap[d.aviso_id])
     .map(d => ({ destinatario: d, aviso: avisosMap[d.aviso_id] }));
-
   const noLeidos = misAvisos.filter(({ destinatario }) => !destinatario.leido_en).length;
 
-  // Marcar como leído al montar (los no leídos)
   useEffect(() => {
     if (!user?.email) return;
     misDestinatarios.forEach(d => {
@@ -84,11 +100,88 @@ export default function MisAvisos() {
     if (!confirmDialog) return;
     updateDestinatarioMutation.mutate({
       id: confirmDialog.destinatario.id,
-      data: {
-        confirmado_en: new Date().toISOString(),
-        comentario,
-      },
+      data: { confirmado_en: new Date().toISOString(), comentario },
     });
+  };
+
+  const sendSlack = async (avisoData, webhooks) => {
+    const emoji = avisoData.prioridad === "urgente" ? "🚨" : avisoData.prioridad === "importante" ? "⚠️" : "📢";
+    const payload = {
+      text: `${emoji} Nuevo aviso de ${avisoData.autor}: ${avisoData.titulo}`,
+      attachments: [{
+        color: avisoData.prioridad === "urgente" ? "#E53E3E" : avisoData.prioridad === "importante" ? "#DD6B20" : "#38A169",
+        blocks: [
+          { type: "header", text: { type: "plain_text", text: `${emoji} ${avisoData.titulo}`, emoji: true } },
+          { type: "section", text: { type: "mrkdwn", text: `*Mensaje:*\n${avisoData.mensaje}` } },
+          { type: "context", elements: [{ type: "mrkdwn", text: `Enviado por *${avisoData.autor}* · Providentia` }] },
+        ],
+      }],
+    };
+    await Promise.allSettled(
+      webhooks.map(w => fetch(w.webhook_url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }))
+    );
+  };
+
+  const enviarEmails = async (avisoData, destinatarios) => {
+    const emoji = avisoData.prioridad === "urgente" ? "🚨" : avisoData.prioridad === "importante" ? "⚠️" : "📢";
+    const priorLabel = { informativo: "Informativo", importante: "Importante", urgente: "URGENTE" };
+    await Promise.allSettled(
+      destinatarios.filter(d => d.email).map(d =>
+        base44.integrations.Core.SendEmail({
+          from_name: "Providentia · Pequeño Cottolengo",
+          to: d.email,
+          subject: `${emoji} ${priorLabel[avisoData.prioridad]}: ${avisoData.titulo}`,
+          body: `Hola${d.full_name ? " " + d.full_name.split(" ")[0] : ""},\n\n${avisoData.autor} ha publicado un aviso:\n\n📌 ${avisoData.titulo}\n\n${avisoData.mensaje}\n\n---\nRevisa este aviso en Providentia → sección "Avisos".\n\nPequeño Cottolengo Quintero`,
+        })
+      )
+    );
+  };
+
+  const handleEnviarAviso = async ({ form, destinatarios }) => {
+    setSending(true);
+    const autorNombre = user?.full_name || user?.email || "Personal";
+    const webhooksRelevantes = slackConfigs.filter(w => {
+      const areaMatch = form.areas_destino === "todos" || !w.area || w.area === form.areas_destino;
+      const urgenciaMatch = !w.solo_urgentes || form.prioridad === "urgente";
+      return areaMatch && urgenciaMatch;
+    });
+    let slackOk = false;
+    try {
+      if (webhooksRelevantes.length > 0) { await sendSlack({ ...form, autor: autorNombre }, webhooksRelevantes); slackOk = true; }
+    } catch { slackOk = false; }
+
+    const aviso = await createAvisoMutation.mutateAsync({
+      ...form,
+      autor: autorNombre,
+      estado: "enviado",
+      slack_enviado: slackOk,
+    });
+
+    // Crear registros de destinatarios
+    await Promise.allSettled(
+      destinatarios.map(d =>
+        createDestinatarioMutation.mutateAsync({
+          aviso_id: aviso.id,
+          aviso_titulo: form.titulo,
+          usuario_email: d.email,
+          area: "",
+        })
+      )
+    );
+
+    // Enviar emails
+    await enviarEmails({ ...form, autor: autorNombre }, destinatarios);
+
+    queryClient.invalidateQueries({ queryKey: ["avisos-enviados"] });
+    queryClient.invalidateQueries({ queryKey: ["mis-destinatarios"] });
+    queryClient.invalidateQueries({ queryKey: ["avisos-director"] });
+    setSending(false);
+  };
+
+  const handleBorradorAviso = async (form) => {
+    const autorNombre = user?.full_name || user?.email || "Personal";
+    await createAvisoMutation.mutateAsync({ ...form, autor: autorNombre, estado: "borrador" });
+    queryClient.invalidateQueries({ queryKey: ["avisos-director"] });
   };
 
   return (
@@ -96,15 +189,18 @@ export default function MisAvisos() {
       <div className="flex items-start justify-between gap-3 mb-6 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Megaphone className="w-6 h-6 text-primary" /> Mis Avisos
+            <Megaphone className="w-6 h-6 text-primary" /> Avisos
             {noLeidos > 0 && (
               <span className="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5 ml-1">
                 {noLeidos}
               </span>
             )}
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Comunicaciones del Director para tu área</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Comunicaciones del equipo</p>
         </div>
+        <Button onClick={() => setShowNuevoAviso(true)} className="gap-2">
+          <Plus className="w-4 h-4" /> Enviar aviso
+        </Button>
       </div>
 
       {misAvisos.length === 0 ? (
@@ -134,7 +230,7 @@ export default function MisAvisos() {
                     </div>
                     <p className="text-sm text-muted-foreground mb-2 whitespace-pre-wrap">{aviso.mensaje}</p>
                     <div className="flex items-center gap-3 text-[11px] text-muted-foreground mb-3">
-                      <span>Por {aviso.autor || "Director"}</span>
+                      <span>Por {aviso.autor || "Personal"}</span>
                       {aviso.created_date && (
                         <span>{format(new Date(aviso.created_date), "d MMM yyyy HH:mm", { locale: es })}</span>
                       )}
@@ -168,6 +264,7 @@ export default function MisAvisos() {
         </div>
       )}
 
+      {/* Confirmar lectura dialog */}
       <Dialog open={!!confirmDialog} onOpenChange={() => { setConfirmDialog(null); setComentario(""); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -195,6 +292,17 @@ export default function MisAvisos() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Nuevo aviso dialog */}
+      <NuevoAvisoDialog
+        open={showNuevoAviso}
+        onClose={() => setShowNuevoAviso(false)}
+        onEnviar={handleEnviarAviso}
+        onBorrador={handleBorradorAviso}
+        allUsers={allUsers}
+        staffMembers={staffMembers}
+        sending={sending}
+      />
     </div>
   );
 }

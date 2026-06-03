@@ -56,7 +56,7 @@ const NAV_GROUPS_USER = [
       { label: "Evidencia SENADIS", icon: BarChart3, path: "/senadis" },
       { label: "Control de Gastos", icon: Wallet, path: "/gastos" },
       { label: "Reuniones de Equipo", icon: UsersRound, path: "/reuniones" },
-      { label: "Mis Avisos", icon: Megaphone, path: "/mis-avisos", badgeKey: "avisos" },
+      { label: "Avisos", icon: Megaphone, path: "/mis-avisos", badgeKey: "avisos" },
     ]
   }
 ];
@@ -108,7 +108,7 @@ const NAV_GROUPS_ADMIN = [
       { label: "Evidencia SENADIS", icon: BarChart3, path: "/senadis" },
       { label: "Control de Gastos", icon: Wallet, path: "/gastos" },
       { label: "Reuniones de Equipo", icon: UsersRound, path: "/reuniones" },
-      { label: "Mis Avisos", icon: Megaphone, path: "/mis-avisos", badgeKey: "avisos" },
+      { label: "Avisos", icon: Megaphone, path: "/mis-avisos", badgeKey: "avisos" },
     ]
   },
   {
