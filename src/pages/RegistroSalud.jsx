@@ -11,10 +11,12 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, ClipboardList, Activity, Plus, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardList, Activity, Plus, CheckCircle2, XCircle, AlertTriangle, Download } from "lucide-react";
 import BristolScale, { BRISTOL } from "@/components/registros/BristolScale";
 import AlertaDeposicion from "@/components/registros/AlertaDeposicion";
+import InformeDeposicionImprimible from "@/components/registros/InformeDeposicionImprimible";
 import { toast } from "sonner";
+import { createRoot } from "react-dom/client";
 
 const TURNOS = [
   { key: "manana", label: "Mañana", icon: "🌅", color: "bg-amber-50 border-amber-200" },
@@ -425,6 +427,26 @@ export default function RegistroSalud() {
   const nextDay = () => setSelectedDate(format(subDays(parseISO(selectedDate), -1), "yyyy-MM-dd"));
   const isToday = selectedDate === format(new Date(), "yyyy-MM-dd");
 
+  const handleDescargarInforme = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) { toast.error("Permite ventanas emergentes para descargar el informe"); return; }
+    const div = printWindow.document.createElement("div");
+    printWindow.document.body.appendChild(div);
+    printWindow.document.title = `Deposiciones ${selectedDate}`;
+    const root = createRoot(div);
+    root.render(
+      <InformeDeposicionImprimible
+        residents={residents}
+        deposiciones={deposiciones}
+        date={selectedDate}
+        diasSinPorResidente={diasSinPorResidente}
+      />
+    );
+    setTimeout(() => {
+      printWindow.print();
+    }, 600);
+  };
+
   // Calcular días sin deposición por residente
   const diasSinPorResidente = useMemo(() => {
     const map = {};
@@ -449,6 +471,11 @@ export default function RegistroSalud() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Deposiciones y Signos Vitales diarios</p>
         </div>
+        {tab === "deposiciones" && (
+          <Button variant="outline" size="sm" onClick={handleDescargarInforme} className="shrink-0 gap-1.5">
+            <Download className="w-4 h-4" /> Descargar informe
+          </Button>
+        )}
       </div>
 
       {/* Navegación de fecha */}
