@@ -28,6 +28,7 @@ import RegistroSalud from '@/pages/RegistroSalud';
 import ControlGastos from '@/pages/ControlGastos';
 import Reuniones from '@/pages/Reuniones';
 import AvisosDirector from '@/pages/AvisosDirector';
+import Novedades from '@/pages/Novedades';
 import MisAvisos from '@/pages/MisAvisos';
 import ConfiguracionSlackPage from '@/pages/ConfiguracionSlackPage';
 import AdminRoute from '@/components/AdminRoute';
@@ -80,6 +81,7 @@ const AuthenticatedApp = () => {
         <Route path="/slack-config" element={<AdminRoute><ConfiguracionSlackPage /></AdminRoute>} />
         <Route path="/gastos" element={<ControlGastos />} />
         <Route path="/reuniones" element={<Reuniones />} />
+        <Route path="/novedades" element={<Novedades />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

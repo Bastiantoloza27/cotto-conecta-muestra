@@ -1,0 +1,67 @@
+{
+  "name": "Novedad",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo de la novedad"
+    },
+    "descripcion": {
+      "type": "string",
+      "description": "Descripci\u00f3n breve visible en la tarjeta"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "novedad",
+        "tutorial",
+        "mejora",
+        "aviso"
+      ],
+      "default": "novedad",
+      "description": "Tipo de publicaci\u00f3n"
+    },
+    "emoji": {
+      "type": "string",
+      "description": "Emoji o \u00edcono representativo"
+    },
+    "color": {
+      "type": "string",
+      "enum": [
+        "purple",
+        "blue",
+        "green",
+        "orange",
+        "pink",
+        "teal"
+      ],
+      "default": "purple"
+    },
+    "pasos": {
+      "type": "string",
+      "description": "JSON stringificado con los pasos del tutorial [{titulo, descripcion, imagen_url?}]"
+    },
+    "modulo": {
+      "type": "string",
+      "description": "M\u00f3dulo o secci\u00f3n de la app a la que aplica"
+    },
+    "publicado": {
+      "type": "boolean",
+      "default": true
+    },
+    "destacado": {
+      "type": "boolean",
+      "default": false,
+      "description": "Si aparece en la parte superior destacado"
+    },
+    "fecha_publicacion": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "titulo",
+    "descripcion",
+    "tipo"
+  ]
+}

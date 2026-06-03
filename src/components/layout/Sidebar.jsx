@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, BookOpen, Calendar, Pill,
   Heart, Church, BarChart3, Package, ClipboardList, Clock, X,
-  ChevronDown, ChevronRight, ClipboardPlus, Activity, UserCog, Megaphone, Settings, Stethoscope, Wallet, UsersRound
+  ChevronDown, ChevronRight, ClipboardPlus, Activity, UserCog, Megaphone, Settings, Stethoscope, Wallet, UsersRound, Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { base44 } from "@/api/base44Client";
@@ -14,6 +14,7 @@ const NAV_GROUPS_USER = [
     label: null,
     items: [
       { label: "Inicio", icon: LayoutDashboard, path: "/" },
+      { label: "¿Qué hay de nuevo?", icon: Sparkles, path: "/novedades" },
     ]
   },
   {
@@ -65,6 +66,7 @@ const NAV_GROUPS_ADMIN = [
     label: null,
     items: [
       { label: "Inicio", icon: LayoutDashboard, path: "/" },
+      { label: "¿Qué hay de nuevo?", icon: Sparkles, path: "/novedades" },
     ]
   },
   {
