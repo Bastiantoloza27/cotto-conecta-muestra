@@ -164,7 +164,7 @@ export default function MisAvisos() {
           aviso_id: aviso.id,
           aviso_titulo: form.titulo,
           usuario_email: d.email,
-          area: "",
+          area: d.area || "",
         })
       )
     );

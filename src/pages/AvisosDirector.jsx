@@ -104,11 +104,28 @@ export default function AvisosDirector() {
     });
   };
 
-  // Resuelve los staff destinatarios según el área (usa StaffMembers directamente)
+  // Resuelve destinatarios usando Users (plataforma) + StaffMembers con email, sin duplicados
   const resolverDestinatarios = (areasDestino) => {
-    if (areasDestino === "todos") return staffMembers.filter(s => s.email);
+    // Usuarios registrados en la plataforma (fuente principal)
+    const usersComoDestinatarios = allUsers
+      .filter(u => u.email)
+      .map(u => {
+        // Intentar encontrar su área en StaffMember
+        const staffMatch = staffMembers.find(s => s.email === u.email);
+        return { email: u.email, full_name: u.full_name, area: staffMatch?.area || "" };
+      });
+
+    // Staff con email que NO tienen cuenta en la plataforma
+    const emailsEnPlataforma = new Set(allUsers.map(u => u.email).filter(Boolean));
+    const staffSinCuenta = staffMembers
+      .filter(s => s.email && !emailsEnPlataforma.has(s.email))
+      .map(s => ({ email: s.email, full_name: s.full_name, area: s.area || "" }));
+
+    const todos = [...usersComoDestinatarios, ...staffSinCuenta];
+
+    if (areasDestino === "todos") return todos;
     const areas = areasDestino.split(",").map(a => a.trim());
-    return staffMembers.filter(s => s.email && areas.includes(s.area));
+    return todos.filter(d => areas.includes(d.area));
   };
 
   const sendSlack = async (avisoData, webhooks) => {
@@ -178,19 +195,19 @@ export default function AvisosDirector() {
   };
 
   const crearDestinatarios = async (avisoId, avisoData, areasDestino) => {
-    const staff = resolverDestinatarios(areasDestino);
+    const destinatarios = resolverDestinatarios(areasDestino);
     await Promise.allSettled(
-      staff.map(s =>
+      destinatarios.map(d =>
         createDestinatarioMutation.mutateAsync({
           aviso_id: avisoId,
           aviso_titulo: avisoData.titulo,
-          usuario_email: s.email,
-          area: s.area || "",
+          usuario_email: d.email,
+          area: d.area || "",
         })
       )
     );
-    // Enviar emails directamente a los staff con email registrado
-    await enviarEmails(avisoData, staff.map(s => ({ email: s.email, full_name: s.full_name })));
+    // Enviar emails
+    await enviarEmails(avisoData, destinatarios);
   };
 
   const openEdit = (aviso) => {

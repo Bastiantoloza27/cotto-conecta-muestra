@@ -43,21 +43,22 @@ export default function NuevoAvisoDialog({ open, onClose, onEnviar, onBorrador, 
   };
 
   const resolverDestinatariosEmails = () => {
-    if (modoDestino === "todos") {
-      return [
-        ...allUsers.map(u => ({ email: u.email, full_name: u.full_name })),
-        ...staffMembers.filter(s => s.email && !allUsers.find(u => u.email === s.email))
-          .map(s => ({ email: s.email, full_name: s.full_name }))
-      ].filter(x => x.email);
-    }
-    if (modoDestino === "area") {
-      return staffMembers.filter(s => s.email && s.area === areaSeleccionada)
-        .map(s => ({ email: s.email, full_name: s.full_name }));
-    }
+    // Usuarios de plataforma + staff sin cuenta, sin duplicados
+    const emailsEnPlataforma = new Set(allUsers.map(u => u.email).filter(Boolean));
+    const staffSinCuenta = staffMembers.filter(s => s.email && !emailsEnPlataforma.has(s.email));
+    const todosConArea = [
+      ...allUsers.filter(u => u.email).map(u => {
+        const staffMatch = staffMembers.find(s => s.email === u.email);
+        return { email: u.email, full_name: u.full_name, area: staffMatch?.area || "" };
+      }),
+      ...staffSinCuenta.map(s => ({ email: s.email, full_name: s.full_name, area: s.area || "" })),
+    ];
+    if (modoDestino === "todos") return todosConArea;
+    if (modoDestino === "area") return todosConArea.filter(d => d.area === areaSeleccionada);
     // personas específicas
     return personasSeleccionadas.map(email => {
-      const u = allUsers.find(x => x.email === email) || staffMembers.find(x => x.email === email);
-      return { email, full_name: u?.full_name || email };
+      const found = todosConArea.find(x => x.email === email);
+      return { email, full_name: found?.full_name || email, area: found?.area || "" };
     });
   };
 
@@ -81,13 +82,14 @@ export default function NuevoAvisoDialog({ open, onClose, onEnviar, onBorrador, 
     onClose();
   };
 
-  // Combinar users + staff con email para el selector de personas
+  // Combinar users + staff con email para el selector de personas (sin duplicados)
+  const emailsEnPlataforma = new Set(allUsers.map(u => u.email).filter(Boolean));
   const todasLasPersonas = [
-    ...allUsers.map(u => ({ email: u.email, nombre: u.full_name || u.email, fuente: "usuario" })),
+    ...allUsers.filter(u => u.email).map(u => ({ email: u.email, nombre: u.full_name || u.email, fuente: "usuario" })),
     ...staffMembers
-      .filter(s => s.email && !allUsers.find(u => u.email === s.email))
+      .filter(s => s.email && !emailsEnPlataforma.has(s.email))
       .map(s => ({ email: s.email, nombre: s.full_name || s.email, fuente: "personal" }))
-  ].filter(p => p.email);
+  ];
 
   const valid = form.titulo.trim() && form.mensaje.trim() &&
     (modoDestino !== "personas" || personasSeleccionadas.length > 0);
