@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Printer, CheckCircle, XCircle } from "lucide-react";
+import { Printer, CheckCircle, XCircle, Paperclip } from "lucide-react";
 
 const CATEGORIAS = {
   insumos: "Insumos", traslado: "Traslado", alimentacion: "Alimentación",
@@ -63,6 +63,24 @@ export default function ResolucionDialog({ open, onClose, solicitud, onAprobar, 
           </div>
           <div><span className="text-muted-foreground">Motivo:</span><p className="mt-0.5 bg-muted/50 rounded p-2">{solicitud.motivo}</p></div>
           {solicitud.detalle && <div><span className="text-muted-foreground">Detalle:</span><p className="mt-0.5 bg-muted/50 rounded p-2">{solicitud.detalle}</p></div>}
+          {solicitud.archivos_urls && (
+            <div>
+              <span className="text-muted-foreground flex items-center gap-1"><Paperclip className="w-3.5 h-3.5" /> Archivos adjuntos:</span>
+              <div className="mt-1 space-y-1">
+                {solicitud.archivos_urls.split(",").filter(Boolean).map((url, i) => {
+                  const nombre = url.split("/").pop().split("?")[0] || `Archivo ${i + 1}`;
+                  const esImagen = /\.(jpg|jpeg|png|gif|webp)$/i.test(nombre);
+                  return (
+                    <a key={url} href={url} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-2 bg-muted/50 hover:bg-muted rounded px-2 py-1.5 text-xs text-primary hover:underline">
+                      <Paperclip className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{esImagen ? "🖼️ " : "📄 "}{nombre}</span>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {solicitud.fecha_resolucion && (
             <div className="border-t pt-2">
               <span className="text-muted-foreground">Resolución:</span>

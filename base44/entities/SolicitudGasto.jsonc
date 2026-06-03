@@ -39,6 +39,10 @@
       "type": "string",
       "description": "Detalle adicional (opcional)"
     },
+    "archivos_urls": {
+      "type": "string",
+      "description": "URLs de archivos adjuntos separadas por coma (boletas, presupuestos, fotos)"
+    },
     "estado": {
       "type": "string",
       "enum": [

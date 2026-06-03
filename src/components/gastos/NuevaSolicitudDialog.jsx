@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
+import { Paperclip, X, Upload, Loader2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
 const CATEGORIAS = [
   { value: "insumos", label: "Insumos" },
@@ -18,12 +20,24 @@ const CATEGORIAS = [
 
 export default function NuevaSolicitudDialog({ open, onClose, onSubmit, user }) {
   const today = format(new Date(), "yyyy-MM-dd");
-  const [form, setForm] = useState({
-    motivo: "",
-    categoria: "",
-    monto: "",
-    detalle: "",
-  });
+  const [form, setForm] = useState({ motivo: "", categoria: "", monto: "", detalle: "" });
+  const [archivos, setArchivos] = useState([]); // [{ name, url }]
+  const [subiendo, setSubiendo] = useState(false);
+  const fileInputRef = useRef();
+
+  const handleArchivos = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    setSubiendo(true);
+    for (const file of files) {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setArchivos(prev => [...prev, { name: file.name, url: file_url }]);
+    }
+    setSubiendo(false);
+    e.target.value = "";
+  };
+
+  const removeArchivo = (url) => setArchivos(prev => prev.filter(a => a.url !== url));
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -35,9 +49,11 @@ export default function NuevaSolicitudDialog({ open, onClose, onSubmit, user }) 
       categoria: form.categoria,
       monto: parseFloat(form.monto),
       detalle: form.detalle,
+      archivos_urls: archivos.map(a => a.url).join(","),
       estado: "pendiente",
     });
     setForm({ motivo: "", categoria: "", monto: "", detalle: "" });
+    setArchivos([]);
   };
 
   const valid = form.motivo && form.categoria && form.monto;
@@ -106,6 +122,36 @@ export default function NuevaSolicitudDialog({ open, onClose, onSubmit, user }) 
               placeholder="Información adicional (opcional)..."
               rows={2}
             />
+          </div>
+
+          {/* Adjuntos */}
+          <div className="space-y-2">
+            <Label>Adjuntos <span className="text-muted-foreground text-xs">(boletas, presupuestos, fotos)</span></Label>
+            <input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" className="hidden" onChange={handleArchivos} />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-2 w-full"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={subiendo}
+            >
+              {subiendo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              {subiendo ? "Subiendo..." : "Seleccionar archivos"}
+            </Button>
+            {archivos.length > 0 && (
+              <div className="space-y-1.5">
+                {archivos.map(a => (
+                  <div key={a.url} className="flex items-center gap-2 bg-muted/50 rounded-md px-3 py-1.5">
+                    <Paperclip className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary truncate flex-1 hover:underline">{a.name}</a>
+                    <button type="button" onClick={() => removeArchivo(a.url)} className="text-muted-foreground hover:text-destructive">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <DialogFooter>
