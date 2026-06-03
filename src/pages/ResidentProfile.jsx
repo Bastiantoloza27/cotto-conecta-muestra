@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MoodBadge from "@/components/shared/MoodBadge";
 import ResidentEditForm from "@/components/residents/ResidentEditForm";
+import ResidentDocuments from "@/components/residents/ResidentDocuments";
 
 const depColors = {
   leve: "bg-green-50 text-green-700 border-green-200",
@@ -148,6 +149,7 @@ export default function ResidentProfile() {
           <TabsTrigger value="medicacion">Medicación ({medications.length})</TabsTrigger>
           <TabsTrigger value="planes">Planes ({plans.length})</TabsTrigger>
           <TabsTrigger value="incidentes">Incidentes ({incidents.length})</TabsTrigger>
+          <TabsTrigger value="documentos">Documentos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
@@ -295,6 +297,9 @@ export default function ResidentProfile() {
               </Card>
             ))}
           </div>
+        </TabsContent>
+        <TabsContent value="documentos">
+          <ResidentDocuments residentId={id} residentName={r.full_name} />
         </TabsContent>
       </Tabs>
     </div>

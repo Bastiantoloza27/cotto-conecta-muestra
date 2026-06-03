@@ -1,0 +1,55 @@
+{
+  "name": "ResidentDocument",
+  "type": "object",
+  "properties": {
+    "resident_id": {
+      "type": "string",
+      "description": "ID del residente"
+    },
+    "resident_name": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string",
+      "description": "Nombre o t\u00edtulo del documento"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "evaluacion",
+        "informe",
+        "ficha_clinica",
+        "contrato",
+        "identificacion",
+        "legal",
+        "otro"
+      ],
+      "description": "Categor\u00eda del documento"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL del archivo subido"
+    },
+    "file_name": {
+      "type": "string",
+      "description": "Nombre original del archivo"
+    },
+    "file_type": {
+      "type": "string",
+      "description": "Tipo de archivo (pdf, docx, etc.)"
+    },
+    "uploaded_by": {
+      "type": "string",
+      "description": "Nombre del profesional que sube el documento"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observaciones adicionales"
+    }
+  },
+  "required": [
+    "resident_id",
+    "title",
+    "file_url"
+  ]
+}
