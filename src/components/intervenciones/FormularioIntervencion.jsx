@@ -14,6 +14,7 @@ export const PROFESIONES = [
   { key: "tens", label: "TENS", color: "bg-blue-100 text-blue-800 border-blue-300", icon: "🩺" },
   { key: "kinesiologo", label: "Kinesiólogo/a", color: "bg-orange-100 text-orange-800 border-orange-300", icon: "🏃" },
   { key: "psicologo", label: "Psicólogo/a", color: "bg-pink-100 text-pink-800 border-pink-300", icon: "🧠" },
+  { key: "trabajador_social", label: "Trabajador/a Social", color: "bg-teal-100 text-teal-800 border-teal-300", icon: "🤝" },
 ];
 
 // ─── Tipos de intervención por profesión ───────────────────────────────────
@@ -23,6 +24,7 @@ const TIPOS_INTERVENCION = {
   tens: ["Control signos vitales", "Administración de medicamentos", "Curación herida / úlcera", "Higiene y aseo", "Traslado y posicionamiento", "Registro eliminación", "Apoyo en alimentación", "Sondas y ostomías", "Otro"],
   kinesiologo: ["Evaluación kinésica", "Kinesioterapia respiratoria", "Rehabilitación motora", "Ejercicios de movilidad articular", "Estimulación motriz", "Prevención caídas", "Ejercicios de equilibrio", "Masoterapia", "Otro"],
   psicologo: ["Evaluación psicológica", "Sesión de psicoterapia individual", "Evaluación cognitiva", "Psicoeducación a familia", "Intervención en crisis", "Estimulación cognitiva", "Evaluación estado mental", "Intervención conductual", "Otro"],
+  trabajador_social: ["Evaluación social", "Visita familiar", "Gestión de beneficios", "Coordinación con redes de apoyo", "Intervención en crisis familiar", "Trámites legales / judiciales", "Vinculación con familia", "Informe social", "Plan de intervención familiar", "Otro"],
 };
 
 // ─── Campos clínicos específicos por profesión ─────────────────────────────
@@ -257,6 +259,55 @@ function CamposClinicos({ profesion, datos, onChange }) {
       <div className="space-y-1 col-span-2">
         <Label className="text-xs font-semibold">Técnicas / abordaje terapéutico</Label>
         <Input value={datos.tecnicas || ""} onChange={e => set("tecnicas", e.target.value)} placeholder="Ej: Reminiscencia, psicoterapia de apoyo, orientación a la realidad" />
+      </div>
+    </div>
+  );
+
+  if (profesion === "trabajador_social") return (
+    <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-1">
+        <Label className="text-xs font-semibold">Red de apoyo familiar</Label>
+        <Select value={datos.red_apoyo || ""} onValueChange={v => set("red_apoyo", v)}>
+          <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+          <SelectContent>
+            {["Activa y presente", "Limitada", "Ausente", "En conflicto", "En proceso de vinculación"].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs font-semibold">Situación habitacional previa</Label>
+        <Select value={datos.situacion_habitacional || ""} onValueChange={v => set("situacion_habitacional", v)}>
+          <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+          <SelectContent>
+            {["Casa propia", "Casa familiar", "Arriendo", "Allegado/a", "Sin vivienda estable", "Otro"].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs font-semibold">Previsión de salud</Label>
+        <Select value={datos.prevision || ""} onValueChange={v => set("prevision", v)}>
+          <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+          <SelectContent>
+            {["FONASA A", "FONASA B", "FONASA C", "FONASA D", "ISAPRE", "Sin previsión", "Otro"].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs font-semibold">Pensión / ingreso</Label>
+        <Select value={datos.pension || ""} onValueChange={v => set("pension", v)}>
+          <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+          <SelectContent>
+            {["PBS Vejez", "PBS Invalidez", "Pensión contributiva", "Sin pensión", "Otro"].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1 col-span-2">
+        <Label className="text-xs font-semibold">Beneficios / gestiones en curso</Label>
+        <Input value={datos.beneficios || ""} onChange={e => set("beneficios", e.target.value)} placeholder="Ej: Gestión SENADIS, bono alivio, credencial discapacidad" />
+      </div>
+      <div className="space-y-1 col-span-2">
+        <Label className="text-xs font-semibold">Contacto familiar clave</Label>
+        <Input value={datos.contacto_familiar || ""} onChange={e => set("contacto_familiar", e.target.value)} placeholder="Nombre, relación y teléfono" />
       </div>
     </div>
   );
