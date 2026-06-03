@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Plus, Download, Pencil, Trash2, Search, Filter } from "lucide-react";
+import { Plus, Download, Pencil, Trash2, Search, Filter, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { createRoot } from "react-dom/client";
 import FormularioIntervencion, { PROFESIONES } from "./FormularioIntervencion";
 import InformeIntervencionImprimible from "./InformeIntervencionImprimible";
+import GenerarInformeIntegralDialog from "./GenerarInformeIntegralDialog";
 
 export default function TabIntervenciones({ residents }) {
   const qc = useQueryClient();
@@ -20,8 +21,9 @@ export default function TabIntervenciones({ residents }) {
   const [filtroResidente, setFiltroResidente] = useState("todos");
   const [busqueda, setBusqueda] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editando, setEditando] = useState(null); // { intervencion, resident }
+  const [editando, setEditando] = useState(null);
   const [residenteNuevo, setResidenteNuevo] = useState(null);
+  const [informeOpen, setInformeOpen] = useState(false);
 
   const { data: intervenciones = [], isLoading } = useQuery({
     queryKey: ["intervenciones"],
@@ -128,13 +130,23 @@ export default function TabIntervenciones({ residents }) {
             </SelectContent>
           </Select>
         </div>
-        <Button
-          size="sm"
-          onClick={() => { setResidenteNuevo(null); setEditando(null); setDialogOpen(true); }}
-          className="gap-1.5 shrink-0"
-        >
-          <Plus className="w-4 h-4" /> Nueva intervención
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setInformeOpen(true)}
+            className="gap-1.5"
+          >
+            <FileText className="w-4 h-4" /> Informe integral
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => { setResidenteNuevo(null); setEditando(null); setDialogOpen(true); }}
+            className="gap-1.5"
+          >
+            <Plus className="w-4 h-4" /> Nueva intervención
+          </Button>
+        </div>
       </div>
 
       {/* Contenido */}
@@ -222,6 +234,15 @@ export default function TabIntervenciones({ residents }) {
             );
           })}
         </div>
+      )}
+
+      {/* Informe integral */}
+      {informeOpen && (
+        <GenerarInformeIntegralDialog
+          open={informeOpen}
+          onClose={() => setInformeOpen(false)}
+          residents={residents}
+        />
       )}
 
       {/* Dialog */}
