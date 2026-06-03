@@ -10,10 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 
-export default function DailyLogFormDialog({ open, onClose, onSubmit, isLoading, residents = [], initial }) {
+export default function DailyLogFormDialog({ open, onClose, onSubmit, isLoading, residents = [], initial, categories = [], logType = "cuidadora" }) {
+  const defaultCategory = categories[0]?.value || "otro";
   const [form, setForm] = useState(initial || {
     resident_id: "", resident_name: "", date: format(new Date(), "yyyy-MM-dd"),
-    time: format(new Date(), "HH:mm"), category: "otro", mood: "",
+    time: format(new Date(), "HH:mm"), category: defaultCategory, mood: "",
     title: "", description: "", shift: "manana", is_important: false,
     registered_by: "",
   });
@@ -40,7 +41,9 @@ export default function DailyLogFormDialog({ open, onClose, onSubmit, isLoading,
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{initial ? "✏️ Editar registro" : "📝 Nuevo registro"}</DialogTitle>
+          <DialogTitle>
+            {initial ? "✏️ Editar registro" : logType === "tens" ? "🩺 Nuevo registro TENS" : "🤲 Nuevo registro Cuidadoras"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div>
@@ -70,16 +73,9 @@ export default function DailyLogFormDialog({ open, onClose, onSubmit, isLoading,
               <Select value={form.category} onValueChange={(v) => set("category", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="alimentacion">🍽️ Alimentación</SelectItem>
-                  <SelectItem value="emocional">💛 Emocional</SelectItem>
-                  <SelectItem value="sueno">🌙 Sueño</SelectItem>
-                  <SelectItem value="comportamiento">🧠 Comportamiento</SelectItem>
-                  <SelectItem value="actividad">🎯 Actividad</SelectItem>
-                  <SelectItem value="salud">🏥 Salud</SelectItem>
-                  <SelectItem value="higiene">🚿 Higiene</SelectItem>
-                  <SelectItem value="social">👥 Social</SelectItem>
-                  <SelectItem value="espiritual">🕊️ Espiritual</SelectItem>
-                  <SelectItem value="otro">📝 Otro</SelectItem>
+                  {categories.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

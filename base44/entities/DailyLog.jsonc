@@ -17,6 +17,15 @@
       "type": "string",
       "description": "Hora del registro"
     },
+    "log_type": {
+      "type": "string",
+      "enum": [
+        "cuidadora",
+        "tens"
+      ],
+      "default": "cuidadora",
+      "description": "Tipo de bit\u00e1cora: cuidadora o TENS"
+    },
     "category": {
       "type": "string",
       "enum": [
@@ -29,6 +38,14 @@
         "higiene",
         "social",
         "espiritual",
+        "signos_vitales",
+        "procedimiento",
+        "medicacion",
+        "curacion",
+        "examen_fisico",
+        "glucemia",
+        "sondaje",
+        "oxigenoterapia",
         "otro"
       ],
       "default": "otro"
