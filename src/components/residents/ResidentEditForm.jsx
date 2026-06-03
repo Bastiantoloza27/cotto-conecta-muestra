@@ -123,6 +123,65 @@ export default function ResidentEditForm({ resident, onClose }) {
         </div>
       </Card>
 
+      {/* Nutrición */}
+      <Card className="p-4 space-y-4">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Nutrición y Antropometría</h3>
+        <div className="grid sm:grid-cols-3 gap-4">
+          <div className="space-y-1">
+            <Label>Peso (kg)</Label>
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              value={form.weight_kg || ""}
+              onChange={e => set("weight_kg", e.target.value ? parseFloat(e.target.value) : "")}
+              placeholder="Ej: 65.5"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label>Estatura (cm)</Label>
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              value={form.height_cm || ""}
+              onChange={e => set("height_cm", e.target.value ? parseFloat(e.target.value) : "")}
+              placeholder="Ej: 158"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label>IMC</Label>
+            <Input
+              readOnly
+              value={
+                form.weight_kg && form.height_cm
+                  ? (form.weight_kg / Math.pow(form.height_cm / 100, 2)).toFixed(1)
+                  : "—"
+              }
+              className="bg-muted text-muted-foreground"
+            />
+          </div>
+        </div>
+        <div className="space-y-1">
+          <Label>Estado nutricional</Label>
+          <Select value={form.nutritional_status || ""} onValueChange={v => set("nutritional_status", v)}>
+            <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="normal">Normal</SelectItem>
+              <SelectItem value="bajo_peso">Bajo peso</SelectItem>
+              <SelectItem value="sobrepeso">Sobrepeso</SelectItem>
+              <SelectItem value="obesidad">Obesidad</SelectItem>
+              <SelectItem value="desnutricion">Desnutrición</SelectItem>
+              <SelectItem value="riesgo_nutricional">Riesgo nutricional</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label>Observaciones nutricionales</Label>
+          <Textarea rows={2} value={form.nutritional_notes || ""} onChange={e => set("nutritional_notes", e.target.value)} placeholder="Dieta especial, restricciones, suplementos..." />
+        </div>
+      </Card>
+
       {/* Historia y preferencias */}
       <Card className="p-4 space-y-4">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Historia y Preferencias</h3>

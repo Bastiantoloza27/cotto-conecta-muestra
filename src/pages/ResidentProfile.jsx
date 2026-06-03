@@ -164,6 +164,40 @@ export default function ResidentProfile() {
                 <p className="text-sm">{r.allergies}</p>
               </Card>
             )}
+            {(r.weight_kg || r.height_cm || r.nutritional_status) && (
+              <Card className="p-4 col-span-full">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-3">Nutrición y Antropometría</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {r.weight_kg && (
+                    <div className="bg-muted/50 rounded-lg p-3 text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Peso</p>
+                      <p className="text-lg font-bold text-primary mt-0.5">{r.weight_kg} <span className="text-xs font-normal">kg</span></p>
+                    </div>
+                  )}
+                  {r.height_cm && (
+                    <div className="bg-muted/50 rounded-lg p-3 text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Estatura</p>
+                      <p className="text-lg font-bold text-primary mt-0.5">{r.height_cm} <span className="text-xs font-normal">cm</span></p>
+                    </div>
+                  )}
+                  {r.weight_kg && r.height_cm && (
+                    <div className="bg-muted/50 rounded-lg p-3 text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">IMC</p>
+                      <p className="text-lg font-bold text-primary mt-0.5">{(r.weight_kg / Math.pow(r.height_cm / 100, 2)).toFixed(1)}</p>
+                    </div>
+                  )}
+                  {r.nutritional_status && (
+                    <div className="bg-muted/50 rounded-lg p-3 text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Estado nutricional</p>
+                      <p className="text-sm font-semibold mt-0.5 capitalize">{r.nutritional_status.replace("_", " ")}</p>
+                    </div>
+                  )}
+                </div>
+                {r.nutritional_notes && (
+                  <p className="text-sm text-muted-foreground mt-3 border-t pt-3">{r.nutritional_notes}</p>
+                )}
+              </Card>
+            )}
             {r.personal_history && (
               <Card className="p-4 col-span-full">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2 flex items-center gap-1"><Heart className="w-3 h-3" /> Historia de vida</h3>

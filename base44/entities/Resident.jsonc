@@ -71,6 +71,30 @@
         "O-"
       ]
     },
+    "weight_kg": {
+      "type": "number",
+      "description": "Peso en kilogramos"
+    },
+    "height_cm": {
+      "type": "number",
+      "description": "Estatura en cent\u00edmetros"
+    },
+    "nutritional_status": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "bajo_peso",
+        "sobrepeso",
+        "obesidad",
+        "desnutricion",
+        "riesgo_nutricional"
+      ],
+      "description": "Estado nutricional"
+    },
+    "nutritional_notes": {
+      "type": "string",
+      "description": "Observaciones nutricionales"
+    },
     "diagnoses": {
       "type": "string",
       "description": "Diagn\u00f3sticos principales"
