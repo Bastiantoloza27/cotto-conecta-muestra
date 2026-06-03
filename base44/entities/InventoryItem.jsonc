@@ -3,36 +3,49 @@
   "type": "object",
   "properties": {
     "name": {
-      "type": "string"
+      "type": "string",
+      "description": "Nombre del insumo"
     },
     "category": {
       "type": "string",
       "enum": [
-        "panales",
-        "medicamentos",
-        "alimentos",
-        "aseo",
-        "ropa",
-        "materiales",
-        "equipamiento",
-        "otro"
-      ]
+        "farmacos",
+        "alimentacion",
+        "aseo"
+      ],
+      "description": "Categor\u00eda principal"
+    },
+    "subcategory": {
+      "type": "string",
+      "description": "Subcategor\u00eda o tipo (ej: antibi\u00f3ticos, l\u00e1cteos, desinfectantes)"
     },
     "current_stock": {
-      "type": "number"
+      "type": "number",
+      "default": 0,
+      "description": "Stock actual"
     },
     "minimum_stock": {
-      "type": "number"
+      "type": "number",
+      "default": 0,
+      "description": "Stock m\u00ednimo cr\u00edtico (rojo)"
+    },
+    "warning_stock": {
+      "type": "number",
+      "default": 0,
+      "description": "Stock de advertencia moderada (amarillo)"
     },
     "unit": {
-      "type": "string"
+      "type": "string",
+      "description": "Unidad de medida (ej: unid., kg, litros, cajas)"
+    },
+    "location": {
+      "type": "string",
+      "description": "Ubicaci\u00f3n f\u00edsica en la instituci\u00f3n"
     },
     "last_restock_date": {
       "type": "string",
-      "format": "date"
-    },
-    "location": {
-      "type": "string"
+      "format": "date",
+      "description": "Fecha de \u00faltima reposici\u00f3n"
     },
     "notes": {
       "type": "string"
