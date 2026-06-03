@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, ClipboardList, Target, Pencil, Trash2, LayoutGrid, List } from "lucide-react";
+import { Plus, ClipboardList, Target, Pencil, Trash2, LayoutGrid, List, FileDown } from "lucide-react";
+import InformePlanesApoyo from "@/components/informes/InformePlanesApoyo";
+import { printReport } from "@/lib/printReport";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -34,6 +36,7 @@ export default function SupportPlans() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [view, setView] = useState("kanban");
+  const [statusFilter, setStatusFilter] = useState("todos");
   const queryClient = useQueryClient();
 
   const { data: plans = [] } = useQuery({
@@ -87,7 +90,13 @@ export default function SupportPlans() {
           <h1 className="text-2xl font-bold text-foreground">Plan de Apoyos</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Objetivos personalizados y seguimiento de cada persona</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+            const toExport = statusFilter === "todos" ? plans : plans.filter(p => p.status === statusFilter);
+            printReport(<InformePlanesApoyo plans={toExport} statusFilter={statusFilter} />, "Planes de Apoyo");
+          }}>
+            <FileDown className="w-4 h-4" /> Informe
+          </Button>
           {/* View toggle */}
           <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
             <button

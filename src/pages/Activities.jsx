@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Calendar, MapPin, User, Pencil, Trash2 } from "lucide-react";
+import { Plus, Calendar, MapPin, User, Pencil, Trash2, FileDown } from "lucide-react";
+import InformeActividadesImprimible from "@/components/informes/InformeActividadesImprimible";
+import { printReport } from "@/lib/printReport";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -31,10 +33,16 @@ const emptyActivity = {
   time_start: "", time_end: "", location: "", responsible: "", status: "programada", notes: "",
 };
 
+const today = new Date();
+const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split("T")[0];
+const todayStr = today.toISOString().split("T")[0];
+
 export default function Activities() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyActivity);
+  const [desde, setDesde] = useState(firstDayOfMonth);
+  const [hasta, setHasta] = useState(todayStr);
   const queryClient = useQueryClient();
 
   const { data: activities = [] } = useQuery({
@@ -68,13 +76,26 @@ export default function Activities() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
-      <PageHeader
-        title="Actividades y Comunidad"
-        subtitle="Talleres, celebraciones, voluntariados y más"
-        action={() => setShowForm(true)}
-        actionLabel="Nueva actividad"
-        actionIcon={Plus}
-      />
+      <div className="flex items-start justify-between gap-3 mb-6 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Actividades y Comunidad</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Talleres, celebraciones, voluntariados y más</p>
+        </div>
+        <div className="flex gap-2 flex-wrap items-center">
+          <input type="date" value={desde} onChange={e => setDesde(e.target.value)} className="border rounded px-2 py-1 text-xs" />
+          <span className="text-xs text-muted-foreground">al</span>
+          <input type="date" value={hasta} onChange={e => setHasta(e.target.value)} className="border rounded px-2 py-1 text-xs" />
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+            const filtradas = activities.filter(a => (!desde || a.date >= desde) && (!hasta || a.date <= hasta));
+            printReport(<InformeActividadesImprimible activities={filtradas} desde={desde} hasta={hasta} />, "Informe Actividades");
+          }}>
+            <FileDown className="w-4 h-4" /> Informe
+          </Button>
+          <Button size="sm" className="gap-1.5" onClick={() => setShowForm(true)}>
+            <Plus className="w-4 h-4" /> Nueva actividad
+          </Button>
+        </div>
+      </div>
 
       {activities.length === 0 ? (
         <EmptyState

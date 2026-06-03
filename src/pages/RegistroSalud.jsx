@@ -15,6 +15,7 @@ import { ChevronLeft, ChevronRight, ClipboardList, Activity, Plus, CheckCircle2,
 import BristolScale, { BRISTOL } from "@/components/registros/BristolScale";
 import AlertaDeposicion from "@/components/registros/AlertaDeposicion";
 import InformeDeposicionImprimible from "@/components/registros/InformeDeposicionImprimible";
+import InformeSignosVitalesImprimible from "@/components/informes/InformeSignosVitalesImprimible";
 import TabIntervenciones from "@/components/intervenciones/TabIntervenciones";
 import { toast } from "sonner";
 import { createRoot } from "react-dom/client";
@@ -472,11 +473,27 @@ export default function RegistroSalud() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Deposiciones y Signos Vitales diarios</p>
         </div>
-        {tab === "deposiciones" && (
-          <Button variant="outline" size="sm" onClick={handleDescargarInforme} className="shrink-0 gap-1.5">
-            <Download className="w-4 h-4" /> Descargar informe
-          </Button>
-        )}
+        <div className="flex gap-2 shrink-0">
+          {tab === "deposiciones" && (
+            <Button variant="outline" size="sm" onClick={handleDescargarInforme} className="gap-1.5">
+              <Download className="w-4 h-4" /> Informe deposición
+            </Button>
+          )}
+          {tab === "signos" && (
+            <Button variant="outline" size="sm" onClick={() => {
+              const printWindow = window.open("", "_blank");
+              if (!printWindow) { toast.error("Permite ventanas emergentes"); return; }
+              printWindow.document.title = `Signos Vitales ${selectedDate}`;
+              const div = printWindow.document.createElement("div");
+              printWindow.document.body.appendChild(div);
+              const root = createRoot(div);
+              root.render(<InformeSignosVitalesImprimible residents={residents} signosVitales={signosVitales} date={selectedDate} />);
+              setTimeout(() => printWindow.print(), 700);
+            }} className="gap-1.5">
+              <Download className="w-4 h-4" /> Informe signos
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Navegación de fecha */}

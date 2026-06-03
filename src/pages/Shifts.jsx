@@ -5,7 +5,9 @@ import { base44 } from "@/api/base44Client";
 const shiftTypeLabels = { manana: "Mañana", tarde: "Tarde", noche: "Noche", largo: "Largo" };
 import { format, addDays, startOfWeek } from "date-fns";
 import { es } from "date-fns/locale";
-import { Plus, Clock, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { Plus, Clock, ChevronLeft, ChevronRight, Pencil, Trash2, FileDown } from "lucide-react";
+import InformeTurnosImprimible from "@/components/informes/InformeTurnosImprimible";
+import { printReport } from "@/lib/printReport";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -94,13 +96,23 @@ export default function Shifts() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
-      <PageHeader
-        title="Turnos y Personal"
-        subtitle="Calendario de turnos y gestión del equipo"
-        action={() => setShowForm(true)}
-        actionLabel="Asignar turno"
-        actionIcon={Plus}
-      />
+      <div className="flex items-start justify-between gap-3 mb-6 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Turnos y Personal</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Calendario de turnos y gestión del equipo</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => printReport(
+            <InformeTurnosImprimible shifts={shifts.filter(s => days.some(d => format(d, "yyyy-MM-dd") === s.date))} weekStart={weekStart} days={days} />,
+            "Cuadro de Turnos"
+          )}>
+            <FileDown className="w-4 h-4" /> Cuadro semanal
+          </Button>
+          <Button size="sm" className="gap-1.5" onClick={() => setShowForm(true)}>
+            <Plus className="w-4 h-4" /> Asignar turno
+          </Button>
+        </div>
+      </div>
 
       {/* Week nav */}
       <div className="flex items-center gap-3 mb-6">

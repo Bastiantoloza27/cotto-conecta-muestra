@@ -9,7 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Search, Phone, Mail, Pencil, Trash2, User } from "lucide-react";
+import { Plus, Search, Phone, Mail, Pencil, Trash2, User, FileDown } from "lucide-react";
+import InformePersonalImprimible from "@/components/informes/InformePersonalImprimible";
+import { printReport } from "@/lib/printReport";
 
 const POSITION_LABELS = {
   director: "Director/a",
@@ -127,9 +129,17 @@ export default function Staff() {
             {activeCount} funcionario{activeCount !== 1 ? "s" : ""} activo{activeCount !== 1 ? "s" : ""}
           </p>
         </div>
-        <Button onClick={() => { setForm(EMPTY_FORM); setShowForm(true); }} className="gap-2 self-start sm:self-auto">
-          <Plus className="w-4 h-4" /> Agregar funcionario
-        </Button>
+        <div className="flex gap-2 self-start sm:self-auto">
+          <Button variant="outline" className="gap-2" onClick={() => printReport(
+            <InformePersonalImprimible staff={filtered} filterArea={filterArea} />,
+            "Nómina de Personal"
+          )}>
+            <FileDown className="w-4 h-4" /> Nómina
+          </Button>
+          <Button onClick={() => { setForm(EMPTY_FORM); setShowForm(true); }} className="gap-2">
+            <Plus className="w-4 h-4" /> Agregar funcionario
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}

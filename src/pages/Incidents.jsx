@@ -2,7 +2,13 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, AlertTriangle, Filter } from "lucide-react";
+import { useState as useStateDate } from "react";
+import { Plus, AlertTriangle, Filter, FileDown } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import InformeIncidentesImprimible from "@/components/informes/InformeIncidentesImprimible";
+import { printReport } from "@/lib/printReport";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,6 +32,9 @@ const statusColors = {
 export default function Incidents() {
   const [showForm, setShowForm] = useState(false);
   const [statusFilter, setStatusFilter] = useState("todos");
+  const [showFiltroFecha, setShowFiltroFecha] = useState(false);
+  const [desde, setDesde] = useStateDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0]);
+  const [hasta, setHasta] = useStateDate(new Date().toISOString().split("T")[0]);
   const queryClient = useQueryClient();
 
   const params = new URLSearchParams(window.location.search);
@@ -52,22 +61,49 @@ export default function Incidents() {
     },
   });
 
-  const filtered = statusFilter === "todos"
-    ? incidents
-    : incidents.filter((i) => i.status === statusFilter);
+  const filtered = incidents.filter(i => {
+    const matchStatus = statusFilter === "todos" || i.status === statusFilter;
+    const matchDesde = !desde || (i.date && i.date >= desde);
+    const matchHasta = !hasta || (i.date && i.date <= hasta);
+    return matchStatus && matchDesde && matchHasta;
+  });
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
-      <PageHeader
-        title="Incidentes"
-        subtitle="Registro y seguimiento de eventos importantes"
-        action={() => setShowForm(true)}
-        actionLabel="Reportar incidente"
-        actionIcon={Plus}
-      />
+      <div className="flex items-start justify-between gap-3 mb-6 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Incidentes</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Registro y seguimiento de eventos importantes</p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowFiltroFecha(f => !f)}>
+            <Filter className="w-4 h-4" /> Filtrar fechas
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => printReport(
+            <InformeIncidentesImprimible incidents={filtered} filtros={{ estado: statusFilter }} desde={desde} hasta={hasta} />,
+            "Informe Incidentes"
+          )}>
+            <FileDown className="w-4 h-4" /> Informe
+          </Button>
+          <Button size="sm" className="gap-1.5" onClick={() => setShowForm(true)}>
+            <Plus className="w-4 h-4" /> Reportar incidente
+          </Button>
+        </div>
+      </div>
+      {showFiltroFecha && (
+        <div className="flex flex-wrap gap-3 items-end mb-4 p-3 bg-muted/40 rounded-lg border">
+          <div className="flex items-center gap-2">
+            <Label className="text-xs">Desde</Label>
+            <input type="date" value={desde} onChange={e => setDesde(e.target.value)} className="border rounded px-2 py-1 text-sm" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs">Hasta</Label>
+            <input type="date" value={hasta} onChange={e => setHasta(e.target.value)} className="border rounded px-2 py-1 text-sm" />
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-3 mb-6 items-center">
-        <Filter className="w-4 h-4 text-muted-foreground" />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-44">
             <SelectValue />

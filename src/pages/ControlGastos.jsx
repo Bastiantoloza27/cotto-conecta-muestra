@@ -9,7 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
-import { Plus, Receipt, Clock, CheckCircle, XCircle, Printer, Search } from "lucide-react";
+import { Plus, Receipt, Clock, CheckCircle, XCircle, Printer, Search, FileDown } from "lucide-react";
+import InformeGastosResumen from "@/components/informes/InformeGastosResumen";
+import { printReport } from "@/lib/printReport";
 import NuevaSolicitudDialog from "@/components/gastos/NuevaSolicitudDialog";
 import ResolucionDialog from "@/components/gastos/ResolucionDialog";
 import DocumentoImprimible from "@/components/gastos/DocumentoImprimible";
@@ -169,9 +171,21 @@ function VistaDirector({ user }) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Control de Gastos</h1>
-        <p className="text-sm text-muted-foreground">Gestión de solicitudes del personal</p>
+      <div className="mb-6 flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold">Control de Gastos</h1>
+          <p className="text-sm text-muted-foreground">Gestión de solicitudes del personal</p>
+        </div>
+        <Button variant="outline" className="gap-2" onClick={() => {
+          const inicio = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+          const fin = new Date().toISOString().split("T")[0];
+          printReport(
+            <InformeGastosResumen solicitudes={filtradas} desde={inicio} hasta={fin} user={user} />,
+            "Resumen Gastos"
+          );
+        }}>
+          <FileDown className="w-4 h-4" /> Resumen del mes
+        </Button>
       </div>
 
       {/* Indicadores */}

@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Pill, Clock, AlertCircle, AlertTriangle, Send, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pill, Clock, AlertCircle, AlertTriangle, Send, Pencil, Trash2, FileDown } from "lucide-react";
+import InformeMedicacionImprimible from "@/components/informes/InformeMedicacionImprimible";
+import { printReport } from "@/lib/printReport";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -155,7 +157,17 @@ export default function Medications() {
           <h1 className="text-2xl font-semibold tracking-tight">Medicación</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Control de medicamentos, horarios y administración</p>
         </div>
-        <div className="flex gap-2 shrink-0">
+        <div className="flex gap-2 shrink-0 flex-wrap">
+          <Button
+            variant="outline"
+            onClick={() => printReport(
+              <InformeMedicacionImprimible medications={filtered} residents={residents} statusFilter={statusFilter} />,
+              "Informe Medicación"
+            )}
+            className="gap-2"
+          >
+            <FileDown className="w-4 h-4" /> Informe
+          </Button>
           <Button onClick={() => { setEditingMed(null); setForm(EMPTY_FORM); setShowForm(true); }} className="gap-2">
             <Plus className="w-4 h-4" />
             Agregar medicamento
