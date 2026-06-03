@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import StatCard from "@/components/shared/StatCard";
 import MoodBadge from "@/components/shared/MoodBadge";
+import MiniCalendar from "@/components/dashboard/MiniCalendar";
 
 const today = format(new Date(), "yyyy-MM-dd");
 
@@ -197,34 +198,8 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Today's activities */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-base font-semibold flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-primary" />
-                Actividades hoy
-              </h2>
-              <Link to="/actividades">
-                <Button variant="ghost" size="sm" className="text-xs">Ver</Button>
-              </Link>
-            </div>
-            {activities.length === 0 ? (
-              <Card className="p-4 text-center">
-                <p className="text-xs text-muted-foreground">No hay actividades programadas</p>
-              </Card>
-            ) : (
-              <div className="space-y-2">
-                {activities.slice(0, 4).map((act) => (
-                  <Card key={act.id} className="p-3">
-                    <p className="text-sm font-medium">{act.title}</p>
-                    <p className="text-xs text-muted-foreground capitalize mt-0.5">
-                      {act.time_start && `${act.time_start} · `}{act.type}
-                    </p>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Mini Calendar */}
+          <MiniCalendar />
 
           {/* Medication alerts */}
           {(criticalMeds.length > 0 || lowMeds.length > 0) && (
