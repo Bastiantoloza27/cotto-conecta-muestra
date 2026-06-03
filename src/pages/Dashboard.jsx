@@ -5,7 +5,7 @@ import { es } from "date-fns/locale";
 import { Link } from "react-router-dom";
 import {
   Users, Calendar, Pill, BookOpen,
-  Heart, ArrowRight, Clock, Activity, ClipboardPlus, Stethoscope, FileText
+  Heart, ArrowRight, Clock, Activity, ClipboardPlus, Stethoscope, FileText, Megaphone
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +44,16 @@ export default function Dashboard() {
   const { data: waitingAdmissions = [] } = useQuery({
     queryKey: ["admissions-waiting"],
     queryFn: () => base44.entities.Admission.filter({ status: "en_espera" }),
+  });
+
+  const { data: avisosNoLeidos = [] } = useQuery({
+    queryKey: ["avisos-no-leidos-dashboard"],
+    queryFn: async () => {
+      const me = await base44.auth.me();
+      if (!me?.email) return [];
+      const destinatarios = await base44.entities.AvisoDestinatario.filter({ usuario_email: me.email });
+      return destinatarios.filter(d => !d.leido_en);
+    },
   });
 
   const criticalMeds = allMedications.filter(m => m.stock_remaining > 0 && m.stock_remaining < 5);
@@ -255,6 +265,37 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* Avisos no leídos */}
+          {avisosNoLeidos.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base font-semibold flex items-center gap-2">
+                  <Megaphone className="w-4 h-4 text-primary" />
+                  Avisos pendientes
+                </h2>
+                <Link to="/mis-avisos">
+                  <Button variant="ghost" size="sm" className="text-xs">Ver todos</Button>
+                </Link>
+              </div>
+              <Link to="/mis-avisos">
+                <Card className="p-3 border-orange-200 bg-orange-50 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                      <Megaphone className="w-4 h-4 text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-orange-800">
+                        {avisosNoLeidos.length} aviso{avisosNoLeidos.length > 1 ? "s" : ""} sin leer
+                      </p>
+                      <p className="text-xs text-orange-600">Toca para ver tus avisos</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-orange-400 ml-auto" />
+                  </div>
+                </Card>
+              </Link>
+            </div>
+          )}
+
           {/* Quick actions */}
           <div>
             <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
@@ -277,9 +318,9 @@ export default function Dashboard() {
                   💊 Medicación
                 </Button>
               </Link>
-              <Link to="/admisiones">
+              <Link to="/mis-avisos">
                 <Button variant="outline" size="sm" className="w-full text-xs h-9">
-                  📋 Admisiones
+                  📢 Avisos
                 </Button>
               </Link>
             </div>
