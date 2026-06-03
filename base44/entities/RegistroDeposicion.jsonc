@@ -1,0 +1,58 @@
+{
+  "name": "RegistroDeposicion",
+  "type": "object",
+  "properties": {
+    "resident_id": {
+      "type": "string"
+    },
+    "resident_name": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "turno": {
+      "type": "string",
+      "enum": [
+        "manana",
+        "tarde",
+        "noche"
+      ]
+    },
+    "tuvo_deposicion": {
+      "type": "boolean",
+      "default": false
+    },
+    "cantidad": {
+      "type": "string",
+      "enum": [
+        "mancha",
+        "poco",
+        "mucho"
+      ],
+      "description": "Cantidad de deposici\u00f3n"
+    },
+    "tipo_bristol": {
+      "type": "number",
+      "description": "Escala de Bristol 1-7"
+    },
+    "diuresis": {
+      "type": "boolean",
+      "default": false,
+      "description": "Hubo diuresis (orina)"
+    },
+    "encargada": {
+      "type": "string",
+      "description": "Nombre de la encargada del turno"
+    },
+    "observaciones": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "resident_id",
+    "date",
+    "turno"
+  ]
+}

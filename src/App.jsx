@@ -24,6 +24,7 @@ import Admissions from '@/pages/Admissions';
 import CalendarPage from '@/pages/CalendarPage';
 import Staff from '@/pages/Staff';
 import InformesMedico from '@/pages/InformesMedico';
+import RegistroSalud from '@/pages/RegistroSalud';
 import ControlGastos from '@/pages/ControlGastos';
 import Reuniones from '@/pages/Reuniones';
 import AvisosDirector from '@/pages/AvisosDirector';
@@ -65,6 +66,7 @@ const AuthenticatedApp = () => {
         <Route path="/medicacion" element={<Medications />} />
         <Route path="/incidentes" element={<Incidents />} />
         <Route path="/informes-medico" element={<InformesMedico />} />
+        <Route path="/registro-salud" element={<RegistroSalud />} />
         <Route path="/actividades" element={<Activities />} />
         <Route path="/turnos" element={<Shifts />} />
         <Route path="/pastoral" element={<Pastoral />} />

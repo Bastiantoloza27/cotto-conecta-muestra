@@ -1,0 +1,46 @@
+{
+  "name": "RegistroSignosVitales",
+  "type": "object",
+  "properties": {
+    "resident_id": {
+      "type": "string"
+    },
+    "resident_name": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "pa_sistolica": {
+      "type": "number",
+      "description": "Presi\u00f3n arterial sist\u00f3lica (mmHg)"
+    },
+    "pa_diastolica": {
+      "type": "number",
+      "description": "Presi\u00f3n arterial diast\u00f3lica (mmHg)"
+    },
+    "saturacion": {
+      "type": "number",
+      "description": "Saturaci\u00f3n de ox\u00edgeno (%)"
+    },
+    "temperatura": {
+      "type": "number",
+      "description": "Temperatura corporal (\u00b0C)"
+    },
+    "frecuencia_cardiaca": {
+      "type": "number",
+      "description": "Frecuencia card\u00edaca (lpm)"
+    },
+    "encargada": {
+      "type": "string"
+    },
+    "observaciones": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "resident_id",
+    "date"
+  ]
+}

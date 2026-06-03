@@ -35,6 +35,7 @@ const NAV_GROUPS_USER = [
     items: [
       { label: "Medicación", icon: Pill, path: "/medicacion" },
       { label: "Informes del Médico", icon: Stethoscope, path: "/informes-medico" },
+      { label: "Registro de Salud", icon: ClipboardList, path: "/registro-salud" },
     ]
   },
   {
@@ -85,6 +86,7 @@ const NAV_GROUPS_ADMIN = [
     items: [
       { label: "Medicación", icon: Pill, path: "/medicacion" },
       { label: "Informes del Médico", icon: Stethoscope, path: "/informes-medico" },
+      { label: "Registro de Salud", icon: ClipboardList, path: "/registro-salud" },
     ]
   },
   {
