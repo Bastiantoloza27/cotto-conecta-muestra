@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Heart, Phone, MapPin, Calendar, Brain, MessageCircle, Pill, AlertTriangle, ClipboardList, Pencil } from "lucide-react";
+import { ArrowLeft, Heart, Phone, MapPin, Calendar, Brain, MessageCircle, Pill, AlertTriangle, ClipboardList, Pencil, Stethoscope } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MoodBadge from "@/components/shared/MoodBadge";
 import ResidentEditForm from "@/components/residents/ResidentEditForm";
 import ResidentDocuments from "@/components/residents/ResidentDocuments";
+import ResidentIntervenciones from "@/components/intervenciones/ResidentIntervenciones";
 
 const depColors = {
   leve: "bg-green-50 text-green-700 border-green-200",
@@ -149,6 +150,7 @@ export default function ResidentProfile() {
           <TabsTrigger value="medicacion">Medicación ({medications.length})</TabsTrigger>
           <TabsTrigger value="planes">Planes ({plans.length})</TabsTrigger>
           <TabsTrigger value="incidentes">Incidentes ({incidents.length})</TabsTrigger>
+          <TabsTrigger value="intervenciones">Intervenciones</TabsTrigger>
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
         </TabsList>
 
@@ -297,6 +299,9 @@ export default function ResidentProfile() {
               </Card>
             ))}
           </div>
+        </TabsContent>
+        <TabsContent value="intervenciones">
+          <ResidentIntervenciones resident={r} />
         </TabsContent>
         <TabsContent value="documentos">
           <ResidentDocuments residentId={id} residentName={r.full_name} />

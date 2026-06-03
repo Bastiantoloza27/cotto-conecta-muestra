@@ -1,0 +1,68 @@
+{
+  "name": "IntervencionProfesional",
+  "type": "object",
+  "properties": {
+    "resident_id": {
+      "type": "string"
+    },
+    "resident_name": {
+      "type": "string"
+    },
+    "fecha": {
+      "type": "string",
+      "format": "date"
+    },
+    "profesion": {
+      "type": "string",
+      "enum": [
+        "nutricionista",
+        "terapeuta_ocupacional",
+        "tens",
+        "kinesiologo",
+        "psicologo"
+      ]
+    },
+    "profesional_nombre": {
+      "type": "string"
+    },
+    "tipo_intervencion": {
+      "type": "string"
+    },
+    "datos_clinicos": {
+      "type": "string",
+      "description": "JSON stringificado con los campos cl\u00ednicos espec\u00edficos del \u00e1rea"
+    },
+    "evaluacion": {
+      "type": "string",
+      "description": "Evaluaci\u00f3n general / hallazgos"
+    },
+    "objetivos": {
+      "type": "string",
+      "description": "Objetivos de la intervenci\u00f3n"
+    },
+    "acciones": {
+      "type": "string",
+      "description": "Acciones realizadas"
+    },
+    "indicaciones": {
+      "type": "string",
+      "description": "Indicaciones o plan a seguir"
+    },
+    "proxima_sesion": {
+      "type": "string",
+      "format": "date"
+    },
+    "firma": {
+      "type": "string"
+    },
+    "observaciones": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "resident_id",
+    "fecha",
+    "profesion",
+    "profesional_nombre"
+  ]
+}

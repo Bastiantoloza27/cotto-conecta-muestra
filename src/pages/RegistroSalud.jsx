@@ -11,10 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, ClipboardList, Activity, Plus, CheckCircle2, XCircle, AlertTriangle, Download } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardList, Activity, Plus, CheckCircle2, XCircle, AlertTriangle, Download, Stethoscope } from "lucide-react";
 import BristolScale, { BRISTOL } from "@/components/registros/BristolScale";
 import AlertaDeposicion from "@/components/registros/AlertaDeposicion";
 import InformeDeposicionImprimible from "@/components/registros/InformeDeposicionImprimible";
+import TabIntervenciones from "@/components/intervenciones/TabIntervenciones";
 import { toast } from "sonner";
 import { createRoot } from "react-dom/client";
 
@@ -513,6 +514,9 @@ export default function RegistroSalud() {
           <TabsTrigger value="signos" className="gap-1.5">
             <Activity className="w-4 h-4" /> Signos Vitales
           </TabsTrigger>
+          <TabsTrigger value="intervenciones" className="gap-1.5">
+            <Stethoscope className="w-4 h-4" /> Intervenciones
+          </TabsTrigger>
         </TabsList>
 
         {/* ── TAB DEPOSICIONES ── */}
@@ -637,6 +641,11 @@ export default function RegistroSalud() {
               </div>
             </div>
           </div>
+        </TabsContent>
+
+        {/* ── TAB INTERVENCIONES ── */}
+        <TabsContent value="intervenciones">
+          <TabIntervenciones residents={residents} />
         </TabsContent>
       </Tabs>
 
