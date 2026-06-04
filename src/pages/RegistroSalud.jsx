@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, ClipboardList, Activity, Plus, CheckCircle2, XCircle, AlertTriangle, Download, Stethoscope } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardList, Activity, Plus, CheckCircle2, XCircle, AlertTriangle, Download, Stethoscope, Pencil, Trash2, EyeOff, Eye, UserPlus } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import BristolScale, { BRISTOL } from "@/components/registros/BristolScale";
 import AlertaDeposicion from "@/components/registros/AlertaDeposicion";
 import InformeDeposicionImprimible from "@/components/registros/InformeDeposicionImprimible";
@@ -42,27 +43,40 @@ function calcDiasSinDeposicion(residentId, deposiciones, fechaBase) {
 }
 
 // ─── Tarjeta de deposición por turno ───────────────────────────────────────
-function TarjetaTurno({ turno, resident, registro, onEdit }) {
+function TarjetaTurno({ turno, resident, registro, onEdit, onDelete }) {
   const tieneRegistro = !!registro;
   const deposito = registro?.tuvo_deposicion;
 
   return (
     <div
-      className={`rounded-lg border p-3 cursor-pointer hover:shadow-sm transition-all ${
+      className={`rounded-lg border p-3 transition-all relative group ${
         tieneRegistro
           ? deposito
             ? "bg-green-50 border-green-300"
             : "bg-slate-50 border-slate-300"
-          : "bg-white border-dashed border-border hover:border-primary/50"
+          : "bg-white border-dashed border-border hover:border-primary/50 cursor-pointer hover:shadow-sm"
       }`}
-      onClick={() => onEdit(turno, registro)}
+      onClick={() => !tieneRegistro && onEdit(turno, registro)}
     >
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-semibold text-muted-foreground">{turno.icon} {turno.label}</span>
         {tieneRegistro ? (
-          deposito
-            ? <CheckCircle2 className="w-4 h-4 text-green-600" />
-            : <XCircle className="w-4 h-4 text-slate-400" />
+          <div className="flex items-center gap-1">
+            <button
+              onClick={(e) => { e.stopPropagation(); onEdit(turno, registro); }}
+              className="p-1 rounded hover:bg-black/10 transition-colors opacity-60 hover:opacity-100"
+              title="Editar"
+            >
+              <Pencil className="w-3 h-3" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(registro); }}
+              className="p-1 rounded hover:bg-red-100 transition-colors opacity-60 hover:opacity-100 text-red-500"
+              title="Eliminar"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </div>
         ) : (
           <Plus className="w-4 h-4 text-muted-foreground/40" />
         )}
@@ -95,7 +109,7 @@ function TarjetaTurno({ turno, resident, registro, onEdit }) {
 }
 
 // ─── Fila de residente (deposiciones) ──────────────────────────────────────
-function FilaResidente({ resident, deposiciones, today, onEdit, diasSin }) {
+function FilaResidente({ resident, deposiciones, today, onEdit, onDelete, onHide, diasSin }) {
   const registrosPorTurno = {};
   TURNOS.forEach(t => {
     registrosPorTurno[t.key] = deposiciones.find(
@@ -113,13 +127,22 @@ function FilaResidente({ resident, deposiciones, today, onEdit, diasSin }) {
           <p className="text-sm font-semibold truncate">{resident.preferred_name || resident.full_name}</p>
           <p className="text-[11px] text-muted-foreground">{resident.room ? `Hab. ${resident.room}` : ""}</p>
         </div>
-        {diasSin >= 3 && (
-          <Badge className={`text-[10px] shrink-0 ${
-            diasSin >= 6 ? "bg-red-500" : diasSin >= 5 ? "bg-orange-500" : "bg-amber-500"
-          } text-white border-0`}>
-            {diasSin}d sin dep.
-          </Badge>
-        )}
+        <div className="flex items-center gap-1 shrink-0">
+          {diasSin >= 3 && (
+            <Badge className={`text-[10px] ${
+              diasSin >= 6 ? "bg-red-500" : diasSin >= 5 ? "bg-orange-500" : "bg-amber-500"
+            } text-white border-0`}>
+              {diasSin}d sin dep.
+            </Badge>
+          )}
+          <button
+            onClick={() => onHide(resident.id)}
+            className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            title="Ocultar de esta lista"
+          >
+            <EyeOff className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {diasSin >= 3 && (
@@ -136,6 +159,7 @@ function FilaResidente({ resident, deposiciones, today, onEdit, diasSin }) {
             resident={resident}
             registro={registrosPorTurno[turno.key]}
             onEdit={onEdit}
+            onDelete={onDelete}
           />
         ))}
       </div>
@@ -389,6 +413,11 @@ export default function RegistroSalud() {
   const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [dialogDep, setDialogDep] = useState(null); // { resident, turno, registro }
   const [dialogVit, setDialogVit] = useState(null); // { resident, registro }
+  const [confirmDelete, setConfirmDelete] = useState(null); // registro a eliminar
+  const [mostrarOcultos, setMostrarOcultos] = useState(false);
+  const [residentesOcultos, setResidentesOcultos] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("dep_ocultos") || "[]"); } catch { return []; }
+  });
 
   const { data: residents = [] } = useQuery({
     queryKey: ["residents-activos"],
@@ -415,6 +444,24 @@ export default function RegistroSalud() {
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["deposiciones"] }); toast.success("Registro guardado"); },
   });
+
+  const deleteDep = useMutation({
+    mutationFn: (id) => base44.entities.RegistroDeposicion.delete(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["deposiciones"] }); toast.success("Registro eliminado"); setConfirmDelete(null); },
+  });
+
+  const handleHideResident = (residentId) => {
+    const nuevos = [...residentesOcultos, residentId];
+    setResidentesOcultos(nuevos);
+    localStorage.setItem("dep_ocultos", JSON.stringify(nuevos));
+    toast.success("Residente ocultado de la lista. Puedes restaurarlo con el botón 'Ver ocultos'.");
+  };
+
+  const handleShowResident = (residentId) => {
+    const nuevos = residentesOcultos.filter(id => id !== residentId);
+    setResidentesOcultos(nuevos);
+    localStorage.setItem("dep_ocultos", JSON.stringify(nuevos));
+  };
 
   const saveVit = useMutation({
     mutationFn: async ({ form, id, residentId, residentName }) => {
@@ -538,13 +585,27 @@ export default function RegistroSalud() {
 
         {/* ── TAB DEPOSICIONES ── */}
         <TabsContent value="deposiciones">
+          {/* Barra de acciones lista */}
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs text-muted-foreground">
+              {residents.filter(r => !residentesOcultos.includes(r.id)).length} residentes visibles
+              {residentesOcultos.length > 0 && ` · ${residentesOcultos.length} oculto(s)`}
+            </p>
+            {residentesOcultos.length > 0 && (
+              <Button variant="ghost" size="sm" className="text-xs gap-1.5" onClick={() => setMostrarOcultos(v => !v)}>
+                {mostrarOcultos ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                {mostrarOcultos ? "Ocultar sección" : `Ver ocultos (${residentesOcultos.length})`}
+              </Button>
+            )}
+          </div>
+
           <div className="space-y-4">
             {residents.length === 0 ? (
               <Card className="p-10 text-center">
                 <p className="text-muted-foreground text-sm">No hay residentes activos</p>
               </Card>
             ) : (
-              residents.map(resident => (
+              residents.filter(r => !residentesOcultos.includes(r.id)).map(resident => (
                 <FilaResidente
                   key={resident.id}
                   resident={resident}
@@ -552,10 +613,34 @@ export default function RegistroSalud() {
                   today={selectedDate}
                   diasSin={diasSinPorResidente[resident.id] || 0}
                   onEdit={(turno, registro) => setDialogDep({ resident, turno: turno.key || turno, registro })}
+                  onDelete={(registro) => setConfirmDelete(registro)}
+                  onHide={handleHideResident}
                 />
               ))
             )}
           </div>
+
+          {/* Sección de residentes ocultos */}
+          {mostrarOcultos && residentesOcultos.length > 0 && (
+            <div className="mt-6 border-t pt-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">Residentes ocultos</p>
+              <div className="space-y-2">
+                {residents.filter(r => residentesOcultos.includes(r.id)).map(resident => (
+                  <Card key={resident.id} className="p-3 bg-muted/30">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-bold text-sm shrink-0">
+                        {(resident.preferred_name || resident.full_name)?.[0]}
+                      </div>
+                      <p className="text-sm flex-1 text-muted-foreground">{resident.preferred_name || resident.full_name}</p>
+                      <Button variant="outline" size="sm" className="gap-1.5 text-xs h-7" onClick={() => handleShowResident(resident.id)}>
+                        <UserPlus className="w-3 h-3" /> Restaurar
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Leyenda bristol */}
           <div className="mt-6 p-4 bg-muted/50 rounded-xl">
@@ -698,6 +783,28 @@ export default function RegistroSalud() {
           })}
         />
       )}
+
+      {/* Confirmar eliminación de registro */}
+      <AlertDialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar registro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará el registro de deposición del turno <strong className="capitalize">{confirmDelete?.turno}</strong> del <strong>{confirmDelete?.resident_name}</strong>.
+              Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteDep.mutate(confirmDelete.id)}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
