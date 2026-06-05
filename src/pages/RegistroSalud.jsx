@@ -11,13 +11,14 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, ClipboardList, Activity, Plus, CheckCircle2, XCircle, AlertTriangle, Download, Stethoscope, Pencil, Trash2, EyeOff, Eye, UserPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardList, Activity, Plus, CheckCircle2, XCircle, AlertTriangle, Download, Stethoscope, Pencil, Trash2, EyeOff, Eye, UserPlus, Utensils } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import BristolScale, { BRISTOL } from "@/components/registros/BristolScale";
 import AlertaDeposicion from "@/components/registros/AlertaDeposicion";
 import InformeDeposicionImprimible from "@/components/registros/InformeDeposicionImprimible";
 import InformeSignosVitalesImprimible from "@/components/informes/InformeSignosVitalesImprimible";
 import TabIntervenciones from "@/components/intervenciones/TabIntervenciones";
+import TabIngesta from "@/components/registros/TabIngesta";
 import { toast } from "sonner";
 import { createRoot } from "react-dom/client";
 
@@ -578,6 +579,9 @@ export default function RegistroSalud() {
           <TabsTrigger value="signos" className="gap-1.5">
             <Activity className="w-4 h-4" /> Signos Vitales
           </TabsTrigger>
+          <TabsTrigger value="ingesta" className="gap-1.5">
+            <Utensils className="w-4 h-4" /> Control Ingesta
+          </TabsTrigger>
           <TabsTrigger value="intervenciones" className="gap-1.5">
             <Stethoscope className="w-4 h-4" /> Intervenciones
           </TabsTrigger>
@@ -743,6 +747,11 @@ export default function RegistroSalud() {
               </div>
             </div>
           </div>
+        </TabsContent>
+
+        {/* ── TAB INGESTA ── */}
+        <TabsContent value="ingesta">
+          <TabIngesta residents={residents} selectedDate={selectedDate} />
         </TabsContent>
 
         {/* ── TAB INTERVENCIONES ── */}
