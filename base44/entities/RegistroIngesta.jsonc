@@ -24,9 +24,11 @@
       "type": "string",
       "enum": [
         "desayuno",
+        "colacion_manana",
         "almuerzo",
         "once",
-        "cena"
+        "cena",
+        "colacion_nocturna"
       ],
       "description": "Tipo de comida registrada"
     },

@@ -12,10 +12,12 @@ import { createRoot } from "react-dom/client";
 import InformeIngestaImprimible from "./InformeIngestaImprimible";
 
 const COMIDAS = [
-  { key: "desayuno", emoji: "🌅", label: "Desayuno", turno: "manana" },
-  { key: "almuerzo", emoji: "☀️", label: "Almuerzo", turno: "tarde" },
-  { key: "once",     emoji: "🍵", label: "Once",     turno: "tarde" },
-  { key: "cena",     emoji: "🌙", label: "Cena",     turno: "noche" },
+  { key: "desayuno",          emoji: "🌅", label: "Desayuno",         turno: "manana", opcional: false },
+  { key: "colacion_manana",   emoji: "🍎", label: "Colación",         turno: "manana", opcional: false },
+  { key: "almuerzo",          emoji: "☀️", label: "Almuerzo",         turno: "tarde",  opcional: false },
+  { key: "once",              emoji: "🍵", label: "Once",             turno: "tarde",  opcional: false },
+  { key: "cena",              emoji: "🌙", label: "Cena",             turno: "noche",  opcional: false },
+  { key: "colacion_nocturna", emoji: "🌛", label: "Colación Nocturna",turno: "noche",  opcional: true  },
 ];
 
 const PORCION_INFO = {
@@ -42,7 +44,7 @@ function TarjetaComida({ comida, registro, onEdit, onDelete }) {
       onClick={() => !tieneRegistro && onEdit(comida, registro)}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-semibold">{comida.emoji} {comida.label}</span>
+        <span className="text-sm font-semibold">{comida.emoji} {comida.label}{comida.opcional && <span className="ml-1 text-[9px] font-normal text-muted-foreground border rounded px-1">Opcional</span>}</span>
         {tieneRegistro ? (
           <div className="flex items-center gap-1">
             <button onClick={e => { e.stopPropagation(); onEdit(comida, registro); }} className="p-1 rounded hover:bg-black/10 transition-colors opacity-60 hover:opacity-100" title="Editar">
@@ -138,10 +140,11 @@ export default function TabIngesta({ residents, selectedDate }) {
           </Card>
         ) : (
           residents.map(resident => {
-            // Calcular resumen del día
+            // Calcular resumen del día (solo comidas no opcionales o registradas)
+            const comidasBase = COMIDAS.filter(c => !c.opcional);
             const regDia = COMIDAS.map(c => getRegistro(resident.id, c.key)).filter(Boolean);
-            const totalComidas = COMIDAS.length;
-            const registradas = regDia.length;
+            const totalComidas = comidasBase.length;
+            const registradas = comidasBase.filter(c => getRegistro(resident.id, c.key)).length;
             const completadas = regDia.filter(r => r.porcion_consumida === "completo" || r.porcion_consumida === "3/4").length;
 
             return (
@@ -169,7 +172,7 @@ export default function TabIngesta({ residents, selectedDate }) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {COMIDAS.map(comida => (
                     <TarjetaComida
                       key={comida.key}

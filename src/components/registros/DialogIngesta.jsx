@@ -24,10 +24,12 @@ const HIDRATACION = [
 ];
 
 const TIPO_COMIDA = [
-  { valor: "desayuno", emoji: "🌅", label: "Desayuno" },
-  { valor: "almuerzo", emoji: "☀️", label: "Almuerzo" },
-  { valor: "once",     emoji: "🍵", label: "Once" },
-  { valor: "cena",     emoji: "🌙", label: "Cena" },
+  { valor: "desayuno",          emoji: "🌅", label: "Desayuno" },
+  { valor: "colacion_manana",   emoji: "🍎", label: "Colación" },
+  { valor: "almuerzo",          emoji: "☀️", label: "Almuerzo" },
+  { valor: "once",              emoji: "🍵", label: "Once" },
+  { valor: "cena",              emoji: "🌙", label: "Cena" },
+  { valor: "colacion_nocturna", emoji: "🌛", label: "Colación Nocturna" },
 ];
 
 // Componente visual del plato interactivo
