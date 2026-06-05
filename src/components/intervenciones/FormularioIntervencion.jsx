@@ -50,7 +50,7 @@ function CamposClinicos({ profesion, datos, onChange }) {
         <Select value={datos.estado_nutricional || ""} onValueChange={v => set("estado_nutricional", v)}>
           <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
           <SelectContent>
-            {["Normal", "Bajo peso", "Sobrepeso", "Obesidad", "Desnutrición", "Riesgo nutricional"].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+            {["Normal", "Bajo peso leve", "Moderado", "Severo", "Sobrepeso", "Obesidad"].map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
