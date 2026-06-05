@@ -47,6 +47,11 @@
       "format": "date",
       "description": "Fecha de \u00faltima reposici\u00f3n"
     },
+    "expiry_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de vencimiento del producto"
+    },
     "notes": {
       "type": "string"
     }

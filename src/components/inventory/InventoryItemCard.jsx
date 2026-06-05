@@ -1,7 +1,7 @@
 import { Pencil, Trash2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, differenceInDays } from "date-fns";
 import { es } from "date-fns/locale";
 
 export function getStockLevel(item) {
@@ -75,6 +75,18 @@ export default function InventoryItemCard({ item, onEdit, onDelete }) {
           🔄 Reposición: {format(parseISO(item.last_restock_date), "dd MMM yyyy", { locale: es })}
         </p>
       )}
+      {item.expiry_date && (() => {
+        const days = differenceInDays(parseISO(item.expiry_date), new Date());
+        const expired = days < 0;
+        const soon = days >= 0 && days <= 30;
+        return (
+          <p className={`text-[10px] font-medium mt-0.5 ${expired ? "text-red-600" : soon ? "text-amber-600" : "text-muted-foreground"}`}>
+            {expired ? "⛔" : soon ? "⚠️" : "📅"} Vence: {format(parseISO(item.expiry_date), "dd MMM yyyy", { locale: es })}
+            {expired && " (VENCIDO)"}
+            {!expired && soon && ` (en ${days}d)`}
+          </p>
+        );
+      })()}
     </Card>
   );
 }

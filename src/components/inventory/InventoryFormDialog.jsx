@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 const EMPTY = {
   name: "", category: "farmacos", subcategory: "",
   current_stock: 0, minimum_stock: 0, warning_stock: 0,
-  unit: "unid.", location: "", last_restock_date: "", notes: "",
+  unit: "unid.", location: "", last_restock_date: "", expiry_date: "", notes: "",
 };
 
 export default function InventoryFormDialog({ open, onClose, onSave, item }) {
@@ -92,6 +92,11 @@ export default function InventoryFormDialog({ open, onClose, onSave, item }) {
               <Label>Última reposición</Label>
               <Input type="date" value={form.last_restock_date || ""} onChange={e => set("last_restock_date", e.target.value)} />
             </div>
+          </div>
+
+          <div>
+            <Label>📅 Fecha de vencimiento</Label>
+            <Input type="date" value={form.expiry_date || ""} onChange={e => set("expiry_date", e.target.value)} />
           </div>
 
           <div>
