@@ -43,10 +43,31 @@ export default function Medications() {
   const [statusFilter, setStatusFilter] = useState("activo");
   const { toast } = useToast();
   const EMPTY_FORM = {
-    resident_id: "", resident_name: "", name: "", dosage: "", frequency: "diario",
-    schedule_times: "", route: "oral", prescribing_doctor: "", start_date: "",
+    resident_id: "", resident_name: "", name: "", dosage: "",
+    unidades_por_toma: 1, forma_farmaceutica: "",
+    consumo_mensual_manual: "",
+    frequency: "diario", schedule_times: "", route: "oral",
+    prescribing_doctor: "", start_date: "",
     status: "activo", notes: "", stock_remaining: "",
   };
+
+  // Calcula tomas diarias: primero desde horarios, luego desde frecuencia
+  function calcularTomasDiarias(schedule_times, frequency) {
+    if (schedule_times) {
+      const count = schedule_times.split(",").map(s => s.trim()).filter(Boolean).length;
+      if (count > 0) return count;
+    }
+    return { cada_6h: 4, cada_8h: 3, cada_12h: 2, diario: 1, semanal: 0.14286 }[frequency] ?? null;
+  }
+
+  function calcularConsumoMensual(med) {
+    const freq = med.frequency;
+    if (freq === "sos" || freq === "otro") return null; // manual
+    const tomas = calcularTomasDiarias(med.schedule_times, freq);
+    if (!tomas) return null;
+    const upt = Number(med.unidades_por_toma) || 1;
+    return Math.round(upt * tomas * 30 * 10) / 10;
+  }
   const [form, setForm] = useState(EMPTY_FORM);
   const queryClient = useQueryClient();
 
@@ -95,6 +116,9 @@ export default function Medications() {
       resident_name: med.resident_name || "",
       name: med.name || "",
       dosage: med.dosage || "",
+      unidades_por_toma: med.unidades_por_toma ?? 1,
+      forma_farmaceutica: med.forma_farmaceutica || "",
+      consumo_mensual_manual: med.consumo_mensual_manual ?? "",
       frequency: med.frequency || "diario",
       schedule_times: med.schedule_times || "",
       route: med.route || "oral",
@@ -242,13 +266,28 @@ export default function Medications() {
                           {m.name}
                         </p>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {m.dosage} · {m.frequency?.replace(/_/g, " ")} · {m.route}
+                          {m.dosage}
+                          {m.forma_farmaceutica && <> · <span className="capitalize">{m.forma_farmaceutica}</span></>}
+                          {m.unidades_por_toma && m.unidades_por_toma !== 1 && <> · {m.unidades_por_toma} ud/toma</>}
+                          {" · "}{m.frequency?.replace(/_/g, " ")} · {m.route}
                         </p>
                         {m.schedule_times && (
                           <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                             <Clock className="w-3 h-3 shrink-0" /> {m.schedule_times}
                           </p>
                         )}
+                        {(() => {
+                          const esManual = m.frequency === "sos" || m.frequency === "otro";
+                          const consumo = esManual
+                            ? (m.consumo_mensual_manual ?? null)
+                            : calcularConsumoMensual(m);
+                          if (!consumo && consumo !== 0) return null;
+                          return (
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                              📦 ~{consumo} {m.forma_farmaceutica || "unid."}/mes
+                            </p>
+                          );
+                        })()}
                         {m.prescribing_doctor && (
                           <p className="text-[11px] text-muted-foreground mt-0.5">Dr/a. {m.prescribing_doctor}</p>
                         )}
@@ -306,7 +345,12 @@ export default function Medications() {
           <DialogHeader><DialogTitle>{editingMed ? "✏️ Editar medicamento" : "💊 Agregar medicamento"}</DialogTitle></DialogHeader>
           <form onSubmit={(e) => {
             e.preventDefault();
-            const data = { ...form, stock_remaining: Number(form.stock_remaining) || 0 };
+            const data = {
+              ...form,
+              stock_remaining: Number(form.stock_remaining) || 0,
+              unidades_por_toma: Number(form.unidades_por_toma) || 1,
+              consumo_mensual_manual: form.consumo_mensual_manual !== "" ? Number(form.consumo_mensual_manual) : null,
+            };
             if (editingMed) {
               updateMutation.mutate({ id: editingMed.id, data });
             } else {
@@ -333,6 +377,33 @@ export default function Medications() {
                 <Label>Dosis *</Label>
                 <Input value={form.dosage} onChange={(e) => set("dosage", e.target.value)} placeholder="Ej: 500mg" required />
               </div>
+              <div>
+                <Label>Unidades por toma</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  value={form.unidades_por_toma}
+                  onChange={(e) => set("unidades_por_toma", e.target.value)}
+                  placeholder="1"
+                />
+              </div>
+            </div>
+            <div>
+              <Label>Forma farmacéutica</Label>
+              <Select value={form.forma_farmaceutica} onValueChange={(v) => set("forma_farmaceutica", v)}>
+                <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="comprimido">Comprimido</SelectItem>
+                  <SelectItem value="capsula">Cápsula</SelectItem>
+                  <SelectItem value="gota">Gota</SelectItem>
+                  <SelectItem value="ml">ml</SelectItem>
+                  <SelectItem value="sobre">Sobre</SelectItem>
+                  <SelectItem value="otro">Otro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Frecuencia</Label>
                 <Select value={form.frequency} onValueChange={(v) => set("frequency", v)}>
@@ -392,6 +463,43 @@ export default function Medications() {
                 </Select>
               </div>
             )}
+            {/* Consumo mensual estimado */}
+            {(() => {
+              const esManual = form.frequency === "sos" || form.frequency === "otro";
+              const tomas = calcularTomasDiarias(form.schedule_times, form.frequency);
+              const upt = Number(form.unidades_por_toma) || 1;
+              const estimado = !esManual && tomas ? Math.round(upt * tomas * 30 * 10) / 10 : null;
+              const unidadLabel = form.forma_farmaceutica || "unid.";
+              return (
+                <div className="rounded-xl bg-muted/50 border p-3 space-y-1">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">📦 Consumo mensual estimado</Label>
+                  {esManual ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        value={form.consumo_mensual_manual}
+                        onChange={(e) => set("consumo_mensual_manual", e.target.value === "" ? "" : e.target.value)}
+                        placeholder="Ingresa manualmente"
+                        className="max-w-[140px]"
+                      />
+                      <span className="text-sm text-muted-foreground">{unidadLabel}</span>
+                    </div>
+                  ) : estimado !== null ? (
+                    <p className="text-lg font-semibold text-foreground">
+                      {estimado} <span className="text-sm font-normal text-muted-foreground">{unidadLabel}</span>
+                      {tomas && form.schedule_times?.split(",").filter(Boolean).length > 0
+                        ? <span className="text-[11px] text-muted-foreground ml-2">({tomas} tomas/día por horarios)</span>
+                        : <span className="text-[11px] text-muted-foreground ml-2">({tomas} tomas/día por frecuencia)</span>
+                      }
+                    </p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No aplica</p>
+                  )}
+                </div>
+              );
+            })()}
             <div>
               <Label>Notas</Label>
               <Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} />

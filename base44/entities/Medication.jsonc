@@ -15,6 +15,27 @@
     "dosage": {
       "type": "string"
     },
+    "unidades_por_toma": {
+      "type": "number",
+      "default": 1,
+      "description": "Unidades (comprimidos, gotas, ml, etc.) por cada toma"
+    },
+    "forma_farmaceutica": {
+      "type": "string",
+      "enum": [
+        "comprimido",
+        "capsula",
+        "gota",
+        "ml",
+        "sobre",
+        "otro"
+      ],
+      "description": "Forma farmac\u00e9utica del medicamento"
+    },
+    "consumo_mensual_manual": {
+      "type": "number",
+      "description": "Consumo mensual estimado ingresado manualmente (solo para SOS / Otro)"
+    },
     "frequency": {
       "type": "string",
       "enum": [
