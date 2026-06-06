@@ -5,7 +5,7 @@ import { es } from "date-fns/locale";
 import { Link } from "react-router-dom";
 import {
   Users, Calendar, Pill, BookOpen,
-  Heart, ArrowRight, Clock, Activity, ClipboardPlus, Stethoscope, FileText, Megaphone
+  Heart, ArrowRight, Clock, Activity, ClipboardPlus, Stethoscope, FileText, Megaphone, Sparkles
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +45,11 @@ export default function Dashboard() {
   const { data: waitingAdmissions = [] } = useQuery({
     queryKey: ["admissions-waiting"],
     queryFn: () => base44.entities.Admission.filter({ status: "en_espera" }),
+  });
+
+  const { data: ultimasNovedades = [] } = useQuery({
+    queryKey: ["novedades-dashboard"],
+    queryFn: () => base44.entities.Novedad.filter({ publicado: true }, "-fecha_publicacion", 3),
   });
 
   const { data: avisosNoLeidos = [] } = useQuery({
@@ -268,6 +273,36 @@ export default function Dashboard() {
                   </div>
                 </Card>
               </Link>
+            </div>
+          )}
+
+          {/* Novedades */}
+          {ultimasNovedades.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base font-semibold flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  ¿Qué hay de nuevo?
+                </h2>
+                <Link to="/novedades">
+                  <Button variant="ghost" size="sm" className="text-xs">Ver todo</Button>
+                </Link>
+              </div>
+              <div className="space-y-2">
+                {ultimasNovedades.map(n => (
+                  <Link to="/novedades" key={n.id}>
+                    <Card className="p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                      <div className="flex items-start gap-2">
+                        <span className="text-lg shrink-0">{n.emoji || "✨"}</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold leading-tight">{n.titulo}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.descripcion}</p>
+                        </div>
+                      </div>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
             </div>
           )}
 
