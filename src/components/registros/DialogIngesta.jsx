@@ -172,13 +172,13 @@ export default function DialogIngesta({ open, onClose, resident, turno, tipoComi
             </Label>
             <div className="flex items-center gap-2">
               <Input
-                type="number"
-                min="0"
-                max="2000"
-                value={form.gramos_consumidos}
-                onChange={e => set("gramos_consumidos", e.target.value)}
-                placeholder="ej: 150"
-                className="text-center max-w-[120px]"
+              type="number"
+              min="0"
+              max="2000"
+              value={form.gramos_consumidos ?? ""}
+              onChange={e => set("gramos_consumidos", e.target.value === "" ? null : Number(e.target.value))}
+              placeholder="ej: 150"
+              className="text-center max-w-[120px]"
               />
               <span className="text-sm text-muted-foreground">gramos</span>
             </div>
