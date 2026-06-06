@@ -1,0 +1,58 @@
+{
+  "name": "ExamenBioquimico",
+  "type": "object",
+  "properties": {
+    "resident_id": {
+      "type": "string"
+    },
+    "resident_name": {
+      "type": "string"
+    },
+    "fecha_examen": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha en que se realiz\u00f3 el examen"
+    },
+    "proxima_fecha": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha sugerida para pr\u00f3ximos ex\u00e1menes"
+    },
+    "hemograma": {
+      "type": "string",
+      "description": "Par\u00e1metros, resultados e interpretaci\u00f3n del hemograma"
+    },
+    "glicemia": {
+      "type": "string",
+      "description": "Par\u00e1metros, resultados e interpretaci\u00f3n de glicemias"
+    },
+    "perfil_lipidico": {
+      "type": "string",
+      "description": "Par\u00e1metros, resultados e interpretaci\u00f3n del perfil lip\u00eddico"
+    },
+    "hepatico": {
+      "type": "string",
+      "description": "Par\u00e1metros, resultados e interpretaci\u00f3n del perfil hep\u00e1tico"
+    },
+    "renal": {
+      "type": "string",
+      "description": "Par\u00e1metros, resultados e interpretaci\u00f3n del perfil renal"
+    },
+    "tiroides": {
+      "type": "string",
+      "description": "Par\u00e1metros, resultados e interpretaci\u00f3n de tiroides (TSH, T3, T4)"
+    },
+    "observaciones": {
+      "type": "string",
+      "description": "Observaciones generales o campos adicionales"
+    },
+    "profesional_nombre": {
+      "type": "string",
+      "description": "Profesional que registra o interpreta"
+    }
+  },
+  "required": [
+    "resident_id",
+    "fecha_examen"
+  ]
+}

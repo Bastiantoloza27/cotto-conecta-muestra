@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Heart, Phone, MapPin, Calendar, Brain, MessageCircle, Pill, AlertTriangle, ClipboardList, Pencil, Stethoscope, ListChecks } from "lucide-react";
 import EsquemaCompletoDialog from "@/components/medications/EsquemaCompletoDialog";
+import TabExamenesBioquimicos from "@/components/examenes/TabExamenesBioquimicos";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -152,6 +153,7 @@ export default function ResidentProfile() {
           <TabsTrigger value="medicacion">Medicación ({medications.length})</TabsTrigger>
           <TabsTrigger value="planes">Planes ({plans.length})</TabsTrigger>
           <TabsTrigger value="incidentes">Incidentes ({incidents.length})</TabsTrigger>
+          <TabsTrigger value="examenes">Exámenes</TabsTrigger>
           <TabsTrigger value="intervenciones">Intervenciones</TabsTrigger>
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
         </TabsList>
@@ -306,6 +308,9 @@ export default function ResidentProfile() {
               </Card>
             ))}
           </div>
+        </TabsContent>
+        <TabsContent value="examenes">
+          <TabExamenesBioquimicos residents={[r]} residentFixed={r} />
         </TabsContent>
         <TabsContent value="intervenciones">
           <ResidentIntervenciones resident={r} />
