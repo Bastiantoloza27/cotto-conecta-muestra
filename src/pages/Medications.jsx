@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Pill, Clock, AlertCircle, AlertTriangle, Send, Pencil, Trash2, FileDown } from "lucide-react";
+import { Plus, Pill, Clock, AlertCircle, AlertTriangle, Send, Pencil, Trash2, FileDown, ListChecks } from "lucide-react";
 import InformeMedicacionImprimible from "@/components/informes/InformeMedicacionImprimible";
 import { printReport } from "@/lib/printReport";
+import EsquemaCompletoDialog from "@/components/medications/EsquemaCompletoDialog";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -41,6 +42,8 @@ export default function Medications() {
   const [editingMed, setEditingMed] = useState(null);
   const [sendingId, setSendingId] = useState(null);
   const [statusFilter, setStatusFilter] = useState("activo");
+  const [showEsquema, setShowEsquema] = useState(false);
+  const [esquemaResident, setEsquemaResident] = useState(null);
   const { toast } = useToast();
   const EMPTY_FORM = {
     resident_id: "", resident_name: "", name: "", dosage: "",
@@ -192,6 +195,10 @@ export default function Medications() {
           >
             <FileDown className="w-4 h-4" /> Informe
           </Button>
+          <Button variant="outline" onClick={() => setShowEsquema(true)} className="gap-2">
+            <ListChecks className="w-4 h-4" />
+            Esquema completo
+          </Button>
           <Button onClick={() => { setEditingMed(null); setForm(EMPTY_FORM); setShowForm(true); }} className="gap-2">
             <Plus className="w-4 h-4" />
             Agregar medicamento
@@ -339,6 +346,38 @@ export default function Medications() {
         </div>
       )}
 
+
+      {/* Dialog selector de residente para esquema completo */}
+      <Dialog open={showEsquema && !esquemaResident} onOpenChange={(v) => { if (!v) setShowEsquema(false); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><ListChecks className="w-5 h-5 text-primary" />Esquema completo — ¿Para quién?</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-2">
+            <p className="text-sm text-muted-foreground">Selecciona el residente para agregar su esquema farmacológico completo.</p>
+            <Select onValueChange={(id) => {
+              const r = residents.find(r => r.id === id);
+              setEsquemaResident(r);
+            }}>
+              <SelectTrigger><SelectValue placeholder="Seleccionar residente..." /></SelectTrigger>
+              <SelectContent>
+                {residents.map(r => (
+                  <SelectItem key={r.id} value={r.id}>{r.preferred_name || r.full_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={() => setShowEsquema(false)}>Cancelar</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {esquemaResident && (
+        <EsquemaCompletoDialog
+          open={showEsquema && !!esquemaResident}
+          onOpenChange={(v) => { if (!v) { setShowEsquema(false); setEsquemaResident(null); } }}
+          resident={esquemaResident}
+        />
+      )}
 
       <Dialog open={showForm} onOpenChange={(v) => { setShowForm(v); if (!v) { setEditingMed(null); setForm(EMPTY_FORM); } }}>
         <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
