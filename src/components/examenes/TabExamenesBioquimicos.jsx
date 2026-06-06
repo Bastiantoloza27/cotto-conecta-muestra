@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card } from "@/components/ui/card";
@@ -9,26 +9,161 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, FlaskConical, Pencil, Trash2, CalendarClock, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, FlaskConical, Pencil, Trash2, CalendarClock, ChevronDown, ChevronUp, Upload, Sparkles, FileText, ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { es } from "date-fns/locale";
 
 const PANELES = [
-  { key: "hemograma",      label: "🩸 Hemograma",         hint: "Hematocrito, Hemoglobina, Leucocitos, Plaquetas..." },
-  { key: "glicemia",       label: "🍬 Glicemia",           hint: "Glicemia en ayunas, HbA1c..." },
-  { key: "perfil_lipidico",label: "💛 Perfil Lipídico",    hint: "Colesterol total, HDL, LDL, Triglicéridos..." },
-  { key: "hepatico",       label: "🫁 Hepático",           hint: "GOT/AST, GPT/ALT, Fosfatasa alcalina, Bilirrubina..." },
-  { key: "renal",          label: "🔵 Renal",              hint: "Creatinina, BUN, Clearance de creatinina, Ácido úrico..." },
-  { key: "tiroides",       label: "🦋 Tiroides",           hint: "TSH, T3, T4..." },
+  { key: "hemograma",       label: "🩸 Hemograma",        hint: "Hematocrito, Hemoglobina, Leucocitos, Plaquetas..." },
+  { key: "glicemia",        label: "🍬 Glicemia",          hint: "Glicemia en ayunas, HbA1c..." },
+  { key: "perfil_lipidico", label: "💛 Perfil Lipídico",   hint: "Colesterol total, HDL, LDL, Triglicéridos..." },
+  { key: "hepatico",        label: "🫁 Hepático",          hint: "GOT/AST, GPT/ALT, Fosfatasa alcalina, Bilirrubina..." },
+  { key: "renal",           label: "🔵 Renal",             hint: "Creatinina, BUN, Clearance de creatinina, Ácido úrico..." },
+  { key: "tiroides",        label: "🦋 Tiroides",          hint: "TSH, T3, T4..." },
 ];
 
 const EMPTY_FORM = {
   resident_id: "", resident_name: "", fecha_examen: "", proxima_fecha: "",
   hemograma: "", glicemia: "", perfil_lipidico: "", hepatico: "", renal: "", tiroides: "",
-  observaciones: "", profesional_nombre: "",
+  observaciones: "", profesional_nombre: "", archivo_url: "", archivo_nombre: "",
 };
 
+// ─── Extracción IA desde archivo ───────────────────────────────────────────
+async function extraerDatosConIA(fileUrl) {
+  const prompt = `Eres un asistente clínico especializado en análisis de laboratorio. 
+Analiza la imagen o documento adjunto que corresponde a un examen de laboratorio o examen bioquímico de un paciente.
+
+Extrae TODOS los valores que encuentres y organízalos en los siguientes paneles. Para cada panel, lista los parámetros con su valor y unidad, e indica brevemente si está normal, alto o bajo según los rangos de referencia.
+
+Si un panel no aparece en el documento, déjalo vacío ("").
+
+Responde SOLO con el JSON indicado, sin texto adicional.`;
+
+  const result = await base44.integrations.Core.InvokeLLM({
+    prompt,
+    file_urls: [fileUrl],
+    response_json_schema: {
+      type: "object",
+      properties: {
+        fecha_examen: { type: "string", description: "Fecha del examen en formato YYYY-MM-DD, si aparece en el documento" },
+        hemograma: { type: "string", description: "Parámetros del hemograma con valores y estado (normal/alto/bajo)" },
+        glicemia: { type: "string", description: "Glicemia, HbA1c y otros parámetros de glucosa" },
+        perfil_lipidico: { type: "string", description: "Colesterol total, HDL, LDL, triglicéridos" },
+        hepatico: { type: "string", description: "GOT, GPT, fosfatasa alcalina, bilirrubina y otros hepáticos" },
+        renal: { type: "string", description: "Creatinina, BUN, ácido úrico y otros renales" },
+        tiroides: { type: "string", description: "TSH, T3, T4 y otros tiroideos" },
+        observaciones: { type: "string", description: "Otros parámetros no categorizados u observaciones relevantes del laboratorio" },
+      }
+    }
+  });
+  return result;
+}
+
+// ─── Zona de carga de archivo ───────────────────────────────────────────────
+function ZonaArchivo({ onExtracted, onFileUploaded, archivoActual }) {
+  const [uploading, setUploading] = useState(false);
+  const [extracting, setExtracting] = useState(false);
+  const [fileUrl, setFileUrl] = useState(archivoActual?.url || "");
+  const [fileName, setFileName] = useState(archivoActual?.nombre || "");
+  const inputRef = useRef();
+
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    toast.info("Subiendo archivo...");
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setFileUrl(file_url);
+    setFileName(file.name);
+    onFileUploaded(file_url, file.name);
+    setUploading(false);
+    toast.success("Archivo subido. Ahora puedes extraer los datos con IA.");
+  };
+
+  const handleExtract = async () => {
+    if (!fileUrl) { toast.error("Primero sube un archivo"); return; }
+    setExtracting(true);
+    toast.info("La IA está leyendo el examen, esto puede tardar unos segundos...");
+    const datos = await extraerDatosConIA(fileUrl);
+    onExtracted(datos);
+    setExtracting(false);
+    toast.success("¡Datos extraídos! Revisa y ajusta los campos si es necesario.");
+  };
+
+  return (
+    <div className="rounded-xl border-2 border-dashed border-border bg-muted/30 p-4 space-y-3">
+      <p className="text-sm font-semibold flex items-center gap-2">
+        <Upload className="w-4 h-4 text-primary" />
+        Adjuntar examen original
+      </p>
+
+      {fileUrl ? (
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 bg-white border rounded-lg px-3 py-1.5 flex-1 min-w-0">
+            <FileText className="w-4 h-4 text-primary shrink-0" />
+            <span className="text-xs truncate text-muted-foreground">{fileName}</span>
+            <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="ml-auto shrink-0">
+              <ExternalLink className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
+            </a>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs shrink-0"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+          >
+            Reemplazar
+          </Button>
+        </div>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-1.5 w-full"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+        >
+          {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+          {uploading ? "Subiendo..." : "Seleccionar foto o PDF"}
+        </Button>
+      )}
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*,.pdf"
+        className="hidden"
+        onChange={handleFile}
+      />
+
+      {fileUrl && (
+        <Button
+          type="button"
+          size="sm"
+          className="w-full gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+          onClick={handleExtract}
+          disabled={extracting}
+        >
+          {extracting
+            ? <><Loader2 className="w-4 h-4 animate-spin" /> Extrayendo datos con IA...</>
+            : <><Sparkles className="w-4 h-4" /> Extraer datos automáticamente con IA</>
+          }
+        </Button>
+      )}
+
+      <p className="text-[11px] text-muted-foreground">
+        Sube una foto o PDF del examen y la IA completará los campos automáticamente. El archivo queda guardado como respaldo.
+      </p>
+    </div>
+  );
+}
+
+// ─── Formulario ────────────────────────────────────────────────────────────
 function FormDialog({ open, onClose, residents, editing, residentFixed }) {
   const qc = useQueryClient();
   const [form, setForm] = useState(() =>
@@ -45,6 +180,22 @@ function FormDialog({ open, onClose, residents, editing, residentFixed }) {
     const r = residents.find(r => r.id === id);
     set("resident_id", id);
     set("resident_name", r?.preferred_name || r?.full_name || "");
+  };
+
+  const handleExtracted = (datos) => {
+    setForm(prev => ({
+      ...prev,
+      fecha_examen: datos.fecha_examen || prev.fecha_examen,
+      hemograma: datos.hemograma || prev.hemograma,
+      glicemia: datos.glicemia || prev.glicemia,
+      perfil_lipidico: datos.perfil_lipidico || prev.perfil_lipidico,
+      hepatico: datos.hepatico || prev.hepatico,
+      renal: datos.renal || prev.renal,
+      tiroides: datos.tiroides || prev.tiroides,
+      observaciones: datos.observaciones
+        ? (prev.observaciones ? prev.observaciones + "\n" + datos.observaciones : datos.observaciones)
+        : prev.observaciones,
+    }));
   };
 
   const mutation = useMutation({
@@ -95,6 +246,13 @@ function FormDialog({ open, onClose, residents, editing, residentFixed }) {
             </div>
           )}
 
+          {/* Zona adjunto + IA */}
+          <ZonaArchivo
+            archivoActual={form.archivo_url ? { url: form.archivo_url, nombre: form.archivo_nombre } : null}
+            onFileUploaded={(url, nombre) => { set("archivo_url", url); set("archivo_nombre", nombre); }}
+            onExtracted={handleExtracted}
+          />
+
           {/* Fechas */}
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -121,7 +279,6 @@ function FormDialog({ open, onClose, residents, editing, residentFixed }) {
             </div>
           ))}
 
-          {/* Observaciones */}
           <div>
             <Label>Observaciones generales</Label>
             <Textarea rows={2} value={form.observaciones} onChange={e => set("observaciones", e.target.value)} placeholder="Observaciones, interpretación general, recomendaciones..." className="text-sm resize-none" />
@@ -144,6 +301,7 @@ function FormDialog({ open, onClose, residents, editing, residentFixed }) {
   );
 }
 
+// ─── Tarjeta de examen ─────────────────────────────────────────────────────
 function ExamenCard({ examen, onEdit, onDelete }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -164,6 +322,15 @@ function ExamenCard({ examen, onEdit, onDelete }) {
             <Badge variant="outline" className="text-[10px]">
               {format(parseISO(examen.fecha_examen), "dd MMM yyyy", { locale: es })}
             </Badge>
+            {examen.archivo_url && (
+              <a href={examen.archivo_url} target="_blank" rel="noopener noreferrer">
+                <Badge variant="outline" className="text-[10px] flex items-center gap-1 hover:bg-primary/5 cursor-pointer">
+                  <FileText className="w-2.5 h-2.5" />
+                  Archivo adjunto
+                  <ExternalLink className="w-2.5 h-2.5" />
+                </Badge>
+              </a>
+            )}
             {examen.proxima_fecha && (
               <Badge
                 variant="outline"
@@ -182,7 +349,9 @@ function ExamenCard({ examen, onEdit, onDelete }) {
           </div>
           <div className="flex flex-wrap gap-1 mt-1">
             {panelesCargados.map(p => (
-              <span key={p.key} className="text-[10px] bg-primary/10 text-primary rounded px-1.5 py-0.5">{p.label.split(" ").slice(1).join(" ")}</span>
+              <span key={p.key} className="text-[10px] bg-primary/10 text-primary rounded px-1.5 py-0.5">
+                {p.label.split(" ").slice(1).join(" ")}
+              </span>
             ))}
           </div>
         </div>
@@ -214,7 +383,7 @@ function ExamenCard({ examen, onEdit, onDelete }) {
             </div>
           )}
           {examen.profesional_nombre && (
-            <p className="text-[11px] text-muted-foreground">Registrado por: {examen.profesional_nombre}</p>
+            <p className="text-[11px] text-muted-foreground mt-1">Registrado por: {examen.profesional_nombre}</p>
           )}
         </div>
       )}
@@ -222,6 +391,7 @@ function ExamenCard({ examen, onEdit, onDelete }) {
   );
 }
 
+// ─── Vista principal ───────────────────────────────────────────────────────
 export default function TabExamenesBioquimicos({ residents, residentFixed }) {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -249,16 +419,13 @@ export default function TabExamenesBioquimicos({ residents, residentFixed }) {
     filterResidente === "todos" ? true : e.resident_id === filterResidente
   );
 
-  // Alertas: próximos exámenes en ≤ 14 días o vencidos
   const proximos = examenes.filter(e => {
     if (!e.proxima_fecha) return false;
-    const dias = differenceInDays(parseISO(e.proxima_fecha), new Date());
-    return dias <= 14;
+    return differenceInDays(parseISO(e.proxima_fecha), new Date()) <= 14;
   });
 
   return (
     <div className="space-y-4">
-      {/* Alerta próximos */}
       {proximos.length > 0 && (
         <Card className="p-3 border-amber-200 bg-amber-50">
           <p className="text-sm text-amber-800 font-medium flex items-center gap-2">
@@ -270,7 +437,6 @@ export default function TabExamenesBioquimicos({ residents, residentFixed }) {
       )}
 
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        {/* Filtro por residente (solo si no es vista fija de residente) */}
         {!residentFixed && (
           <Select value={filterResidente} onValueChange={setFilterResidente}>
             <SelectTrigger className="w-48 h-8 text-sm"><SelectValue placeholder="Todos los residentes" /></SelectTrigger>
