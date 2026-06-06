@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Heart, Phone, MapPin, Calendar, Brain, MessageCircle, Pill, AlertTriangle, ClipboardList, Pencil, Stethoscope } from "lucide-react";
+import { ArrowLeft, Heart, Phone, MapPin, Calendar, Brain, MessageCircle, Pill, AlertTriangle, ClipboardList, Pencil, Stethoscope, ListChecks } from "lucide-react";
+import EsquemaCompletoDialog from "@/components/medications/EsquemaCompletoDialog";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ const depColors = {
 export default function ResidentProfile() {
   const { id } = useParams();
   const [editing, setEditing] = useState(false);
+  const [showEsquema, setShowEsquema] = useState(false);
 
   const { data: resident, isLoading } = useQuery({
     queryKey: ["resident", id],
@@ -249,6 +251,11 @@ export default function ResidentProfile() {
         </TabsContent>
 
         <TabsContent value="medicacion">
+          <div className="flex justify-end mb-3">
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowEsquema(true)}>
+              <ListChecks className="w-4 h-4" /> Agregar esquema completo
+            </Button>
+          </div>
           <div className="space-y-2">
             {medications.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">Sin medicamentos registrados</p>
@@ -307,6 +314,14 @@ export default function ResidentProfile() {
           <ResidentDocuments residentId={id} residentName={r.full_name} />
         </TabsContent>
       </Tabs>
+
+      {resident && (
+        <EsquemaCompletoDialog
+          open={showEsquema}
+          onOpenChange={setShowEsquema}
+          resident={resident}
+        />
+      )}
     </div>
   );
 }
