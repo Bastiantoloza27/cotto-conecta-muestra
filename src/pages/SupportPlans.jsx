@@ -17,6 +17,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import KanbanBoard from "@/components/supportplans/KanbanBoard";
 import PlanDetalleDialog from "@/components/supportplans/PlanDetalleDialog";
+import ProfesionalesSelector from "@/components/supportplans/ProfesionalesSelector";
 
 const statusColors = {
   activo: "bg-blue-50 text-blue-700 border-blue-200",
@@ -31,7 +32,7 @@ const emptyForm = {
   description: "", diagnostico_situacion: "", start_date: "", target_date: "",
   revision_date: "", status: "activo", progress: 0, supports: "",
   indicadores_logro: "", profesionales_involucrados: "", responsible: "",
-  evaluations: "", observations: "",
+  equipo_profesional: "[]", evaluations: "", observations: "",
 };
 
 export default function SupportPlans() {
@@ -234,7 +235,22 @@ export default function SupportPlans() {
               </div>
               <div><Label>Avance (%)</Label><Input type="number" min={0} max={100} value={editing.progress || 0} onChange={(e) => setEditing(p => ({ ...p, progress: Number(e.target.value) }))} /></div>
               <div><Label>Responsable coordinador</Label><Input value={editing.responsible || ""} onChange={(e) => setEditing(p => ({ ...p, responsible: e.target.value }))} /></div>
-              <div><Label>Profesionales involucrados</Label><Input value={editing.profesionales_involucrados || ""} onChange={(e) => setEditing(p => ({ ...p, profesionales_involucrados: e.target.value }))} placeholder="Ej: Kinesiólogo, Nutricionista, TO" /></div>
+              <div>
+                <Label>Equipo profesional involucrado</Label>
+                <div className="mt-1">
+                  <ProfesionalesSelector
+                    value={editing.equipo_profesional || "[]"}
+                    onChange={(v) => {
+                      const arr = (() => { try { return JSON.parse(v); } catch { return []; } })();
+                      setEditing(p => ({
+                        ...p,
+                        equipo_profesional: v,
+                        profesionales_involucrados: arr.map(m => m.nombre).join(", "),
+                      }));
+                    }}
+                  />
+                </div>
+              </div>
               <div><Label>Notas de evaluación</Label><Textarea value={editing.evaluations || ""} onChange={(e) => setEditing(p => ({ ...p, evaluations: e.target.value }))} rows={2} /></div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
@@ -304,8 +320,18 @@ export default function SupportPlans() {
               <Textarea value={form.supports} onChange={(e) => set("supports", e.target.value)} rows={2} placeholder="Qué apoyos se necesitan para lograr el objetivo" />
             </div>
             <div>
-              <Label>Profesionales involucrados</Label>
-              <Input value={form.profesionales_involucrados} onChange={(e) => set("profesionales_involucrados", e.target.value)} placeholder="Ej: Kinesiólogo, Nutricionista, Terapeuta Ocupacional" />
+              <Label>Equipo profesional involucrado</Label>
+              <div className="mt-1">
+                <ProfesionalesSelector
+                  value={form.equipo_profesional}
+                  onChange={(v) => {
+                    // Sync legacy field too
+                    const arr = (() => { try { return JSON.parse(v); } catch { return []; } })();
+                    set("equipo_profesional", v);
+                    set("profesionales_involucrados", arr.map(p => p.nombre).join(", "));
+                  }}
+                />
+              </div>
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div><Label>Fecha inicio</Label><Input type="date" value={form.start_date} onChange={(e) => set("start_date", e.target.value)} /></div>

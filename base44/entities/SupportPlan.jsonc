@@ -67,9 +67,13 @@
       "type": "string",
       "description": "Apoyos y estrategias necesarias"
     },
+    "equipo_profesional": {
+      "type": "string",
+      "description": "JSON stringificado con el equipo: [{id, nombre, cargo, objetivo_individual, objetivo_conjunto}]"
+    },
     "profesionales_involucrados": {
       "type": "string",
-      "description": "Profesionales del equipo participantes (separados por coma)"
+      "description": "Nombres de profesionales separados por coma (campo legacy / legible)"
     },
     "responsible": {
       "type": "string",
@@ -77,7 +81,7 @@
     },
     "evaluations": {
       "type": "string",
-      "description": "Notas de evaluaci\u00f3n peri\u00f3dica"
+      "description": "Notas de evaluaci\u00f3n peri\u00f3dica con historial"
     },
     "indicadores_logro": {
       "type": "string",

@@ -192,6 +192,92 @@ function AvanceEditor({ plan, onSave }) {
   );
 }
 
+// ─── Sección de equipo con objetivos ────────────────────────────────────────
+function EquipoSection({ plan, intervenciones, profesionesUnicas }) {
+  const equipoJson = (() => {
+    try { return JSON.parse(plan.equipo_profesional || "[]"); } catch { return []; }
+  })();
+
+  const positionLabel = {
+    kinesiologo: "Kinesiólogo/a", terapeuta_ocupacional: "Terapeuta Ocupacional",
+    psicologo: "Psicólogo/a", trabajador_social: "Trabajador/a Social",
+    nutricionista: "Nutricionista", medico: "Médico/a", enfermero: "Enfermero/a",
+    tecnico_enfermeria: "TENS", capellan: "Capellán", director: "Director/a", otro: "Otro",
+  };
+
+  // Objetivo conjunto (todos comparten el mismo)
+  const objetivoConjunto = equipoJson[0]?.objetivo_conjunto || "";
+
+  return (
+    <div className="rounded-xl border bg-white p-4 space-y-4">
+      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+        <Users className="w-3.5 h-3.5" /> Equipo interdisciplinar
+      </p>
+
+      {/* Chips de profesiones que han intervenido */}
+      {profesionesUnicas.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {profesionesUnicas.map(pk => {
+            const prof = PROFESIONES.find(p => p.key === pk);
+            if (!prof) return null;
+            const count = intervenciones.filter(i => i.profesion === pk).length;
+            return (
+              <div key={pk} className={`flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${prof.color}`}>
+                {prof.icon} {prof.label} <span className="ml-1 bg-white/50 rounded-full px-1.5 font-bold">{count}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Objetivo conjunto */}
+      {objetivoConjunto && (
+        <div className="rounded-lg bg-primary/5 border border-primary/20 p-3">
+          <p className="text-[10px] font-bold text-primary uppercase tracking-wide mb-1">🤝 Objetivo conjunto del equipo</p>
+          <p className="text-xs">{objetivoConjunto}</p>
+        </div>
+      )}
+
+      {/* Objetivos individuales */}
+      {equipoJson.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">👤 Objetivos individuales</p>
+          {equipoJson.map((m) => {
+            const invCount = intervenciones.filter(i => i.profesional_nombre === m.nombre).length;
+            return (
+              <div key={m.id} className="flex items-start gap-3 rounded-lg border p-2.5 bg-muted/20">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-xs font-semibold">{m.nombre}</span>
+                    <Badge variant="outline" className="text-[9px]">{positionLabel[m.cargo] || m.cargo}</Badge>
+                    {invCount > 0 && (
+                      <span className="text-[10px] text-muted-foreground ml-auto">{invCount} intervención{invCount !== 1 ? "es" : ""}</span>
+                    )}
+                  </div>
+                  {m.objetivo_individual ? (
+                    <p className="text-xs text-muted-foreground">{m.objetivo_individual}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic opacity-60">Sin objetivo individual definido</p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Fallback: solo nombres legacy */}
+      {equipoJson.length === 0 && plan.profesionales_involucrados && (
+        <div className="flex flex-wrap gap-1.5">
+          {plan.profesionales_involucrados.split(",").map(p => p.trim()).filter(Boolean).map((p, i) => (
+            <Badge key={i} variant="secondary" className="text-xs">{p}</Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Dialog principal ───────────────────────────────────────────────────────
 export default function PlanDetalleDialog({ plan, open, onOpenChange }) {
   const queryClient = useQueryClient();
@@ -301,28 +387,8 @@ export default function PlanDetalleDialog({ plan, open, onOpenChange }) {
             </div>
           )}
 
-          {/* Equipo */}
-          {profesionesUnicas.length > 0 && (
-            <div>
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5" /> Equipo interdisciplinar activo
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {profesionesUnicas.map(pk => {
-                  const prof = PROFESIONES.find(p => p.key === pk);
-                  if (!prof) return null;
-                  const count = intervenciones.filter(i => i.profesion === pk).length;
-                  return (
-                    <div key={pk} className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${prof.color}`}>
-                      <span>{prof.icon}</span>
-                      <span>{prof.label}</span>
-                      <span className="bg-white/50 rounded-full px-1.5 py-0.5 text-[10px] font-bold">{count}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {/* Equipo profesional con objetivos */}
+          <EquipoSection plan={plan} intervenciones={intervenciones} profesionesUnicas={profesionesUnicas} />
 
           {/* Línea de tiempo */}
           <div>
