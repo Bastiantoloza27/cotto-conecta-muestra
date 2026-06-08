@@ -10,7 +10,7 @@
     },
     "title": {
       "type": "string",
-      "description": "Objetivo del plan"
+      "description": "Objetivo principal del plan"
     },
     "area": {
       "type": "string",
@@ -27,7 +27,12 @@
       ]
     },
     "description": {
-      "type": "string"
+      "type": "string",
+      "description": "Descripci\u00f3n del plan y contexto"
+    },
+    "diagnostico_situacion": {
+      "type": "string",
+      "description": "Diagn\u00f3stico de la situaci\u00f3n actual del residente"
     },
     "start_date": {
       "type": "string",
@@ -35,7 +40,13 @@
     },
     "target_date": {
       "type": "string",
-      "format": "date"
+      "format": "date",
+      "description": "Fecha meta para lograr el objetivo"
+    },
+    "revision_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de pr\u00f3xima revisi\u00f3n del plan"
     },
     "status": {
       "type": "string",
@@ -54,14 +65,23 @@
     },
     "supports": {
       "type": "string",
-      "description": "Apoyos activos necesarios"
+      "description": "Apoyos y estrategias necesarias"
+    },
+    "profesionales_involucrados": {
+      "type": "string",
+      "description": "Profesionales del equipo participantes (separados por coma)"
+    },
+    "responsible": {
+      "type": "string",
+      "description": "Profesional responsable/coordinador del plan"
     },
     "evaluations": {
       "type": "string",
-      "description": "Notas de evaluaci\u00f3n"
+      "description": "Notas de evaluaci\u00f3n peri\u00f3dica"
     },
-    "responsible": {
-      "type": "string"
+    "indicadores_logro": {
+      "type": "string",
+      "description": "Indicadores concretos para determinar el logro del objetivo"
     },
     "observations": {
       "type": "string"

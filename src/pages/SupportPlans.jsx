@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, ClipboardList, Target, Pencil, Trash2, LayoutGrid, List, FileDown } from "lucide-react";
+import { Plus, ClipboardList, Target, Pencil, Trash2, LayoutGrid, List, FileDown, Eye } from "lucide-react";
 import InformePlanesApoyo from "@/components/informes/InformePlanesApoyo";
 import { printReport } from "@/lib/printReport";
 import { Card } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import KanbanBoard from "@/components/supportplans/KanbanBoard";
+import PlanDetalleDialog from "@/components/supportplans/PlanDetalleDialog";
 
 const statusColors = {
   activo: "bg-blue-50 text-blue-700 border-blue-200",
@@ -27,8 +28,10 @@ const statusColors = {
 
 const emptyForm = {
   resident_id: "", resident_name: "", title: "", area: "autonomia",
-  description: "", start_date: "", target_date: "", status: "activo",
-  progress: 0, supports: "", responsible: "", observations: "",
+  description: "", diagnostico_situacion: "", start_date: "", target_date: "",
+  revision_date: "", status: "activo", progress: 0, supports: "",
+  indicadores_logro: "", profesionales_involucrados: "", responsible: "",
+  evaluations: "", observations: "",
 };
 
 export default function SupportPlans() {
@@ -37,6 +40,7 @@ export default function SupportPlans() {
   const [form, setForm] = useState(emptyForm);
   const [view, setView] = useState("kanban");
   const [statusFilter, setStatusFilter] = useState("todos");
+  const [viewingPlan, setViewingPlan] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: plans = [] } = useQuery({
@@ -47,6 +51,11 @@ export default function SupportPlans() {
   const { data: residents = [] } = useQuery({
     queryKey: ["residents-active"],
     queryFn: () => base44.entities.Resident.filter({ status: "activo" }),
+  });
+
+  const { data: todasIntervenciones = [] } = useQuery({
+    queryKey: ["intervenciones-con-plan"],
+    queryFn: () => base44.entities.IntervencionProfesional.list("-fecha", 500),
   });
 
   const createMutation = useMutation({
@@ -132,6 +141,8 @@ export default function SupportPlans() {
           onEdit={setEditing}
           onDelete={(id) => deleteMutation.mutate(id)}
           onStatusChange={handleStatusChange}
+          onView={setViewingPlan}
+          intervenciones={todasIntervenciones}
         />
       ) : (
         <div className="space-y-3">
@@ -159,6 +170,9 @@ export default function SupportPlans() {
                   {p.responsible && <p className="text-[11px] text-muted-foreground mt-1.5">Responsable: {p.responsible}</p>}
                 </div>
                 <div className="flex gap-1 shrink-0">
+                  <Button size="icon" variant="ghost" className="h-7 w-7 text-primary/70 hover:text-primary" onClick={() => setViewingPlan(p)} title="Ver detalle">
+                    <Eye className="w-3.5 h-3.5" />
+                  </Button>
                   <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditing(p)}>
                     <Pencil className="w-3.5 h-3.5" />
                   </Button>
@@ -175,42 +189,53 @@ export default function SupportPlans() {
       {/* Edit dialog */}
       {editing && (
         <Dialog open={!!editing} onOpenChange={() => setEditing(null)}>
-          <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+          <DialogContent className="max-w-lg max-h-[88vh] overflow-y-auto">
             <DialogHeader><DialogTitle>✏️ Editar plan de apoyo</DialogTitle></DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); updateMutation.mutate({ id: editing.id, data: editing }); }} className="space-y-4 mt-2">
               <div><Label>Objetivo *</Label><Input value={editing.title} onChange={(e) => setEditing(p => ({ ...p, title: e.target.value }))} required /></div>
-              <div><Label>Área *</Label>
-                <Select value={editing.area} onValueChange={(v) => setEditing(p => ({ ...p, area: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="autonomia">Autonomía</SelectItem>
-                    <SelectItem value="salud">Salud</SelectItem>
-                    <SelectItem value="social">Social</SelectItem>
-                    <SelectItem value="emocional">Emocional</SelectItem>
-                    <SelectItem value="espiritual">Espiritual</SelectItem>
-                    <SelectItem value="comunicacion">Comunicación</SelectItem>
-                    <SelectItem value="movilidad">Movilidad</SelectItem>
-                    <SelectItem value="cognitivo">Cognitivo</SelectItem>
-                    <SelectItem value="otro">Otro</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Área *</Label>
+                  <Select value={editing.area} onValueChange={(v) => setEditing(p => ({ ...p, area: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="autonomia">🙌 Autonomía</SelectItem>
+                      <SelectItem value="salud">🏥 Salud</SelectItem>
+                      <SelectItem value="social">👥 Social</SelectItem>
+                      <SelectItem value="emocional">💛 Emocional</SelectItem>
+                      <SelectItem value="espiritual">🕊️ Espiritual</SelectItem>
+                      <SelectItem value="comunicacion">💬 Comunicación</SelectItem>
+                      <SelectItem value="movilidad">🦿 Movilidad</SelectItem>
+                      <SelectItem value="cognitivo">🧠 Cognitivo</SelectItem>
+                      <SelectItem value="otro">📌 Otro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Estado</Label>
+                  <Select value={editing.status} onValueChange={(v) => setEditing(p => ({ ...p, status: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="activo">Activo</SelectItem>
+                      <SelectItem value="en_pausa">En pausa</SelectItem>
+                      <SelectItem value="logrado">Logrado</SelectItem>
+                      <SelectItem value="reformulado">Reformulado</SelectItem>
+                      <SelectItem value="cerrado">Cerrado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div><Label>Estado</Label>
-                <Select value={editing.status} onValueChange={(v) => setEditing(p => ({ ...p, status: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="activo">Activo</SelectItem>
-                    <SelectItem value="en_pausa">En pausa</SelectItem>
-                    <SelectItem value="logrado">Logrado</SelectItem>
-                    <SelectItem value="reformulado">Reformulado</SelectItem>
-                    <SelectItem value="cerrado">Cerrado</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div><Label>Diagnóstico de situación</Label><Textarea value={editing.diagnostico_situacion || ""} onChange={(e) => setEditing(p => ({ ...p, diagnostico_situacion: e.target.value }))} rows={2} placeholder="Situación actual del residente que motiva este plan..." /></div>
+              <div><Label>Descripción del plan</Label><Textarea value={editing.description || ""} onChange={(e) => setEditing(p => ({ ...p, description: e.target.value }))} rows={2} /></div>
+              <div><Label>Indicadores de logro</Label><Input value={editing.indicadores_logro || ""} onChange={(e) => setEditing(p => ({ ...p, indicadores_logro: e.target.value }))} placeholder="Ej: Camina 10 metros sin asistencia" /></div>
+              <div><Label>Apoyos y estrategias</Label><Textarea value={editing.supports || ""} onChange={(e) => setEditing(p => ({ ...p, supports: e.target.value }))} rows={2} /></div>
+              <div className="grid grid-cols-3 gap-3">
+                <div><Label>Fecha inicio</Label><Input type="date" value={editing.start_date || ""} onChange={(e) => setEditing(p => ({ ...p, start_date: e.target.value }))} /></div>
+                <div><Label>Fecha meta</Label><Input type="date" value={editing.target_date || ""} onChange={(e) => setEditing(p => ({ ...p, target_date: e.target.value }))} /></div>
+                <div><Label>Próx. revisión</Label><Input type="date" value={editing.revision_date || ""} onChange={(e) => setEditing(p => ({ ...p, revision_date: e.target.value }))} /></div>
               </div>
               <div><Label>Avance (%)</Label><Input type="number" min={0} max={100} value={editing.progress || 0} onChange={(e) => setEditing(p => ({ ...p, progress: Number(e.target.value) }))} /></div>
-              <div><Label>Descripción</Label><Textarea value={editing.description || ""} onChange={(e) => setEditing(p => ({ ...p, description: e.target.value }))} rows={2} /></div>
-              <div><Label>Apoyos necesarios</Label><Textarea value={editing.supports || ""} onChange={(e) => setEditing(p => ({ ...p, supports: e.target.value }))} rows={2} /></div>
-              <div><Label>Responsable</Label><Input value={editing.responsible || ""} onChange={(e) => setEditing(p => ({ ...p, responsible: e.target.value }))} /></div>
+              <div><Label>Responsable coordinador</Label><Input value={editing.responsible || ""} onChange={(e) => setEditing(p => ({ ...p, responsible: e.target.value }))} /></div>
+              <div><Label>Profesionales involucrados</Label><Input value={editing.profesionales_involucrados || ""} onChange={(e) => setEditing(p => ({ ...p, profesionales_involucrados: e.target.value }))} placeholder="Ej: Kinesiólogo, Nutricionista, TO" /></div>
+              <div><Label>Notas de evaluación</Label><Textarea value={editing.evaluations || ""} onChange={(e) => setEditing(p => ({ ...p, evaluations: e.target.value }))} rows={2} /></div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
                 <Button type="submit" disabled={updateMutation.isPending}>{updateMutation.isPending ? "Guardando..." : "Actualizar"}</Button>
@@ -221,7 +246,7 @@ export default function SupportPlans() {
       )}
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[88vh] overflow-y-auto">
           <DialogHeader><DialogTitle>🎯 Nuevo plan de apoyo</DialogTitle></DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(form); }} className="space-y-4 mt-2">
             <div>
@@ -236,37 +261,56 @@ export default function SupportPlans() {
               </Select>
             </div>
             <div>
-              <Label>Objetivo *</Label>
+              <Label>Objetivo del plan *</Label>
               <Input value={form.title} onChange={(e) => set("title", e.target.value)} required placeholder="Ej: Mejorar autonomía en alimentación" />
             </div>
-            <div>
-              <Label>Área *</Label>
-              <Select value={form.area} onValueChange={(v) => set("area", v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="autonomia">Autonomía</SelectItem>
-                  <SelectItem value="salud">Salud</SelectItem>
-                  <SelectItem value="social">Social</SelectItem>
-                  <SelectItem value="emocional">Emocional</SelectItem>
-                  <SelectItem value="espiritual">Espiritual</SelectItem>
-                  <SelectItem value="comunicacion">Comunicación</SelectItem>
-                  <SelectItem value="movilidad">Movilidad</SelectItem>
-                  <SelectItem value="cognitivo">Cognitivo</SelectItem>
-                  <SelectItem value="otro">Otro</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Área *</Label>
+                <Select value={form.area} onValueChange={(v) => set("area", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="autonomia">🙌 Autonomía</SelectItem>
+                    <SelectItem value="salud">🏥 Salud</SelectItem>
+                    <SelectItem value="social">👥 Social</SelectItem>
+                    <SelectItem value="emocional">💛 Emocional</SelectItem>
+                    <SelectItem value="espiritual">🕊️ Espiritual</SelectItem>
+                    <SelectItem value="comunicacion">💬 Comunicación</SelectItem>
+                    <SelectItem value="movilidad">🦿 Movilidad</SelectItem>
+                    <SelectItem value="cognitivo">🧠 Cognitivo</SelectItem>
+                    <SelectItem value="otro">📌 Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Responsable coordinador</Label>
+                <Input value={form.responsible} onChange={(e) => set("responsible", e.target.value)} />
+              </div>
             </div>
             <div>
-              <Label>Descripción</Label>
-              <Textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={2} />
+              <Label>Diagnóstico de situación</Label>
+              <Textarea value={form.diagnostico_situacion} onChange={(e) => set("diagnostico_situacion", e.target.value)} rows={2} placeholder="Situación actual del residente que motiva este plan..." />
             </div>
             <div>
-              <Label>Apoyos necesarios</Label>
+              <Label>Descripción del plan</Label>
+              <Textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={2} placeholder="Contexto, enfoque y metodología del plan..." />
+            </div>
+            <div>
+              <Label>Indicadores de logro</Label>
+              <Input value={form.indicadores_logro} onChange={(e) => set("indicadores_logro", e.target.value)} placeholder="Ej: Camina 10 metros sin asistencia, come sin apoyo" />
+            </div>
+            <div>
+              <Label>Apoyos y estrategias necesarias</Label>
               <Textarea value={form.supports} onChange={(e) => set("supports", e.target.value)} rows={2} placeholder="Qué apoyos se necesitan para lograr el objetivo" />
             </div>
             <div>
-              <Label>Responsable</Label>
-              <Input value={form.responsible} onChange={(e) => set("responsible", e.target.value)} />
+              <Label>Profesionales involucrados</Label>
+              <Input value={form.profesionales_involucrados} onChange={(e) => set("profesionales_involucrados", e.target.value)} placeholder="Ej: Kinesiólogo, Nutricionista, Terapeuta Ocupacional" />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div><Label>Fecha inicio</Label><Input type="date" value={form.start_date} onChange={(e) => set("start_date", e.target.value)} /></div>
+              <div><Label>Fecha meta</Label><Input type="date" value={form.target_date} onChange={(e) => set("target_date", e.target.value)} /></div>
+              <div><Label>Próx. revisión</Label><Input type="date" value={form.revision_date} onChange={(e) => set("revision_date", e.target.value)} /></div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
@@ -277,6 +321,13 @@ export default function SupportPlans() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Detalle del plan */}
+      <PlanDetalleDialog
+        plan={viewingPlan}
+        open={!!viewingPlan}
+        onOpenChange={(v) => { if (!v) setViewingPlan(null); }}
+      />
     </div>
   );
 }

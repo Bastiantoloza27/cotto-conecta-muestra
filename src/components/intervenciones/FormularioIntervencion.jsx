@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 
 export const PROFESIONES = [
   { key: "nutricionista", label: "Nutricionista", color: "bg-green-100 text-green-800 border-green-300", icon: "🥗" },
@@ -332,6 +334,16 @@ export default function FormularioIntervencion({ open, onClose, resident: reside
     proxima_sesion: intervencion?.proxima_sesion || "",
     firma: intervencion?.firma || "",
     observaciones: intervencion?.observaciones || "",
+    plan_apoyo_id: intervencion?.plan_apoyo_id || "",
+    plan_apoyo_titulo: intervencion?.plan_apoyo_titulo || "",
+  });
+
+  // Planes activos del residente seleccionado
+  const residentId = resident?.id;
+  const { data: planesResidente = [] } = useQuery({
+    queryKey: ["support-plans-resident", residentId],
+    queryFn: () => base44.entities.SupportPlan.filter({ resident_id: residentId, status: "activo" }),
+    enabled: !!residentId,
   });
 
   const [datosClinicos, setDatosClinicos] = useState(() => {
@@ -357,7 +369,7 @@ export default function FormularioIntervencion({ open, onClose, resident: reside
       ...form,
       datos_clinicos: JSON.stringify(datosClinicos),
       resident_id: resident.id,
-      resident_name: resident.full_name,
+      resident_name: resident.preferred_name || resident.full_name,
     }, intervencion?.id);
     onClose();
   };
@@ -457,6 +469,41 @@ export default function FormularioIntervencion({ open, onClose, resident: reside
               <Textarea value={form.indicaciones} onChange={e => set("indicaciones", e.target.value)} placeholder="Indicaciones para el equipo de cuidado y plan de continuidad..." className="min-h-[60px]" />
             </div>
           </div>
+
+          {/* Vinculación con Plan de Apoyo */}
+          {planesResidente.length > 0 && (
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-1.5">
+              <Label className="text-xs font-semibold text-primary">🎯 Vincular a Plan de Apoyo (opcional)</Label>
+              <Select
+                value={form.plan_apoyo_id || "ninguno"}
+                onValueChange={(v) => {
+                  if (v === "ninguno") {
+                    set("plan_apoyo_id", "");
+                    set("plan_apoyo_titulo", "");
+                  } else {
+                    const plan = planesResidente.find(p => p.id === v);
+                    set("plan_apoyo_id", v);
+                    set("plan_apoyo_titulo", plan?.title || "");
+                  }
+                }}
+              >
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Sin vinculación" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ninguno">Sin vinculación</SelectItem>
+                  {planesResidente.map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.title} <span className="text-muted-foreground capitalize ml-1">({p.area})</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {form.plan_apoyo_titulo && (
+                <p className="text-[11px] text-primary/80">✓ Vinculado a: {form.plan_apoyo_titulo}</p>
+              )}
+            </div>
+          )}
 
           {/* Cierre */}
           <div className="grid grid-cols-2 gap-3">

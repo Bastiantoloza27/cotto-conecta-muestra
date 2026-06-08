@@ -29,6 +29,14 @@
     "tipo_intervencion": {
       "type": "string"
     },
+    "plan_apoyo_id": {
+      "type": "string",
+      "description": "ID del plan de apoyo al que contribuye esta intervenci\u00f3n (opcional)"
+    },
+    "plan_apoyo_titulo": {
+      "type": "string",
+      "description": "T\u00edtulo del plan de apoyo vinculado"
+    },
     "datos_clinicos": {
       "type": "string",
       "description": "JSON stringificado con los campos cl\u00ednicos espec\u00edficos del \u00e1rea"

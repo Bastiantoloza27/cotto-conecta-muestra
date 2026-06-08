@@ -1,7 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Pencil, Trash2, Target } from "lucide-react";
+import { Pencil, Trash2, Target, Eye } from "lucide-react";
+import { PROFESIONES } from "@/components/intervenciones/FormularioIntervencion";
 
 const COLUMNS = [
   {
@@ -51,7 +52,9 @@ const areaEmojis = {
   espiritual: "🕊️", comunicacion: "💬", movilidad: "🦿", cognitivo: "🧠", otro: "📌",
 };
 
-function PlanCard({ plan, onEdit, onDelete, onStatusChange }) {
+function PlanCard({ plan, onEdit, onDelete, onStatusChange, onView, intervenciones = [] }) {
+  const planIntervenciones = intervenciones.filter(i => i.plan_apoyo_id === plan.id);
+  const profesionesUnicas = [...new Set(planIntervenciones.map(i => i.profesion))];
   return (
     <div className="bg-white rounded-lg border border-border p-3 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between gap-2 mb-1">
@@ -60,6 +63,9 @@ function PlanCard({ plan, onEdit, onDelete, onStatusChange }) {
           <p className="text-sm font-semibold leading-tight line-clamp-2">{plan.title}</p>
         </div>
         <div className="flex gap-0.5 shrink-0">
+          <Button size="icon" variant="ghost" className="h-6 w-6 text-primary/70 hover:text-primary" onClick={() => onView(plan)} title="Ver detalle">
+            <Eye className="w-3 h-3" />
+          </Button>
           <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => onEdit(plan)}>
             <Pencil className="w-3 h-3" />
           </Button>
@@ -88,6 +94,22 @@ function PlanCard({ plan, onEdit, onDelete, onStatusChange }) {
         <p className="text-[10px] text-muted-foreground">👤 {plan.responsible}</p>
       )}
 
+      {/* Profesiones vinculadas */}
+      {profesionesUnicas.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {profesionesUnicas.map(pk => {
+            const prof = PROFESIONES.find(p => p.key === pk);
+            if (!prof) return null;
+            const count = planIntervenciones.filter(i => i.profesion === pk).length;
+            return (
+              <span key={pk} className="text-[10px] bg-white border rounded-full px-1.5 py-0.5 flex items-center gap-0.5">
+                {prof.icon} <span className="text-muted-foreground">{count}</span>
+              </span>
+            );
+          })}
+        </div>
+      )}
+
       {/* Quick status change */}
       <div className="mt-2 pt-2 border-t border-border flex flex-wrap gap-1">
         {COLUMNS.filter(c => c.key !== plan.status).map(col => (
@@ -105,7 +127,7 @@ function PlanCard({ plan, onEdit, onDelete, onStatusChange }) {
   );
 }
 
-export default function KanbanBoard({ plans, onEdit, onDelete, onStatusChange }) {
+export default function KanbanBoard({ plans, onEdit, onDelete, onStatusChange, onView, intervenciones = [] }) {
   return (
     <div className="overflow-x-auto pb-4">
       <div className="flex gap-4 min-w-max">
@@ -113,22 +135,13 @@ export default function KanbanBoard({ plans, onEdit, onDelete, onStatusChange })
           const colPlans = plans.filter(p => p.status === col.key);
           return (
             <div key={col.key} className={`w-64 flex flex-col rounded-xl border ${col.border} ${col.bg}`}>
-              {/* Column header */}
               <div className={`flex items-center justify-between px-3 py-2.5 rounded-t-xl ${col.header}`}>
-                <span className="text-sm font-semibold">
-                  {col.emoji} {col.label}
-                </span>
-                <span className="text-xs font-bold bg-white/50 rounded-full px-1.5 py-0.5">
-                  {colPlans.length}
-                </span>
+                <span className="text-sm font-semibold">{col.emoji} {col.label}</span>
+                <span className="text-xs font-bold bg-white/50 rounded-full px-1.5 py-0.5">{colPlans.length}</span>
               </div>
-
-              {/* Cards */}
               <div className="flex-1 p-2 space-y-2 min-h-[120px]">
                 {colPlans.length === 0 ? (
-                  <div className="text-center text-xs text-muted-foreground py-6 opacity-60">
-                    Sin planes
-                  </div>
+                  <div className="text-center text-xs text-muted-foreground py-6 opacity-60">Sin planes</div>
                 ) : (
                   colPlans.map(plan => (
                     <PlanCard
@@ -137,6 +150,8 @@ export default function KanbanBoard({ plans, onEdit, onDelete, onStatusChange })
                       onEdit={onEdit}
                       onDelete={onDelete}
                       onStatusChange={onStatusChange}
+                      onView={onView}
+                      intervenciones={intervenciones}
                     />
                   ))
                 )}
