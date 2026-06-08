@@ -85,24 +85,34 @@ export default function MisAvisos() {
     mutationFn: (data) => base44.entities.AvisoDestinatario.create(data),
   });
 
-  // Excluir borradores del mapa
-  const avisosMap = Object.fromEntries(
-    avisos.filter(a => a.estado !== "borrador").map(a => [a.id, a])
-  );
-  const misAvisos = misDestinatarios
-    .filter(d => avisosMap[d.aviso_id])
-    .map(d => ({ destinatario: d, aviso: avisosMap[d.aviso_id] }))
-    .sort((a, b) => new Date(b.aviso.created_date) - new Date(a.aviso.created_date));
-  const noLeidos = misAvisos.filter(({ destinatario }) => !destinatario.leido_en).length;
+  const isAdmin = user?.role === "admin";
+
+  // Excluir borradores
+  const avisosEnviados = avisos.filter(a => a.estado !== "borrador");
+
+  let misAvisos;
+  if (isAdmin) {
+    // Admin ve todos los avisos directamente
+    misAvisos = avisosEnviados
+      .map(aviso => ({ aviso, destinatario: null }))
+      .sort((a, b) => new Date(b.aviso.created_date) - new Date(a.aviso.created_date));
+  } else {
+    const avisosMap = Object.fromEntries(avisosEnviados.map(a => [a.id, a]));
+    misAvisos = misDestinatarios
+      .filter(d => avisosMap[d.aviso_id])
+      .map(d => ({ destinatario: d, aviso: avisosMap[d.aviso_id] }))
+      .sort((a, b) => new Date(b.aviso.created_date) - new Date(a.aviso.created_date));
+  }
+  const noLeidos = misAvisos.filter(({ destinatario }) => destinatario && !destinatario.leido_en).length;
 
   useEffect(() => {
-    if (!user?.email) return;
+    if (!user?.email || isAdmin) return;
     misDestinatarios.forEach(d => {
       if (!d.leido_en) {
         base44.entities.AvisoDestinatario.update(d.id, { leido_en: new Date().toISOString() });
       }
     });
-  }, [misDestinatarios.length, user?.email]);
+  }, [misDestinatarios.length, user?.email, isAdmin]);
 
   const handleConfirmar = () => {
     if (!confirmDialog) return;
@@ -220,11 +230,11 @@ export default function MisAvisos() {
       ) : (
         <div className="space-y-3">
           {misAvisos.map(({ destinatario, aviso }) => {
-            const yaConfirmo = !!destinatario.confirmado_en;
-            const noLeido = !destinatario.leido_en;
+            const yaConfirmo = !!destinatario?.confirmado_en;
+            const noLeido = destinatario ? !destinatario.leido_en : false;
             return (
               <Card
-                key={destinatario.id}
+                key={aviso.id}
                 className={`p-4 transition-shadow ${noLeido ? "border-l-4 border-l-red-400" : ""}`}
               >
                 <div className="flex items-start gap-3">
@@ -243,7 +253,7 @@ export default function MisAvisos() {
                         <span>{format(new Date(aviso.created_date), "d MMM yyyy HH:mm", { locale: es })}</span>
                       )}
                     </div>
-                    {aviso.requiere_confirmacion && (
+                    {destinatario && aviso.requiere_confirmacion && (
                       yaConfirmo ? (
                         <div className="flex items-center gap-1.5 text-xs text-green-700 font-medium">
                           <CheckCircle2 className="w-4 h-4" /> Lectura confirmada
