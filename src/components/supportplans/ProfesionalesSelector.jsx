@@ -14,10 +14,11 @@ import { Check, ChevronDown, ChevronUp, Users } from "lucide-react";
  */
 export default function ProfesionalesSelector({ value, onChange }) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
-  const { data: staff = [] } = useQuery({
+  const { data: staff = [], isLoading } = useQuery({
     queryKey: ["staff-activo"],
-    queryFn: () => base44.entities.StaffMember.filter({ status: "activo" }),
+    queryFn: () => base44.entities.StaffMember.list("-full_name", 200),
   });
 
   // Parse current value
@@ -64,12 +65,10 @@ export default function ProfesionalesSelector({ value, onChange }) {
     otro: "Otro",
   };
 
-  // Group staff by relevant professional roles (skip auxiliary/admin for plan work)
-  const relevantPositions = [
-    "kinesiologo","terapeuta_ocupacional","psicologo","trabajador_social",
-    "nutricionista","medico","enfermero","tecnico_enfermeria","capellan","director","otro"
-  ];
-  const relevantStaff = staff.filter(s => relevantPositions.includes(s.position));
+  const relevantStaff = staff.filter(s =>
+    !search || s.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+    (positionLabel[s.position] || s.position || "").toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="space-y-3">
@@ -90,9 +89,25 @@ export default function ProfesionalesSelector({ value, onChange }) {
         </button>
 
         {open && (
-          <div className="border-t max-h-56 overflow-y-auto divide-y divide-border/50">
-            {relevantStaff.length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-4">No hay personal activo registrado.</p>
+          <div className="border-t">
+            <div className="p-2 border-b">
+              <input
+                type="text"
+                placeholder="Buscar por nombre o cargo..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                autoFocus
+              />
+            </div>
+            <div className="max-h-52 overflow-y-auto divide-y divide-border/50">
+            {isLoading && (
+              <p className="text-xs text-muted-foreground text-center py-4">Cargando personal...</p>
+            )}
+            {!isLoading && relevantStaff.length === 0 && (
+              <p className="text-xs text-muted-foreground text-center py-4">
+                {staff.length === 0 ? "No hay personal registrado en el sistema." : "Sin resultados para la búsqueda."}
+              </p>
             )}
             {relevantStaff.map((member) => {
               const selected = isSelected(member.id);
@@ -114,6 +129,7 @@ export default function ProfesionalesSelector({ value, onChange }) {
               );
             })}
           </div>
+            </div>
         )}
       </div>
 
