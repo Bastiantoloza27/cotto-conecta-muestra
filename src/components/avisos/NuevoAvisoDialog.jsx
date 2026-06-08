@@ -44,8 +44,8 @@ export default function NuevoAvisoDialog({ open, onClose, onEnviar, onBorrador, 
 
   const resolverDestinatariosEmails = () => {
     // Usuarios de plataforma + staff sin cuenta, sin duplicados
-    const emailsEnPlataforma = new Set(allUsers.map(u => u.email).filter(Boolean));
-    const staffSinCuenta = staffMembers.filter(s => s.email && !emailsEnPlataforma.has(s.email));
+    const emailsEnPlataforma = new Set(allUsers.map(u => u.email?.toLowerCase()).filter(Boolean));
+    const staffSinCuenta = staffMembers.filter(s => s.email && !emailsEnPlataforma.has(s.email?.toLowerCase()));
     const todosConArea = [
       ...allUsers.filter(u => u.email).map(u => {
         const staffMatch = staffMembers.find(s => s.email === u.email);
@@ -83,11 +83,11 @@ export default function NuevoAvisoDialog({ open, onClose, onEnviar, onBorrador, 
   };
 
   // Combinar users + staff con email para el selector de personas (sin duplicados)
-  const emailsEnPlataforma = new Set(allUsers.map(u => u.email).filter(Boolean));
+  const emailsEnPlataforma = new Set(allUsers.map(u => u.email?.toLowerCase()).filter(Boolean));
   const todasLasPersonas = [
     ...allUsers.filter(u => u.email).map(u => ({ email: u.email, nombre: u.full_name || u.email, fuente: "usuario" })),
     ...staffMembers
-      .filter(s => s.email && !emailsEnPlataforma.has(s.email))
+      .filter(s => s.email && !emailsEnPlataforma.has(s.email?.toLowerCase()))
       .map(s => ({ email: s.email, nombre: s.full_name || s.email, fuente: "personal" }))
   ];
 
