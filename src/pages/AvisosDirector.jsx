@@ -260,6 +260,7 @@ export default function AvisosDirector() {
       ...form,
       autor: user?.full_name || user?.email || "Director",
       estado: "enviado",
+      fecha_envio: new Date().toISOString(),
       slack_enviado: slackOk,
       slack_error: webhooks.length > 0 && !slackOk,
     });
@@ -288,7 +289,7 @@ export default function AvisosDirector() {
 
     await updateAvisoMutation.mutateAsync({
       id: aviso.id,
-      data: { estado: "enviado", slack_enviado: slackOk, slack_error: webhooks.length > 0 && !slackOk },
+      data: { estado: "enviado", fecha_envio: new Date().toISOString(), slack_enviado: slackOk, slack_error: webhooks.length > 0 && !slackOk },
     });
 
     await crearDestinatarios(aviso.id, aviso, aviso.areas_destino);
@@ -395,8 +396,8 @@ export default function AvisosDirector() {
                   <p className="text-sm text-muted-foreground mb-1 line-clamp-2">{aviso.mensaje}</p>
                   <div className="flex items-center gap-3 text-[11px] text-muted-foreground flex-wrap">
                     <span>Áreas: {aviso.areas_destino}</span>
-                    {aviso.created_date && (
-                      <span>{format(new Date(aviso.created_date), "d MMM yyyy", { locale: es })}</span>
+                    {(aviso.fecha_envio || aviso.created_date) && (
+                      <span>{format(new Date(aviso.fecha_envio || aviso.created_date), "d MMM yyyy HH:mm", { locale: es })}</span>
                     )}
                     {aviso.estado === "enviado" && (
                       <>

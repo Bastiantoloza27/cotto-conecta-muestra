@@ -172,6 +172,7 @@ export default function MisAvisos() {
       ...form,
       autor: autorNombre,
       estado: "enviado",
+      fecha_envio: new Date().toISOString(),
       slack_enviado: slackOk,
     });
 
@@ -249,8 +250,8 @@ export default function MisAvisos() {
                     <p className="text-sm text-muted-foreground mb-2 whitespace-pre-wrap">{aviso.mensaje}</p>
                     <div className="flex items-center gap-3 text-[11px] text-muted-foreground mb-3">
                       <span>Por {aviso.autor || "Personal"}</span>
-                      {aviso.created_date && (
-                        <span>{format(new Date(aviso.created_date), "d MMM yyyy HH:mm", { locale: es })}</span>
+                      {(aviso.fecha_envio || aviso.created_date) && (
+                        <span>{format(new Date(aviso.fecha_envio || aviso.created_date), "d MMM yyyy HH:mm", { locale: es })}</span>
                       )}
                     </div>
                     {destinatario && aviso.requiere_confirmacion && (

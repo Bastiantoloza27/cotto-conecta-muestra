@@ -42,6 +42,10 @@
       "type": "string",
       "description": "Nombre/email del autor"
     },
+    "fecha_envio": {
+      "type": "string",
+      "description": "Fecha y hora exacta del env\u00edo (ISO string en hora local)"
+    },
     "estado": {
       "type": "string",
       "enum": [
