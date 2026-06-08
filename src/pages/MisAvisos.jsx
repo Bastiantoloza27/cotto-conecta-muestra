@@ -37,7 +37,7 @@ export default function MisAvisos() {
   const { data: misDestinatarios = [] } = useQuery({
     queryKey: ["mis-destinatarios", user?.email],
     queryFn: () => user?.email
-      ? base44.entities.AvisoDestinatario.filter({ usuario_email: user.email }, "-created_date", 100)
+      ? base44.entities.AvisoDestinatario.filter({ usuario_email: user.email }, "-created_date", 500)
       : Promise.resolve([]),
     enabled: !!user?.email,
     refetchInterval: 30000,
@@ -45,7 +45,7 @@ export default function MisAvisos() {
 
   const { data: avisos = [] } = useQuery({
     queryKey: ["avisos-enviados"],
-    queryFn: () => base44.entities.AvisoDirector.filter({ estado: "enviado" }, "-created_date", 100),
+    queryFn: () => base44.entities.AvisoDirector.list("-created_date", 500),
     refetchInterval: 30000,
   });
 
@@ -81,10 +81,14 @@ export default function MisAvisos() {
     mutationFn: (data) => base44.entities.AvisoDestinatario.create(data),
   });
 
-  const avisosMap = Object.fromEntries(avisos.map(a => [a.id, a]));
+  // Excluir borradores del mapa
+  const avisosMap = Object.fromEntries(
+    avisos.filter(a => a.estado !== "borrador").map(a => [a.id, a])
+  );
   const misAvisos = misDestinatarios
     .filter(d => avisosMap[d.aviso_id])
-    .map(d => ({ destinatario: d, aviso: avisosMap[d.aviso_id] }));
+    .map(d => ({ destinatario: d, aviso: avisosMap[d.aviso_id] }))
+    .sort((a, b) => new Date(b.aviso.created_date) - new Date(a.aviso.created_date));
   const noLeidos = misAvisos.filter(({ destinatario }) => !destinatario.leido_en).length;
 
   useEffect(() => {

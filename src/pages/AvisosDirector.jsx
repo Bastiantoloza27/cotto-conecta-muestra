@@ -57,7 +57,7 @@ export default function AvisosDirector() {
 
   const { data: destinatarios = [] } = useQuery({
     queryKey: ["todos-destinatarios"],
-    queryFn: () => base44.entities.AvisoDestinatario.list(),
+    queryFn: () => base44.entities.AvisoDestinatario.list("-created_date", 500),
   });
 
   const { data: slackConfigs = [] } = useQuery({
@@ -106,25 +106,28 @@ export default function AvisosDirector() {
 
   // Resuelve destinatarios usando Users (plataforma) + StaffMembers con email, sin duplicados
   const resolverDestinatarios = (areasDestino) => {
+    const emailsEnPlataforma = new Set(allUsers.map(u => u.email).filter(Boolean));
+
     // Usuarios registrados en la plataforma (fuente principal)
     const usersComoDestinatarios = allUsers
       .filter(u => u.email)
       .map(u => {
-        // Intentar encontrar su área en StaffMember
-        const staffMatch = staffMembers.find(s => s.email === u.email);
+        const staffMatch = staffMembers.find(s => s.email?.toLowerCase() === u.email?.toLowerCase());
         return { email: u.email, full_name: u.full_name, area: staffMatch?.area || "" };
       });
 
     // Staff con email que NO tienen cuenta en la plataforma
-    const emailsEnPlataforma = new Set(allUsers.map(u => u.email).filter(Boolean));
     const staffSinCuenta = staffMembers
       .filter(s => s.email && !emailsEnPlataforma.has(s.email))
       .map(s => ({ email: s.email, full_name: s.full_name, area: s.area || "" }));
 
     const todos = [...usersComoDestinatarios, ...staffSinCuenta];
 
-    if (areasDestino === "todos") return todos;
+    // Si es "todos" o áreas_destino está vacío: devolver todos
+    if (!areasDestino || areasDestino === "todos" || areasDestino === "personas_especificas") return todos;
+
     const areas = areasDestino.split(",").map(a => a.trim());
+    // Incluir también usuarios sin área asignada cuando el area vacía no es criterio de exclusión
     return todos.filter(d => areas.includes(d.area));
   };
 
