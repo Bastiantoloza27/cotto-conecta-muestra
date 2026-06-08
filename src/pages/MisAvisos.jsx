@@ -36,9 +36,13 @@ export default function MisAvisos() {
 
   const { data: misDestinatarios = [] } = useQuery({
     queryKey: ["mis-destinatarios", user?.email],
-    queryFn: () => user?.email
-      ? base44.entities.AvisoDestinatario.filter({ usuario_email: user.email }, "-created_date", 500)
-      : Promise.resolve([]),
+    queryFn: async () => {
+      if (!user?.email) return [];
+      // Traer todos y filtrar en cliente por email case-insensitive
+      const todos = await base44.entities.AvisoDestinatario.list("-created_date", 1000);
+      const emailLower = user.email.toLowerCase();
+      return todos.filter(d => d.usuario_email?.toLowerCase() === emailLower);
+    },
     enabled: !!user?.email,
     refetchInterval: 30000,
   });
@@ -167,7 +171,7 @@ export default function MisAvisos() {
         createDestinatarioMutation.mutateAsync({
           aviso_id: aviso.id,
           aviso_titulo: form.titulo,
-          usuario_email: d.email,
+          usuario_email: d.email?.toLowerCase(),
           area: d.area || "",
         })
       )

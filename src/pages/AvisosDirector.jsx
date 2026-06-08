@@ -204,7 +204,7 @@ export default function AvisosDirector() {
         createDestinatarioMutation.mutateAsync({
           aviso_id: avisoId,
           aviso_titulo: avisoData.titulo,
-          usuario_email: d.email,
+          usuario_email: d.email?.toLowerCase(),
           area: d.area || "",
         })
       )
