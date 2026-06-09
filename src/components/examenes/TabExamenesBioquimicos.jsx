@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, FlaskConical, Pencil, Trash2, CalendarClock, ChevronDown, ChevronUp, Upload, Sparkles, FileText, ExternalLink, Loader2 } from "lucide-react";
+import { Plus, FlaskConical, Pencil, Trash2, CalendarClock, ChevronDown, ChevronUp, Upload, Sparkles, FileText, ExternalLink, Loader2, X, Files } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { es } from "date-fns/locale";
@@ -29,10 +29,11 @@ const EMPTY_FORM = {
   observaciones: "", profesional_nombre: "", archivo_url: "", archivo_nombre: "",
 };
 
-// ─── Extracción IA desde archivo ───────────────────────────────────────────
-async function extraerDatosConIA(fileUrl) {
+// ─── Extracción IA desde archivo ─────────────────────────────────────────────
+async function extraerDatosConIA(fileUrls) {
   const prompt = `Eres un asistente clínico especializado en análisis de laboratorio. 
-Analiza la imagen o documento adjunto que corresponde a un examen de laboratorio o examen bioquímico de un paciente.
+Analiza el/los documento(s) adjunto(s) que corresponden a exámenes de laboratorio o exámenes bioquímicos de un paciente.
+El documento puede tener múltiples páginas; analiza TODAS las páginas y extrae todos los valores que encuentres.
 
 Extrae TODOS los valores que encuentres y organízalos en los siguientes paneles. Para cada panel, lista los parámetros con su valor y unidad, e indica brevemente si está normal, alto o bajo según los rangos de referencia.
 
@@ -42,7 +43,8 @@ Responde SOLO con el JSON indicado, sin texto adicional.`;
 
   const result = await base44.integrations.Core.InvokeLLM({
     prompt,
-    file_urls: [fileUrl],
+    model: "claude_sonnet_4_6",
+    file_urls: Array.isArray(fileUrls) ? fileUrls : [fileUrls],
     response_json_schema: {
       type: "object",
       properties: {
@@ -60,34 +62,43 @@ Responde SOLO con el JSON indicado, sin texto adicional.`;
   return result;
 }
 
-// ─── Zona de carga de archivo ───────────────────────────────────────────────
-function ZonaArchivo({ onExtracted, onFileUploaded, archivoActual }) {
+// ─── Zona de carga de MÚLTIPLES archivos ─────────────────────────────────────
+function ZonaArchivos({ archivos, onArchivosChange, onExtracted }) {
   const [uploading, setUploading] = useState(false);
   const [extracting, setExtracting] = useState(false);
-  const [fileUrl, setFileUrl] = useState(archivoActual?.url || "");
-  const [fileName, setFileName] = useState(archivoActual?.nombre || "");
   const inputRef = useRef();
 
-  const handleFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFiles = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
 
     setUploading(true);
-    toast.info("Subiendo archivo...");
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    setFileUrl(file_url);
-    setFileName(file.name);
-    onFileUploaded(file_url, file.name);
+    toast.info(`Subiendo ${files.length} archivo(s)...`);
+
+    const nuevos = [];
+    for (const file of files) {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      nuevos.push({ url: file_url, nombre: file.name });
+    }
+
+    onArchivosChange([...archivos, ...nuevos]);
     setUploading(false);
-    toast.success("Archivo subido. Ahora puedes extraer los datos con IA.");
+    toast.success(`${files.length} archivo(s) subido(s). Puedes extraer los datos con IA.`);
+    // reset input
+    e.target.value = "";
+  };
+
+  const handleRemove = (idx) => {
+    onArchivosChange(archivos.filter((_, i) => i !== idx));
   };
 
   const handleExtract = async () => {
-    if (!fileUrl) { toast.error("Primero sube un archivo"); return; }
+    if (!archivos.length) { toast.error("Primero sube al menos un archivo"); return; }
     setExtracting(true);
-    toast.info("La IA está leyendo el examen, esto puede tardar unos segundos...");
+    toast.info("La IA está leyendo el/los examen(es), esto puede tardar unos segundos...");
     try {
-      const datos = await extraerDatosConIA(fileUrl);
+      const urls = archivos.map(a => a.url);
+      const datos = await extraerDatosConIA(urls);
       onExtracted(datos);
       toast.success("¡Datos extraídos! Revisa y ajusta los campos si es necesario.");
     } catch (err) {
@@ -100,53 +111,51 @@ function ZonaArchivo({ onExtracted, onFileUploaded, archivoActual }) {
   return (
     <div className="rounded-xl border-2 border-dashed border-border bg-muted/30 p-4 space-y-3">
       <p className="text-sm font-semibold flex items-center gap-2">
-        <Upload className="w-4 h-4 text-primary" />
-        Adjuntar examen original
+        <Files className="w-4 h-4 text-primary" />
+        Adjuntar archivos del examen
+        <span className="text-xs font-normal text-muted-foreground">(puedes subir varios)</span>
       </p>
 
-      {fileUrl ? (
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-2 bg-white border rounded-lg px-3 py-1.5 flex-1 min-w-0">
-            <FileText className="w-4 h-4 text-primary shrink-0" />
-            <span className="text-xs truncate text-muted-foreground">{fileName}</span>
-            <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="ml-auto shrink-0">
-              <ExternalLink className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
-            </a>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-xs shrink-0"
-            onClick={() => inputRef.current?.click()}
-            disabled={uploading}
-          >
-            Reemplazar
-          </Button>
+      {/* Lista de archivos subidos */}
+      {archivos.length > 0 && (
+        <div className="space-y-1.5">
+          {archivos.map((archivo, idx) => (
+            <div key={idx} className="flex items-center gap-2 bg-white border rounded-lg px-3 py-1.5">
+              <FileText className="w-4 h-4 text-primary shrink-0" />
+              <span className="text-xs truncate text-muted-foreground flex-1">{archivo.nombre}</span>
+              <a href={archivo.url} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                <ExternalLink className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
+              </a>
+              <button type="button" onClick={() => handleRemove(idx)} className="shrink-0 text-muted-foreground hover:text-destructive transition-colors">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
         </div>
-      ) : (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="gap-1.5 w-full"
-          onClick={() => inputRef.current?.click()}
-          disabled={uploading}
-        >
-          {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-          {uploading ? "Subiendo..." : "Seleccionar foto o PDF"}
-        </Button>
       )}
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="gap-1.5 w-full"
+        onClick={() => inputRef.current?.click()}
+        disabled={uploading}
+      >
+        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+        {uploading ? "Subiendo..." : archivos.length > 0 ? "Agregar más archivos" : "Seleccionar fotos o PDFs"}
+      </Button>
 
       <input
         ref={inputRef}
         type="file"
         accept="image/*,.pdf"
+        multiple
         className="hidden"
-        onChange={handleFile}
+        onChange={handleFiles}
       />
 
-      {fileUrl && (
+      {archivos.length > 0 && (
         <Button
           type="button"
           size="sm"
@@ -162,15 +171,24 @@ function ZonaArchivo({ onExtracted, onFileUploaded, archivoActual }) {
       )}
 
       <p className="text-[11px] text-muted-foreground">
-        Sube una foto o PDF del examen y la IA completará los campos automáticamente. El archivo queda guardado como respaldo.
+        Sube una o varias fotos/PDFs (incluidos PDFs multipágina) y la IA completará los campos automáticamente. Los archivos quedan guardados como respaldo.
       </p>
     </div>
   );
 }
 
-// ─── Formulario ────────────────────────────────────────────────────────────
+// ─── Formulario ──────────────────────────────────────────────────────────────
 function FormDialog({ open, onClose, residents, editing, residentFixed }) {
   const qc = useQueryClient();
+
+  // archivos: array de {url, nombre}
+  const buildInitialArchivos = (src) => {
+    if (!src?.archivo_url) return [];
+    // soporte legacy: un solo archivo guardado
+    const urls = src.archivo_url.split("||");
+    const nombres = src.archivo_nombre ? src.archivo_nombre.split("||") : [];
+    return urls.map((url, i) => ({ url, nombre: nombres[i] || url.split("/").pop() }));
+  };
 
   const buildInitialForm = () =>
     editing
@@ -180,10 +198,13 @@ function FormDialog({ open, onClose, residents, editing, residentFixed }) {
         : EMPTY_FORM;
 
   const [form, setForm] = useState(buildInitialForm);
+  const [archivos, setArchivos] = useState(() => buildInitialArchivos(editing));
 
-  // Resetear form cada vez que el diálogo se abre (nuevo o edición diferente)
   useEffect(() => {
-    if (open) setForm(buildInitialForm());
+    if (open) {
+      setForm(buildInitialForm());
+      setArchivos(buildInitialArchivos(editing));
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editing?.id]);
 
@@ -228,7 +249,12 @@ function FormDialog({ open, onClose, residents, editing, residentFixed }) {
   const handleSave = () => {
     if (!form.resident_id) { toast.error("Selecciona un residente"); return; }
     if (!form.fecha_examen) { toast.error("Ingresa la fecha del examen"); return; }
-    mutation.mutate(form);
+
+    // Serializar múltiples archivos con separador ||
+    const archivo_url = archivos.map(a => a.url).join("||");
+    const archivo_nombre = archivos.map(a => a.nombre).join("||");
+
+    mutation.mutate({ ...form, archivo_url, archivo_nombre });
   };
 
   return (
@@ -262,10 +288,10 @@ function FormDialog({ open, onClose, residents, editing, residentFixed }) {
             </div>
           )}
 
-          {/* Zona adjunto + IA */}
-          <ZonaArchivo
-            archivoActual={form.archivo_url ? { url: form.archivo_url, nombre: form.archivo_nombre } : null}
-            onFileUploaded={(url, nombre) => { set("archivo_url", url); set("archivo_nombre", nombre); }}
+          {/* Zona adjuntos múltiples + IA */}
+          <ZonaArchivos
+            archivos={archivos}
+            onArchivosChange={setArchivos}
             onExtracted={handleExtracted}
           />
 
@@ -317,7 +343,7 @@ function FormDialog({ open, onClose, residents, editing, residentFixed }) {
   );
 }
 
-// ─── Tarjeta de examen ─────────────────────────────────────────────────────
+// ─── Tarjeta de examen ────────────────────────────────────────────────────────
 function ExamenCard({ examen, onEdit, onDelete }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -325,6 +351,14 @@ function ExamenCard({ examen, onEdit, onDelete }) {
   const diasParaProximo = examen.proxima_fecha
     ? differenceInDays(parseISO(examen.proxima_fecha), new Date())
     : null;
+
+  // Soporte para múltiples archivos (separados por ||) o legacy
+  const archivosAdjuntos = examen.archivo_url
+    ? examen.archivo_url.split("||").map((url, i) => {
+        const nombres = examen.archivo_nombre ? examen.archivo_nombre.split("||") : [];
+        return { url, nombre: nombres[i] || url.split("/").pop() };
+      })
+    : [];
 
   return (
     <Card className={`p-4 ${diasParaProximo !== null && diasParaProximo <= 14 && diasParaProximo >= 0 ? "border-amber-300 bg-amber-50/40" : ""}`}>
@@ -338,15 +372,15 @@ function ExamenCard({ examen, onEdit, onDelete }) {
             <Badge variant="outline" className="text-[10px]">
               {format(parseISO(examen.fecha_examen), "dd MMM yyyy", { locale: es })}
             </Badge>
-            {examen.archivo_url && (
-              <a href={examen.archivo_url} target="_blank" rel="noopener noreferrer">
+            {archivosAdjuntos.map((archivo, idx) => (
+              <a key={idx} href={archivo.url} target="_blank" rel="noopener noreferrer">
                 <Badge variant="outline" className="text-[10px] flex items-center gap-1 hover:bg-primary/5 cursor-pointer">
                   <FileText className="w-2.5 h-2.5" />
-                  Archivo adjunto
+                  {archivosAdjuntos.length > 1 ? `Archivo ${idx + 1}` : "Archivo adjunto"}
                   <ExternalLink className="w-2.5 h-2.5" />
                 </Badge>
               </a>
-            )}
+            ))}
             {examen.proxima_fecha && (
               <Badge
                 variant="outline"
@@ -407,7 +441,7 @@ function ExamenCard({ examen, onEdit, onDelete }) {
   );
 }
 
-// ─── Vista principal ───────────────────────────────────────────────────────
+// ─── Vista principal ──────────────────────────────────────────────────────────
 export default function TabExamenesBioquimicos({ residents, residentFixed }) {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
