@@ -1,6 +1,7 @@
 {
   "name": "Incident",
   "type": "object",
+  "x-admin-unrestricted-read": true,
   "properties": {
     "resident_id": {
       "type": "string"
@@ -66,6 +67,10 @@
     "notified_authority": {
       "type": "boolean",
       "default": false
+    },
+    "registered_by": {
+      "type": "string",
+      "description": "Nombre del funcionario que registra el incidente"
     }
   },
   "required": [

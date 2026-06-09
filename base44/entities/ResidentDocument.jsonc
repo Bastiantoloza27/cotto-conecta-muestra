@@ -1,6 +1,7 @@
 {
   "name": "ResidentDocument",
   "type": "object",
+  "x-admin-unrestricted-read": true,
   "properties": {
     "resident_id": {
       "type": "string",

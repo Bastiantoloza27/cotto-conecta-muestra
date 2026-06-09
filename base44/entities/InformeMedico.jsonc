@@ -1,6 +1,7 @@
 {
   "name": "InformeMedico",
   "type": "object",
+  "x-admin-unrestricted-read": true,
   "properties": {
     "fecha_visita": {
       "type": "string",
