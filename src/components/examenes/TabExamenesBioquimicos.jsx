@@ -47,7 +47,7 @@ Si un panel específico no aparece en el documento, déjalo vacío ("").`;
 
   const result = await base44.integrations.Core.InvokeLLM({
     prompt,
-    model: "claude_sonnet_4_6",
+    model: "gemini_3_1_pro",
     file_urls: Array.isArray(fileUrls) ? fileUrls : [fileUrls],
     response_json_schema: {
       type: "object",
@@ -207,19 +207,18 @@ function FormDialog({ open, onClose, residents, editing, residentFixed }) {
     return urls.map((url, i) => ({ url, nombre: nombres[i] || url.split("/").pop() }));
   };
 
-  const buildInitialForm = () =>
-    editing
-      ? { ...EMPTY_FORM, ...editing }
-      : residentFixed
-        ? { ...EMPTY_FORM, resident_id: residentFixed.id, resident_name: residentFixed.preferred_name || residentFixed.full_name }
-        : EMPTY_FORM;
+  const buildInitialForm = (editingSrc, residentSrc) => {
+    if (editingSrc) return { ...EMPTY_FORM, ...editingSrc };
+    if (residentSrc) return { ...EMPTY_FORM, resident_id: residentSrc.id, resident_name: residentSrc.preferred_name || residentSrc.full_name };
+    return { ...EMPTY_FORM };
+  };
 
-  const [form, setForm] = useState(buildInitialForm);
+  const [form, setForm] = useState(() => buildInitialForm(editing, residentFixed));
   const [archivos, setArchivos] = useState(() => buildInitialArchivos(editing));
 
   useEffect(() => {
     if (open) {
-      setForm(buildInitialForm());
+      setForm(buildInitialForm(editing, residentFixed));
       setArchivos(buildInitialArchivos(editing));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -265,13 +264,15 @@ function FormDialog({ open, onClose, residents, editing, residentFixed }) {
 
   const handleSave = () => {
     if (!form.resident_id) { toast.error("Selecciona un residente"); return; }
-    if (!form.fecha_examen) { toast.error("Ingresa la fecha del examen"); return; }
 
     // Serializar múltiples archivos con separador ||
     const archivo_url = archivos.map(a => a.url).join("||");
     const archivo_nombre = archivos.map(a => a.nombre).join("||");
 
-    mutation.mutate({ ...form, archivo_url, archivo_nombre });
+    // Si no hay fecha, usar hoy
+    const fecha_examen = form.fecha_examen || new Date().toISOString().split("T")[0];
+
+    mutation.mutate({ ...form, fecha_examen, archivo_url, archivo_nombre });
   };
 
   return (
