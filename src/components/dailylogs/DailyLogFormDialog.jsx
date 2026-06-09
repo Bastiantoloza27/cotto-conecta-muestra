@@ -26,7 +26,16 @@ export default function DailyLogFormDialog({ open, onClose, onSubmit, isLoading,
 
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
+  const GENERAL_VALUE = "__general__";
+  const isGeneral = form.resident_id === GENERAL_VALUE || form.resident_id === "";
+
   const handleResidentChange = (id) => {
+    if (id === GENERAL_VALUE) {
+      set("resident_id", GENERAL_VALUE);
+      set("resident_name", "");
+      set("mood", "");
+      return;
+    }
     const r = residents.find((r) => r.id === id);
     set("resident_id", id);
     set("resident_name", r?.preferred_name || r?.full_name || "");
@@ -34,7 +43,12 @@ export default function DailyLogFormDialog({ open, onClose, onSubmit, isLoading,
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(form);
+    const data = { ...form };
+    if (data.resident_id === GENERAL_VALUE) {
+      data.resident_id = "";
+      data.resident_name = "";
+    }
+    onSubmit(data);
   };
 
   return (
@@ -47,15 +61,19 @@ export default function DailyLogFormDialog({ open, onClose, onSubmit, isLoading,
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div>
-            <Label>Persona residente *</Label>
-            <Select value={form.resident_id} onValueChange={handleResidentChange}>
-              <SelectTrigger><SelectValue placeholder="Seleccionar persona" /></SelectTrigger>
+            <Label>¿A quién corresponde este registro? *</Label>
+            <Select value={form.resident_id || GENERAL_VALUE} onValueChange={handleResidentChange}>
+              <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
               <SelectContent>
+                <SelectItem value={GENERAL_VALUE}>📋 Observación general del turno</SelectItem>
                 {residents.map((r) => (
                   <SelectItem key={r.id} value={r.id}>{r.preferred_name || r.full_name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {isGeneral && (
+              <p className="text-xs text-muted-foreground mt-1">Este registro no estará vinculado a ninguna persona en particular.</p>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -67,7 +85,7 @@ export default function DailyLogFormDialog({ open, onClose, onSubmit, isLoading,
               <Input type="time" value={form.time} onChange={(e) => set("time", e.target.value)} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className={`grid gap-3 ${isGeneral ? "" : "grid-cols-2"}`}>
             <div>
               <Label>Categoría *</Label>
               <Select value={form.category} onValueChange={(v) => set("category", v)}>
@@ -79,20 +97,22 @@ export default function DailyLogFormDialog({ open, onClose, onSubmit, isLoading,
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Estado emocional</Label>
-              <Select value={form.mood || "none"} onValueChange={(v) => set("mood", v === "none" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sin indicar</SelectItem>
-                  <SelectItem value="muy_bien">😊 Muy bien</SelectItem>
-                  <SelectItem value="bien">🙂 Bien</SelectItem>
-                  <SelectItem value="regular">😐 Regular</SelectItem>
-                  <SelectItem value="bajo">😔 Bajo</SelectItem>
-                  <SelectItem value="critico">😢 Crítico</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {!isGeneral && (
+              <div>
+                <Label>Estado emocional</Label>
+                <Select value={form.mood || "none"} onValueChange={(v) => set("mood", v === "none" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sin indicar</SelectItem>
+                    <SelectItem value="muy_bien">😊 Muy bien</SelectItem>
+                    <SelectItem value="bien">🙂 Bien</SelectItem>
+                    <SelectItem value="regular">😐 Regular</SelectItem>
+                    <SelectItem value="bajo">😔 Bajo</SelectItem>
+                    <SelectItem value="critico">😢 Crítico</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <div>
             <Label>Turno</Label>
