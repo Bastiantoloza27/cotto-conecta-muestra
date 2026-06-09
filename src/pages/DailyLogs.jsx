@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, BookOpen, Filter, Pencil, Trash2 } from "lucide-react";
+import { Plus, BookOpen, Filter, Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import MoodBadge from "@/components/shared/MoodBadge";
 import DailyLogFormDialog from "@/components/dailylogs/DailyLogFormDialog";
+import IncidentFormDialog from "@/components/incidents/IncidentFormDialog";
 
 const CATEGORIES_CUIDADORA = [
   { value: "alimentacion", label: "🍽️ Alimentación" },
@@ -116,6 +117,7 @@ export default function DailyLogs() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState("todas");
+  const [showIncidentForm, setShowIncidentForm] = useState(false);
   const queryClient = useQueryClient();
 
   const params = new URLSearchParams(window.location.search);
@@ -155,6 +157,14 @@ export default function DailyLogs() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["daily-logs"] }),
   });
 
+  const createIncidentMutation = useMutation({
+    mutationFn: (data) => base44.entities.Incident.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["incidents"] });
+      setShowIncidentForm(false);
+    },
+  });
+
   const currentCategories = activeTab === "tens" ? CATEGORIES_TENS : CATEGORIES_CUIDADORA;
 
   const filterLogs = (tabLogs) =>
@@ -178,6 +188,11 @@ export default function DailyLogs() {
         actionLabel="Nuevo registro"
         actionIcon={Plus}
       />
+      <div className="flex justify-end mb-2">
+        <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => setShowIncidentForm(true)}>
+          <AlertTriangle className="w-4 h-4 mr-1" /> Reportar incidente
+        </Button>
+      </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6">
         <TabsList className="w-full sm:w-auto">
@@ -238,6 +253,14 @@ export default function DailyLogs() {
         residents={residents}
         categories={currentCategories}
         logType={activeTab}
+      />
+
+      <IncidentFormDialog
+        open={showIncidentForm}
+        onClose={() => setShowIncidentForm(false)}
+        onSubmit={(data) => createIncidentMutation.mutate(data)}
+        isLoading={createIncidentMutation.isPending}
+        residents={residents}
       />
 
       {editing && (

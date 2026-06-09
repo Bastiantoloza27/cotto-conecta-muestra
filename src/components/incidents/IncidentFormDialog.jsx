@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +15,12 @@ export default function IncidentFormDialog({ open, onClose, onSubmit, isLoading,
     resident_id: "", resident_name: "", date: format(new Date(), "yyyy-MM-dd"),
     time: format(new Date(), "HH:mm"), type: "otro", severity: "leve",
     description: "", actions_taken: "", witnesses: "", status: "abierto",
-    notified_family: false, notified_authority: false,
+    notified_family: false, notified_authority: false, registered_by: "",
+  });
+
+  const { data: staffList = [] } = useQuery({
+    queryKey: ["staff-active"],
+    queryFn: () => base44.entities.StaffMember.filter({ status: "activo" }),
   });
 
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
@@ -89,6 +96,20 @@ export default function IncidentFormDialog({ open, onClose, onSubmit, isLoading,
           <div>
             <Label>Acciones tomadas</Label>
             <Textarea value={form.actions_taken} onChange={(e) => set("actions_taken", e.target.value)} rows={2} />
+          </div>
+          <div>
+            <Label>Registrado por</Label>
+            <Select value={form.registered_by || "none"} onValueChange={(v) => set("registered_by", v === "none" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sin indicar</SelectItem>
+                {staffList.map((s) => (
+                  <SelectItem key={s.id} value={s.full_name}>
+                    {s.full_name} {s.position ? `· ${s.position.replace(/_/g, " ")}` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
