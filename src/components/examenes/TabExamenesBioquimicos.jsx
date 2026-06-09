@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card } from "@/components/ui/card";
@@ -86,10 +86,15 @@ function ZonaArchivo({ onExtracted, onFileUploaded, archivoActual }) {
     if (!fileUrl) { toast.error("Primero sube un archivo"); return; }
     setExtracting(true);
     toast.info("La IA está leyendo el examen, esto puede tardar unos segundos...");
-    const datos = await extraerDatosConIA(fileUrl);
-    onExtracted(datos);
-    setExtracting(false);
-    toast.success("¡Datos extraídos! Revisa y ajusta los campos si es necesario.");
+    try {
+      const datos = await extraerDatosConIA(fileUrl);
+      onExtracted(datos);
+      toast.success("¡Datos extraídos! Revisa y ajusta los campos si es necesario.");
+    } catch (err) {
+      toast.error("Error al extraer datos con IA: " + (err?.message || "intenta nuevamente"));
+    } finally {
+      setExtracting(false);
+    }
   };
 
   return (
@@ -166,13 +171,21 @@ function ZonaArchivo({ onExtracted, onFileUploaded, archivoActual }) {
 // ─── Formulario ────────────────────────────────────────────────────────────
 function FormDialog({ open, onClose, residents, editing, residentFixed }) {
   const qc = useQueryClient();
-  const [form, setForm] = useState(() =>
+
+  const buildInitialForm = () =>
     editing
       ? { ...EMPTY_FORM, ...editing }
       : residentFixed
         ? { ...EMPTY_FORM, resident_id: residentFixed.id, resident_name: residentFixed.preferred_name || residentFixed.full_name }
-        : EMPTY_FORM
-  );
+        : EMPTY_FORM;
+
+  const [form, setForm] = useState(buildInitialForm);
+
+  // Resetear form cada vez que el diálogo se abre (nuevo o edición diferente)
+  useEffect(() => {
+    if (open) setForm(buildInitialForm());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editing?.id]);
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
@@ -206,6 +219,9 @@ function FormDialog({ open, onClose, residents, editing, residentFixed }) {
       qc.invalidateQueries({ queryKey: ["examenes-bioquimicos"] });
       toast.success(editing ? "Examen actualizado" : "Examen registrado");
       onClose();
+    },
+    onError: (err) => {
+      toast.error("Error al guardar: " + (err?.message || "intenta nuevamente"));
     },
   });
 
