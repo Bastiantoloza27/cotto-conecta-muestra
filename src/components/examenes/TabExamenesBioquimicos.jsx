@@ -32,14 +32,18 @@ const EMPTY_FORM = {
 // ─── Extracción IA desde archivo ─────────────────────────────────────────────
 async function extraerDatosConIA(fileUrls) {
   const prompt = `Eres un asistente clínico especializado en análisis de laboratorio. 
-Analiza el/los documento(s) adjunto(s) que corresponden a exámenes de laboratorio o exámenes bioquímicos de un paciente.
-El documento puede tener múltiples páginas; analiza TODAS las páginas y extrae todos los valores que encuentres.
+Analiza el/los documento(s) adjunto(s) que corresponden a exámenes, informes médicos o cualquier documento de salud de un paciente.
+El documento puede tener múltiples páginas; analiza TODAS las páginas y extrae TODA la información que encuentres.
 
-Extrae TODOS los valores que encuentres y organízalos en los siguientes paneles. Para cada panel, lista los parámetros con su valor y unidad, e indica brevemente si está normal, alto o bajo según los rangos de referencia.
+Intenta clasificar los valores en los paneles predefinidos (hemograma, glicemia, perfil_lipidico, hepatico, renal, tiroides).
+Si un valor no encaja en ningún panel específico, ponlo en "observaciones".
+Si el documento no es un examen de laboratorio estándar (por ejemplo es un informe médico, una receta, una epicrisis, etc.), 
+igualmente extrae TODA la información relevante y ponla en "observaciones".
 
-Si un panel no aparece en el documento, déjalo vacío ("").
+IMPORTANTE: Siempre rellena al menos el campo "observaciones" con un resumen de lo que encontraste en el documento, 
+aunque no sea un examen de laboratorio estándar. Nunca dejes todos los campos vacíos.
 
-Responde SOLO con el JSON indicado, sin texto adicional.`;
+Si un panel específico no aparece en el documento, déjalo vacío ("").`;
 
   const result = await base44.integrations.Core.InvokeLLM({
     prompt,
@@ -48,14 +52,14 @@ Responde SOLO con el JSON indicado, sin texto adicional.`;
     response_json_schema: {
       type: "object",
       properties: {
-        fecha_examen: { type: "string", description: "Fecha del examen en formato YYYY-MM-DD, si aparece en el documento" },
+        fecha_examen: { type: "string", description: "Fecha del examen o documento en formato YYYY-MM-DD, si aparece" },
         hemograma: { type: "string", description: "Parámetros del hemograma con valores y estado (normal/alto/bajo)" },
         glicemia: { type: "string", description: "Glicemia, HbA1c y otros parámetros de glucosa" },
         perfil_lipidico: { type: "string", description: "Colesterol total, HDL, LDL, triglicéridos" },
         hepatico: { type: "string", description: "GOT, GPT, fosfatasa alcalina, bilirrubina y otros hepáticos" },
         renal: { type: "string", description: "Creatinina, BUN, ácido úrico y otros renales" },
         tiroides: { type: "string", description: "TSH, T3, T4 y otros tiroideos" },
-        observaciones: { type: "string", description: "Otros parámetros no categorizados u observaciones relevantes del laboratorio" },
+        observaciones: { type: "string", description: "OBLIGATORIO: resumen completo del documento, todos los parámetros no categorizados, diagnósticos, indicaciones u otra información relevante encontrada" },
       }
     }
   });
@@ -95,14 +99,27 @@ function ZonaArchivos({ archivos, onArchivosChange, onExtracted }) {
   const handleExtract = async () => {
     if (!archivos.length) { toast.error("Primero sube al menos un archivo"); return; }
     setExtracting(true);
-    toast.info("La IA está leyendo el/los examen(es), esto puede tardar unos segundos...");
+    toast.info("La IA está leyendo el documento, esto puede tardar hasta 30 segundos...");
     try {
       const urls = archivos.map(a => a.url);
       const datos = await extraerDatosConIA(urls);
-      onExtracted(datos);
-      toast.success("¡Datos extraídos! Revisa y ajusta los campos si es necesario.");
+
+      // Verificar si se extrajo algo útil
+      const tieneContenido = datos && Object.values(datos).some(v => v && String(v).trim() !== "");
+      if (!tieneContenido) {
+        toast.warning("La IA no pudo leer el documento. Puedes completar los campos manualmente.");
+      } else {
+        const panelesCon = ["hemograma","glicemia","perfil_lipidico","hepatico","renal","tiroides"].filter(k => datos[k]?.trim()).length;
+        if (panelesCon > 0) {
+          toast.success(`¡Datos extraídos! ${panelesCon} panel(es) completados. Revisa y ajusta si es necesario.`);
+        } else {
+          toast.success("Documento leído. La información se guardó en Observaciones. Puedes moverla a los paneles si corresponde.");
+        }
+        onExtracted(datos);
+      }
     } catch (err) {
-      toast.error("Error al extraer datos con IA: " + (err?.message || "intenta nuevamente"));
+      console.error("Error IA examenes:", err);
+      toast.error("Error al procesar con IA: " + (err?.message || "intenta nuevamente"));
     } finally {
       setExtracting(false);
     }
