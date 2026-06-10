@@ -18,7 +18,14 @@
         "manana",
         "tarde",
         "noche",
-        "largo"
+        "largo",
+        "TL1",
+        "TL2",
+        "N1",
+        "N2",
+        "V",
+        "LIBRE",
+        "N"
       ]
     },
     "hora_inicio": {
@@ -31,6 +38,16 @@
     },
     "area": {
       "type": "string"
+    },
+    "grupo_turno": {
+      "type": "string",
+      "enum": [
+        "profesionales_salud",
+        "cuidadoras",
+        "tens"
+      ],
+      "default": "profesionales_salud",
+      "description": "Grupo al que pertenece este turno"
     },
     "status": {
       "type": "string",

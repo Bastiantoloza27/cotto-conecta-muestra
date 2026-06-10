@@ -15,7 +15,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageHeader from "@/components/shared/PageHeader";
+import TurnoCuidadoras from "@/components/turnos/TurnoCuidadoras";
 
 const sendShiftEmail = async (shiftData, staffMembers) => {
   const member = staffMembers.find(s => s.full_name === shiftData.staff_name);
@@ -95,71 +97,91 @@ export default function Shifts() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
-      <div className="flex items-start justify-between gap-3 mb-6 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Turnos y Personal</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Calendario de turnos y gestión del equipo</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => printReport(
-            <InformeTurnosImprimible shifts={shifts.filter(s => days.some(d => format(d, "yyyy-MM-dd") === s.date))} weekStart={weekStart} days={days} />,
-            "Cuadro de Turnos"
-          )}>
-            <FileDown className="w-4 h-4" /> Cuadro semanal
-          </Button>
-          <Button size="sm" className="gap-1.5" onClick={() => setShowForm(true)}>
-            <Plus className="w-4 h-4" /> Asignar turno
-          </Button>
-        </div>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight">Turnos y Personal</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Calendario de turnos y gestión del equipo</p>
       </div>
 
-      {/* Week nav */}
-      <div className="flex items-center gap-3 mb-6">
-        <Button variant="outline" size="icon" onClick={() => setWeekStart(addDays(weekStart, -7))}>
-          <ChevronLeft className="w-4 h-4" />
-        </Button>
-        <span className="text-sm font-medium">
-          {format(weekStart, "d MMM", { locale: es })} - {format(addDays(weekStart, 6), "d MMM yyyy", { locale: es })}
-        </span>
-        <Button variant="outline" size="icon" onClick={() => setWeekStart(addDays(weekStart, 7))}>
-          <ChevronRight className="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" size="sm" onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}>
-          Hoy
-        </Button>
-      </div>
+      <Tabs defaultValue="profesionales">
+        <TabsList className="mb-6">
+          <TabsTrigger value="profesionales">🩺 Profesionales de Salud</TabsTrigger>
+          <TabsTrigger value="cuidadoras">🤝 Cuidadoras</TabsTrigger>
+          <TabsTrigger value="tens" disabled>💉 TENS (próximamente)</TabsTrigger>
+        </TabsList>
 
-      {/* Calendar grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-7 gap-2">
-        {days.map((day) => {
-          const dayShifts = getShiftsForDay(day);
-          const isToday = format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
-          return (
-            <Card key={day.toString()} className={`p-3 min-h-[120px] ${isToday ? "ring-2 ring-primary/30" : ""}`}>
-              <p className={`text-xs font-medium mb-2 ${isToday ? "text-primary" : "text-muted-foreground"}`}>
-                {format(day, "EEE d", { locale: es })}
-              </p>
-              <div className="space-y-1">
-                {dayShifts.map((s) => (
-                  <div key={s.id} className={`text-[11px] p-1.5 rounded border ${shiftColors[s.shift_type] || "bg-muted"} group relative`}>
-                    <span className="mr-1">{statusEmojis[s.status] || ""}</span>
-                    <span className="font-medium">{s.staff_name}</span>
-                    <span className="block text-[10px] opacity-75 capitalize">
-                      {s.shift_type}{s.hora_inicio && ` · ${s.hora_inicio}${s.hora_fin ? `–${s.hora_fin}` : ""}`}
-                      {s.area && ` · ${s.area}`}
-                    </span>
-                    <div className="absolute top-0.5 right-0.5 hidden group-hover:flex gap-0.5">
-                      <button onClick={() => setEditing(s)} className="p-0.5 rounded bg-white/70 hover:bg-white"><Pencil className="w-2.5 h-2.5" /></button>
-                      <button onClick={() => { if (confirm("¿Eliminar turno?")) deleteMutation.mutate(s.id); }} className="p-0.5 rounded bg-white/70 hover:bg-white text-destructive"><Trash2 className="w-2.5 h-2.5" /></button>
-                    </div>
+        {/* ---- TAB PROFESIONALES ---- */}
+        <TabsContent value="profesionales">
+          <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" onClick={() => setWeekStart(addDays(weekStart, -7))}>
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-sm font-medium">
+                {format(weekStart, "d MMM", { locale: es })} – {format(addDays(weekStart, 6), "d MMM yyyy", { locale: es })}
+              </span>
+              <Button variant="outline" size="icon" onClick={() => setWeekStart(addDays(weekStart, 7))}>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}>
+                Hoy
+              </Button>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => printReport(
+                <InformeTurnosImprimible shifts={shifts.filter(s => days.some(d => format(d, "yyyy-MM-dd") === s.date))} weekStart={weekStart} days={days} />,
+                "Cuadro de Turnos"
+              )}>
+                <FileDown className="w-4 h-4" /> Cuadro semanal
+              </Button>
+              <Button size="sm" className="gap-1.5" onClick={() => setShowForm(true)}>
+                <Plus className="w-4 h-4" /> Asignar turno
+              </Button>
+            </div>
+          </div>
+
+          {/* Calendar grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-7 gap-2">
+            {days.map((day) => {
+              const dayShifts = getShiftsForDay(day);
+              const isToday = format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+              return (
+                <Card key={day.toString()} className={`p-3 min-h-[120px] ${isToday ? "ring-2 ring-primary/30" : ""}`}>
+                  <p className={`text-xs font-medium mb-2 ${isToday ? "text-primary" : "text-muted-foreground"}`}>
+                    {format(day, "EEE d", { locale: es })}
+                  </p>
+                  <div className="space-y-1">
+                    {dayShifts.map((s) => (
+                      <div key={s.id} className={`text-[11px] p-1.5 rounded border ${shiftColors[s.shift_type] || "bg-muted"} group relative`}>
+                        <span className="mr-1">{statusEmojis[s.status] || ""}</span>
+                        <span className="font-medium">{s.staff_name}</span>
+                        <span className="block text-[10px] opacity-75 capitalize">
+                          {s.shift_type}{s.hora_inicio && ` · ${s.hora_inicio}${s.hora_fin ? `–${s.hora_fin}` : ""}`}
+                          {s.area && ` · ${s.area}`}
+                        </span>
+                        <div className="absolute top-0.5 right-0.5 hidden group-hover:flex gap-0.5">
+                          <button onClick={() => setEditing(s)} className="p-0.5 rounded bg-white/70 hover:bg-white"><Pencil className="w-2.5 h-2.5" /></button>
+                          <button onClick={() => { if (confirm("¿Eliminar turno?")) deleteMutation.mutate(s.id); }} className="p-0.5 rounded bg-white/70 hover:bg-white text-destructive"><Trash2 className="w-2.5 h-2.5" /></button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </Card>
-          );
-        })}
-      </div>
+                </Card>
+              );
+            })}
+          </div>
+        </TabsContent>
+
+        {/* ---- TAB CUIDADORAS ---- */}
+        <TabsContent value="cuidadoras">
+          <TurnoCuidadoras />
+        </TabsContent>
+
+        {/* ---- TAB TENS ---- */}
+        <TabsContent value="tens">
+          <div className="text-center py-16 text-muted-foreground">Próximamente: cuadro de turnos TENS</div>
+        </TabsContent>
+      </Tabs>
 
       {editing && (
         <Dialog open={!!editing} onOpenChange={() => setEditing(null)}>
