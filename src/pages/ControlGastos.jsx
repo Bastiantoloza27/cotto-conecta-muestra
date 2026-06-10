@@ -133,18 +133,16 @@ function VistaDirector({ user, readOnly = false }) {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["todas-solicitudes"] }); setShowResolucion(false); },
   });
 
-  const handleAprobar = (s) => {
-    updateMutation.mutate({
-      id: s.id,
-      data: { estado: "aprobada", fecha_resolucion: new Date().toISOString(), director_nombre: user?.full_name || user?.email || "Director" },
-    });
+  const handleAprobar = async (s) => {
+    const data = { estado: "aprobada", fecha_resolucion: new Date().toISOString(), director_nombre: user?.full_name || user?.email || "Director" };
+    updateMutation.mutate({ id: s.id, data });
+    base44.functions.invoke("notificarResolucionGasto", { solicitud: { ...s, ...data }, accion: "aprobada" }).catch(() => {});
   };
 
-  const handleRechazar = (s, motivo) => {
-    updateMutation.mutate({
-      id: s.id,
-      data: { estado: "rechazada", motivo_rechazo: motivo, fecha_resolucion: new Date().toISOString(), director_nombre: user?.full_name || user?.email || "Director" },
-    });
+  const handleRechazar = async (s, motivo) => {
+    const data = { estado: "rechazada", motivo_rechazo: motivo, fecha_resolucion: new Date().toISOString(), director_nombre: user?.full_name || user?.email || "Director" };
+    updateMutation.mutate({ id: s.id, data });
+    base44.functions.invoke("notificarResolucionGasto", { solicitud: { ...s, ...data }, accion: "rechazada" }).catch(() => {});
   };
 
   // Indicadores del mes
