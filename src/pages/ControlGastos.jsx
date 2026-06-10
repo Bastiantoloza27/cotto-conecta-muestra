@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useRole } from "@/hooks/useRole";
@@ -347,11 +347,11 @@ function VistaDirector({ user, readOnly = false }) {
 export default function ControlGastos() {
   const { isAdmin, loading } = useRole();
   const [user, setUser] = useState(null);
-  const [vistaActiva, setVistaActiva] = useState("personal");
+  const [vistaActiva, setVistaActiva] = useState("director");
 
-  useState(() => {
+  useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
-  });
+  }, []);
 
   if (loading) {
     return (
