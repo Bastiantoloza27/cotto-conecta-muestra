@@ -116,7 +116,7 @@ function VistaPersonal({ user }) {
 }
 
 // ─── VISTA DIRECTOR ────────────────────────────────────────────────────────────
-function VistaDirector({ user }) {
+function VistaDirector({ user, readOnly = false }) {
   const [selectedSolicitud, setSelectedSolicitud] = useState(null);
   const [showResolucion, setShowResolucion] = useState(false);
   const [docSolicitud, setDocSolicitud] = useState(null);
@@ -303,7 +303,7 @@ function VistaDirector({ user }) {
                         >
                           Ver
                         </Button>
-                        {s.estado !== "pendiente" && (
+                        {!readOnly && s.estado !== "pendiente" && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -330,6 +330,7 @@ function VistaDirector({ user }) {
         onAprobar={handleAprobar}
         onRechazar={handleRechazar}
         onImprimir={(s) => { setDocSolicitud(s); setShowResolucion(false); }}
+        readOnly={readOnly}
       />
 
       {docSolicitud && (
@@ -346,6 +347,7 @@ function VistaDirector({ user }) {
 export default function ControlGastos() {
   const { isAdmin, loading } = useRole();
   const [user, setUser] = useState(null);
+  const [vistaActiva, setVistaActiva] = useState("personal");
 
   useState(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -359,5 +361,37 @@ export default function ControlGastos() {
     );
   }
 
-  return isAdmin ? <VistaDirector user={user} /> : <VistaPersonal user={user} />;
+  if (!isAdmin) return <VistaPersonal user={user} />;
+
+  return (
+    <div>
+      {/* Pestañas admin */}
+      <div className="border-b bg-card px-4 pt-4 flex gap-1">
+        <button
+          onClick={() => setVistaActiva("director")}
+          className={`px-4 py-2 text-sm font-medium rounded-t-md border-b-2 transition-colors ${
+            vistaActiva === "director"
+              ? "border-primary text-primary bg-primary/5"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Vista Director
+        </button>
+        <button
+          onClick={() => setVistaActiva("personal")}
+          className={`px-4 py-2 text-sm font-medium rounded-t-md border-b-2 transition-colors ${
+            vistaActiva === "personal"
+              ? "border-primary text-primary bg-primary/5"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Mi Vista (Admin)
+        </button>
+      </div>
+      {vistaActiva === "director"
+        ? <VistaDirector user={user} readOnly />
+        : <VistaDirector user={user} />
+      }
+    </div>
+  );
 }

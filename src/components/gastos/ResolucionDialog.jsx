@@ -23,7 +23,7 @@ function formatMonto(n) {
   return new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" }).format(n);
 }
 
-export default function ResolucionDialog({ open, onClose, solicitud, onAprobar, onRechazar, onImprimir }) {
+export default function ResolucionDialog({ open, onClose, solicitud, onAprobar, onRechazar, onImprimir, readOnly = false }) {
   const [motivoRechazo, setMotivoRechazo] = useState("");
   const [confirmando, setConfirmando] = useState(null); // "aprobar" | "rechazar"
 
@@ -91,7 +91,7 @@ export default function ResolucionDialog({ open, onClose, solicitud, onAprobar, 
         </div>
 
         {/* Confirmación aprobar/rechazar */}
-        {confirmando === "rechazar" && (
+        {!readOnly && confirmando === "rechazar" && (
           <div className="space-y-2 border-t pt-3">
             <Label>Motivo del rechazo <span className="text-destructive">*</span></Label>
             <Textarea
@@ -110,12 +110,12 @@ export default function ResolucionDialog({ open, onClose, solicitud, onAprobar, 
         )}
 
         <DialogFooter className="flex-wrap gap-2">
-          {!isPendiente && (
+          {!readOnly && !isPendiente && (
             <Button variant="outline" size="sm" onClick={() => onImprimir(solicitud)}>
               <Printer className="w-4 h-4 mr-1" /> Generar Documento
             </Button>
           )}
-          {isPendiente && confirmando !== "rechazar" && (
+          {!readOnly && isPendiente && confirmando !== "rechazar" && (
             <>
               <Button variant="outline" size="sm" className="border-red-300 text-red-700 hover:bg-red-50" onClick={() => setConfirmando("rechazar")}>
                 <XCircle className="w-4 h-4 mr-1" /> Rechazar
@@ -125,9 +125,7 @@ export default function ResolucionDialog({ open, onClose, solicitud, onAprobar, 
               </Button>
             </>
           )}
-          {!isPendiente && confirmando !== "rechazar" && (
-            <Button variant="outline" size="sm" onClick={onClose}>Cerrar</Button>
-          )}
+          <Button variant="outline" size="sm" onClick={onClose}>Cerrar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
