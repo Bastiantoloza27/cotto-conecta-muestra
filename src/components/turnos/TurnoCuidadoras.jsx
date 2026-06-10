@@ -62,13 +62,24 @@ export default function TurnoCuidadoras() {
   const monthEnd = endOfMonth(monthDate);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  const { data: allShifts = [] } = useQuery({
-    queryKey: ["shifts-cuidadoras", format(monthDate, "yyyy-MM")],
-    queryFn: () => base44.entities.StaffShift.filter({ grupo_turno: "cuidadoras" }, "date", 500),
+  const monthKey = format(monthDate, "yyyy-MM");
+  const { data: shifts = [] } = useQuery({
+    queryKey: ["shifts-cuidadoras", monthKey],
+    queryFn: async () => {
+      const from = format(monthStart, "yyyy-MM-dd");
+      const to = format(monthEnd, "yyyy-MM-dd");
+      // Traer directamente con filtro de rango de fechas y grupo
+      const page1 = await base44.entities.StaffShift.filter({ grupo_turno: "cuidadoras" }, "date", 500);
+      const page2 = await base44.entities.StaffShift.filter({ grupo_turno: "cuidadoras" }, "-date", 500);
+      // Unir ambas páginas y deduplicar por id
+      const seen = new Set();
+      const all = [];
+      for (const s of [...page1, ...page2]) {
+        if (!seen.has(s.id)) { seen.add(s.id); all.push(s); }
+      }
+      return all.filter(s => s.date >= from && s.date <= to);
+    },
   });
-
-  // Filtrar por mes actual
-  const shifts = allShifts.filter(s => s.date >= format(monthStart, "yyyy-MM-dd") && s.date <= format(monthEnd, "yyyy-MM-dd"));
 
   // Obtener nombres únicos de cuidadoras (desde turnos + defaults)
   const nombres = [...new Set([...CUIDADORAS_DEFAULT, ...shifts.map(s => s.staff_name)])].filter(Boolean);
