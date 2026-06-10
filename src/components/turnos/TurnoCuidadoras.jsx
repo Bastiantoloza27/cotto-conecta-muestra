@@ -52,7 +52,7 @@ function TurnoCell({ turno, onEdit, onDelete }) {
 }
 
 export default function TurnoCuidadoras() {
-  const [monthDate, setMonthDate] = useState(new Date(2026, 4, 1)); // Mayo 2026
+  const [monthDate, setMonthDate] = useState(() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1); });
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ staff_name: "", date: "", shift_type: "TL1", notes: "" });
