@@ -22,10 +22,11 @@
       "type": "string",
       "enum": [
         "cuidadora",
-        "tens"
+        "tens",
+        "psicosocial"
       ],
       "default": "cuidadora",
-      "description": "Tipo de bit\u00e1cora: cuidadora o TENS"
+      "description": "Tipo de bit\u00e1cora: cuidadora, TENS o Psicosocial"
     },
     "category": {
       "type": "string",
@@ -47,6 +48,16 @@
         "glucemia",
         "sondaje",
         "oxigenoterapia",
+        "estado_animo",
+        "vinculo_familiar",
+        "interaccion_social",
+        "duelo",
+        "conducta",
+        "autonomia_social",
+        "proyecto_vida",
+        "evaluacion_psicologica",
+        "intervencion_social",
+        "crisis",
         "otro"
       ],
       "default": "otro"

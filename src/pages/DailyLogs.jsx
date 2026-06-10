@@ -39,18 +39,34 @@ const CATEGORIES_TENS = [
   { value: "otro", label: "📝 Otro" },
 ];
 
+const CATEGORIES_PSICOSOCIAL = [
+  { value: "estado_animo", label: "💛 Estado de ánimo" },
+  { value: "vinculo_familiar", label: "👨‍👩‍👧 Vínculo familiar" },
+  { value: "interaccion_social", label: "👥 Interacción social" },
+  { value: "duelo", label: "🕊️ Proceso de duelo" },
+  { value: "conducta", label: "🧠 Conducta / Comportamiento" },
+  { value: "autonomia_social", label: "🙌 Autonomía social" },
+  { value: "proyecto_vida", label: "🌟 Proyecto de vida" },
+  { value: "evaluacion_psicologica", label: "📋 Evaluación psicológica" },
+  { value: "intervencion_social", label: "🤝 Intervención social" },
+  { value: "crisis", label: "⚠️ Crisis" },
+  { value: "otro", label: "📝 Otro" },
+];
+
 const ALL_CATEGORY_EMOJIS = {
   alimentacion: "🍽️", emocional: "💛", sueno: "🌙", comportamiento: "🧠",
   actividad: "🎯", salud: "🏥", higiene: "🚿", social: "👥", espiritual: "🕊️",
   signos_vitales: "❤️", procedimiento: "🩺", medicacion: "💊", curacion: "🩹",
   examen_fisico: "🔍", glucemia: "🩸", sondaje: "🔧", oxigenoterapia: "💨",
+  estado_animo: "💛", vinculo_familiar: "👨‍👩‍👧", interaccion_social: "👥",
+  duelo: "🕊️", conducta: "🧠", autonomia_social: "🙌", proyecto_vida: "🌟",
+  evaluacion_psicologica: "📋", intervencion_social: "🤝", crisis: "⚠️",
   otro: "📝",
 };
 
-const TENS_CATEGORY_VALUES = new Set(CATEGORIES_TENS.map(c => c.value).filter(v => v !== "salud" && v !== "otro"));
-// We identify TENS logs by their `log_type` field
 const isTensLog = (log) => log.log_type === "tens";
 const isCuidadoraLog = (log) => !log.log_type || log.log_type === "cuidadora";
+const isPsicosocialLog = (log) => log.log_type === "psicosocial";
 
 function LogTimeline({ logs, onEdit, onDelete }) {
   const grouped = {};
@@ -165,14 +181,17 @@ export default function DailyLogs() {
     },
   });
 
-  const currentCategories = activeTab === "tens" ? CATEGORIES_TENS : CATEGORIES_CUIDADORA;
+  const currentCategories =
+    activeTab === "tens" ? CATEGORIES_TENS :
+    activeTab === "psicosocial" ? CATEGORIES_PSICOSOCIAL :
+    CATEGORIES_CUIDADORA;
 
   const filterLogs = (tabLogs) =>
     categoryFilter === "todas" ? tabLogs : tabLogs.filter((l) => l.category === categoryFilter);
 
   const cuidadoraLogs = filterLogs(logs.filter(isCuidadoraLog));
   const tensLogs = filterLogs(logs.filter(isTensLog));
-  const displayedLogs = activeTab === "tens" ? tensLogs : cuidadoraLogs;
+  const psicosocialLogs = filterLogs(logs.filter(isPsicosocialLog));
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -198,6 +217,7 @@ export default function DailyLogs() {
         <TabsList className="w-full sm:w-auto">
           <TabsTrigger value="cuidadora" className="flex-1 sm:flex-none">🤲 Cuidadoras</TabsTrigger>
           <TabsTrigger value="tens" className="flex-1 sm:flex-none">🩺 TENS</TabsTrigger>
+          <TabsTrigger value="psicosocial" className="flex-1 sm:flex-none">🧩 Psicosocial</TabsTrigger>
         </TabsList>
 
         {/* Shared filter */}
@@ -241,6 +261,20 @@ export default function DailyLogs() {
             />
           ) : (
             <LogTimeline logs={tensLogs} onEdit={setEditing} onDelete={(id) => deleteMutation.mutate(id)} />
+          )}
+        </TabsContent>
+
+        <TabsContent value="psicosocial" className="mt-6">
+          {psicosocialLogs.length === 0 ? (
+            <EmptyState
+              icon={BookOpen}
+              title="Sin registros psicosociales"
+              description="Psicólogas y trabajadoras sociales pueden dejar sus observaciones aquí"
+              actionLabel="Crear registro psicosocial"
+              onAction={() => setShowForm(true)}
+            />
+          ) : (
+            <LogTimeline logs={psicosocialLogs} onEdit={setEditing} onDelete={(id) => deleteMutation.mutate(id)} />
           )}
         </TabsContent>
       </Tabs>

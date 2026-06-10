@@ -56,7 +56,7 @@ export default function DailyLogFormDialog({ open, onClose, onSubmit, isLoading,
       <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {initial ? "✏️ Editar registro" : logType === "tens" ? "🩺 Nuevo registro TENS" : "🤲 Nuevo registro Cuidadoras"}
+            {initial ? "✏️ Editar registro" : logType === "tens" ? "🩺 Nuevo registro TENS" : logType === "psicosocial" ? "🧩 Nuevo registro Psicosocial" : "🤲 Nuevo registro Cuidadoras"}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
