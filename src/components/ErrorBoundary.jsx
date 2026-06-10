@@ -1,11 +1,10 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle, RefreshCw, Home } from "lucide-react";
+import { AlertTriangle, RefreshCw, Home, Wifi } from "lucide-react";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
+    this.state = { hasError: false, error: null, errorInfo: null, autoRetried: false };
   }
 
   static getDerivedStateFromError(error) {
@@ -15,49 +14,97 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     this.setState({ errorInfo });
     console.error("Error capturado por ErrorBoundary:", error, errorInfo);
+
+    // Si es un error de carga de módulo (chunk), recargar automáticamente UNA vez
+    const isChunkError =
+      error?.message?.includes("Failed to fetch dynamically imported module") ||
+      error?.message?.includes("Loading chunk") ||
+      error?.message?.includes("Loading CSS chunk") ||
+      error?.name === "ChunkLoadError";
+
+    if (isChunkError && !sessionStorage.getItem("eb_auto_reloaded")) {
+      sessionStorage.setItem("eb_auto_reloaded", "1");
+      setTimeout(() => window.location.reload(), 1500);
+    }
   }
 
-  handleReset = () => {
-    this.setState({ hasError: false, error: null, errorInfo: null });
+  isChunkOrNetworkError() {
+    const msg = this.state.error?.message || "";
+    return (
+      msg.includes("Failed to fetch") ||
+      msg.includes("Loading chunk") ||
+      msg.includes("ChunkLoadError") ||
+      msg.includes("NetworkError")
+    );
+  }
+
+  handleReload = () => {
+    sessionStorage.removeItem("eb_auto_reloaded");
+    window.location.reload();
   };
 
   handleGoHome = () => {
-    this.setState({ hasError: false, error: null, errorInfo: null });
+    sessionStorage.removeItem("eb_auto_reloaded");
     window.location.href = "/";
   };
 
   render() {
     if (this.state.hasError) {
+      const isNetworkRelated = this.isChunkOrNetworkError();
+      const autoRetrying =
+        isNetworkRelated && !sessionStorage.getItem("eb_auto_reloaded") === false;
+
       return (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] p-8">
-          <div className="max-w-md w-full bg-white rounded-2xl border shadow-lg p-8 text-center space-y-4">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-orange-100 mx-auto">
-              <AlertTriangle className="w-7 h-7 text-orange-500" />
+        <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-background">
+          <div className="max-w-md w-full bg-white rounded-2xl border shadow-lg p-8 text-center space-y-5">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 mx-auto">
+              {isNetworkRelated
+                ? <Wifi className="w-8 h-8 text-orange-500" />
+                : <AlertTriangle className="w-8 h-8 text-orange-500" />
+              }
             </div>
-            <h2 className="text-xl font-bold text-foreground">
-              Ocurrió un error inesperado
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Algo salió mal al cargar esta sección. Puedes intentar recargar o volver al inicio.
-            </p>
+
+            <div>
+              <h2 className="text-xl font-bold text-foreground mb-2">
+                {isNetworkRelated ? "Error de conexión" : "Ocurrió un error inesperado"}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {isNetworkRelated
+                  ? "Hubo un problema al cargar la página. Esto suele ocurrir con conexión lenta o al actualizar la plataforma. Recarga para continuar."
+                  : "Algo salió mal al cargar esta sección. Recarga la página para solucionarlo."
+                }
+              </p>
+            </div>
+
             {this.state.error && (
-              <details className="text-left bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground cursor-pointer">
-                <summary className="font-medium mb-1 cursor-pointer">Ver detalle del error</summary>
-                <pre className="whitespace-pre-wrap break-all mt-1">
+              <details className="text-left bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground">
+                <summary className="font-medium cursor-pointer">Ver detalle del error</summary>
+                <pre className="whitespace-pre-wrap break-all mt-2 opacity-70">
                   {this.state.error?.message || String(this.state.error)}
                 </pre>
               </details>
             )}
-            <div className="flex gap-3 justify-center pt-2">
-              <Button variant="outline" onClick={this.handleReset} className="gap-2">
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-1">
+              <button
+                onClick={this.handleReload}
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
                 <RefreshCw className="w-4 h-4" />
-                Reintentar
-              </Button>
-              <Button onClick={this.handleGoHome} className="gap-2">
+                Recargar página
+              </button>
+              <button
+                onClick={this.handleGoHome}
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-input bg-white text-sm font-medium hover:bg-muted transition-colors"
+              >
                 <Home className="w-4 h-4" />
                 Ir al inicio
-              </Button>
+              </button>
             </div>
+
+            <p className="text-xs text-muted-foreground/60 pt-1">
+              Si el problema persiste, intenta cerrar y abrir el navegador.
+            </p>
           </div>
         </div>
       );
