@@ -99,10 +99,13 @@ function ZonaArchivos({ archivos, onArchivosChange, onExtracted }) {
   const handleExtract = async () => {
     if (!archivos.length) { toast.error("Primero sube al menos un archivo"); return; }
     setExtracting(true);
-    toast.info("La IA está leyendo el documento, esto puede tardar hasta 30 segundos...");
+    toast.info("La IA está leyendo el documento, esto puede tardar hasta 60 segundos...");
     try {
       const urls = archivos.map(a => a.url);
-      const datos = await extraerDatosConIA(urls);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Tiempo de espera agotado. El PDF puede ser muy extenso. Intenta con un archivo más pequeño o completa los campos manualmente.")), 90000)
+      );
+      const datos = await Promise.race([extraerDatosConIA(urls), timeoutPromise]);
 
       // Verificar si se extrajo algo útil
       const tieneContenido = datos && Object.values(datos).some(v => v && String(v).trim() !== "");
