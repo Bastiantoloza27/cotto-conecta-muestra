@@ -1,5 +1,5 @@
 import React from "react";
-import { AlertTriangle, RefreshCw, Home, Wifi } from "lucide-react";
+import { AlertTriangle, RefreshCw, Home, Wifi, Trash2 } from "lucide-react";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -46,6 +46,16 @@ class ErrorBoundary extends React.Component {
   handleGoHome = () => {
     sessionStorage.removeItem("eb_auto_reloaded");
     window.location.href = "/";
+  };
+
+  handleClearCacheAndReload = async () => {
+    sessionStorage.clear();
+    localStorage.clear();
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(key => caches.delete(key)));
+    }
+    window.location.reload(true);
   };
 
   render() {
@@ -102,9 +112,21 @@ class ErrorBoundary extends React.Component {
               </button>
             </div>
 
-            <p className="text-xs text-muted-foreground/60 pt-1">
-              Si el problema persiste, intenta cerrar y abrir el navegador.
-            </p>
+            <div className="border-t pt-4 mt-1">
+              <p className="text-xs text-muted-foreground mb-3">
+                ¿El problema persiste? Limpia el caché del navegador y recarga:
+              </p>
+              <button
+                onClick={this.handleClearCacheAndReload}
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-orange-100 text-orange-700 text-sm font-medium hover:bg-orange-200 transition-colors w-full sm:w-auto"
+              >
+                <Trash2 className="w-4 h-4" />
+                Limpiar caché y recargar
+              </button>
+              <p className="text-xs text-muted-foreground/50 mt-2">
+                Esto borra los archivos guardados del navegador y carga la versión más reciente.
+              </p>
+            </div>
           </div>
         </div>
       );
