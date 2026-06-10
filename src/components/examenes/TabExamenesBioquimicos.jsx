@@ -66,133 +66,253 @@ Si un panel específico no aparece en el documento, déjalo vacío ("").`;
   return result;
 }
 
-// ─── Zona de carga de MÚLTIPLES archivos ─────────────────────────────────────
-function ZonaArchivos({ archivos, onArchivosChange, onExtracted }) {
+// ─── Dialog: Subir PDF y generar ficha digital ───────────────────────────────
+function SubirPDFDialog({ open, onClose, residents, residentFixed }) {
+  const qc = useQueryClient();
+  const inputRef = useRef();
+  const [archivos, setArchivos] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [extracting, setExtracting] = useState(false);
-  const inputRef = useRef();
+  const [residenteId, setResidenteId] = useState(residentFixed?.id || "");
+  const [residenteNombre, setResidenteNombre] = useState(residentFixed?.preferred_name || residentFixed?.full_name || "");
+  const [fichaData, setFichaData] = useState(null);
+
+  useEffect(() => {
+    if (open) {
+      setArchivos([]);
+      setFichaData(null);
+      setResidenteId(residentFixed?.id || "");
+      setResidenteNombre(residentFixed?.preferred_name || residentFixed?.full_name || "");
+    }
+  }, [open]);
 
   const handleFiles = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-
     setUploading(true);
     toast.info(`Subiendo ${files.length} archivo(s)...`);
-
     const nuevos = [];
     for (const file of files) {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       nuevos.push({ url: file_url, nombre: file.name });
     }
-
-    onArchivosChange([...archivos, ...nuevos]);
+    setArchivos(prev => [...prev, ...nuevos]);
     setUploading(false);
-    toast.success(`${files.length} archivo(s) subido(s). Puedes extraer los datos con IA.`);
-    // reset input
     e.target.value = "";
   };
 
-  const handleRemove = (idx) => {
-    onArchivosChange(archivos.filter((_, i) => i !== idx));
-  };
-
   const handleExtract = async () => {
-    if (!archivos.length) { toast.error("Primero sube al menos un archivo"); return; }
+    if (!residenteId) { toast.error("Selecciona un residente primero"); return; }
+    if (!archivos.length) { toast.error("Sube al menos un archivo"); return; }
     setExtracting(true);
-    toast.info("La IA está leyendo el documento, esto puede tardar hasta 60 segundos...");
+    toast.info("La IA está leyendo el documento, puede tardar hasta 60 segundos...");
     try {
       const urls = archivos.map(a => a.url);
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Tiempo de espera agotado. El PDF puede ser muy extenso. Intenta con un archivo más pequeño o completa los campos manualmente.")), 90000)
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Tiempo agotado. El PDF puede ser muy extenso, intenta con un archivo más pequeño.")), 90000)
       );
-      const datos = await Promise.race([extraerDatosConIA(urls), timeoutPromise]);
-
-      // Verificar si se extrajo algo útil
+      const datos = await Promise.race([extraerDatosConIA(urls), timeout]);
       const tieneContenido = datos && Object.values(datos).some(v => v && String(v).trim() !== "");
       if (!tieneContenido) {
-        toast.warning("La IA no pudo leer el documento. Puedes completar los campos manualmente.");
-      } else {
-        const panelesCon = ["hemograma","glicemia","perfil_lipidico","hepatico","renal","tiroides"].filter(k => datos[k]?.trim()).length;
-        if (panelesCon > 0) {
-          toast.success(`¡Datos extraídos! ${panelesCon} panel(es) completados. Revisa y ajusta si es necesario.`);
-        } else {
-          toast.success("Documento leído. La información se guardó en Observaciones. Puedes moverla a los paneles si corresponde.");
-        }
-        onExtracted(datos);
+        toast.warning("La IA no pudo leer el documento. Intenta con una imagen o un PDF de mejor calidad.");
+        setExtracting(false);
+        return;
       }
+      setFichaData(datos);
+      toast.success("¡Transcripción lista! Revisa la ficha y guárdala.");
     } catch (err) {
-      console.error("Error IA examenes:", err);
-      toast.error("Error al procesar con IA: " + (err?.message || "intenta nuevamente"));
+      toast.error(err?.message || "Error al procesar con IA");
     } finally {
       setExtracting(false);
     }
   };
 
-  return (
-    <div className="rounded-xl border-2 border-dashed border-border bg-muted/30 p-4 space-y-3">
-      <p className="text-sm font-semibold flex items-center gap-2">
-        <Files className="w-4 h-4 text-primary" />
-        Adjuntar archivos del examen
-        <span className="text-xs font-normal text-muted-foreground">(puedes subir varios)</span>
-      </p>
+  const saveMutation = useMutation({
+    mutationFn: (data) => base44.entities.ExamenBioquimico.create(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["examenes-bioquimicos"] });
+      toast.success("Ficha guardada correctamente");
+      onClose();
+    },
+  });
 
-      {/* Lista de archivos subidos */}
+  const handleGuardar = () => {
+    const archivo_url = archivos.map(a => a.url).join("||");
+    const archivo_nombre = archivos.map(a => a.nombre).join("||");
+    saveMutation.mutate({
+      resident_id: residenteId,
+      resident_name: residenteNombre,
+      fecha_examen: fichaData.fecha_examen || new Date().toISOString().split("T")[0],
+      hemograma: fichaData.hemograma || "",
+      glicemia: fichaData.glicemia || "",
+      perfil_lipidico: fichaData.perfil_lipidico || "",
+      hepatico: fichaData.hepatico || "",
+      renal: fichaData.renal || "",
+      tiroides: fichaData.tiroides || "",
+      observaciones: fichaData.observaciones || "",
+      archivo_url,
+      archivo_nombre,
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={v => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-purple-600" />
+            Transcribir examen con IA
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Residente */}
+          {residentFixed ? (
+            <div className="rounded-lg bg-muted/50 border px-3 py-2">
+              <p className="text-xs text-muted-foreground">Residente</p>
+              <p className="text-sm font-semibold">{residenteNombre}</p>
+            </div>
+          ) : (
+            <div>
+              <Label>Residente *</Label>
+              <Select value={residenteId} onValueChange={id => {
+                const r = residents.find(r => r.id === id);
+                setResidenteId(id);
+                setResidenteNombre(r?.preferred_name || r?.full_name || "");
+              }}>
+                <SelectTrigger><SelectValue placeholder="Seleccionar residente..." /></SelectTrigger>
+                <SelectContent>
+                  {residents.map(r => (
+                    <SelectItem key={r.id} value={r.id}>{r.preferred_name || r.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Zona subida */}
+          {!fichaData && (
+            <div className="rounded-xl border-2 border-dashed border-purple-200 bg-purple-50/40 p-5 space-y-3">
+              <p className="text-sm font-semibold text-purple-800 flex items-center gap-2">
+                <Upload className="w-4 h-4" /> Sube el PDF o imagen del examen
+              </p>
+              {archivos.length > 0 && (
+                <div className="space-y-1.5">
+                  {archivos.map((a, i) => (
+                    <div key={i} className="flex items-center gap-2 bg-white border rounded-lg px-3 py-1.5 text-xs">
+                      <FileText className="w-4 h-4 text-primary shrink-0" />
+                      <span className="truncate flex-1 text-muted-foreground">{a.nombre}</span>
+                      <button type="button" onClick={() => setArchivos(prev => prev.filter((_, j) => j !== i))}>
+                        <X className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Button type="button" variant="outline" size="sm" className="w-full gap-2" onClick={() => inputRef.current?.click()} disabled={uploading}>
+                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                {uploading ? "Subiendo..." : archivos.length > 0 ? "Agregar más archivos" : "Seleccionar PDF o imagen"}
+              </Button>
+              <input ref={inputRef} type="file" accept="image/*,.pdf" multiple className="hidden" onChange={handleFiles} />
+              {archivos.length > 0 && (
+                <Button type="button" size="sm" className="w-full gap-2 bg-purple-600 hover:bg-purple-700 text-white" onClick={handleExtract} disabled={extracting}>
+                  {extracting
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Transcribiendo con IA...</>
+                    : <><Sparkles className="w-4 h-4" /> Transcribir con IA</>}
+                </Button>
+              )}
+              <p className="text-[11px] text-muted-foreground">La IA leerá el documento y generará una ficha digital estructurada lista para guardar.</p>
+            </div>
+          )}
+
+          {/* Ficha digital resultado */}
+          {fichaData && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                <Sparkles className="w-4 h-4 shrink-0" />
+                <span className="text-sm font-medium">Transcripción completada — revisa la ficha antes de guardar</span>
+              </div>
+
+              {fichaData.fecha_examen && (
+                <div className="bg-muted/40 rounded-lg px-3 py-2 text-sm">
+                  <span className="text-muted-foreground text-xs font-medium uppercase">Fecha del examen</span>
+                  <p className="font-semibold">{fichaData.fecha_examen}</p>
+                </div>
+              )}
+
+              {[...PANELES, { key: "observaciones", label: "📝 Observaciones" }].map(panel => {
+                const val = fichaData[panel.key];
+                if (!val?.trim()) return null;
+                return (
+                  <div key={panel.key} className="border rounded-lg p-3 bg-white">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">{panel.label}</p>
+                    <p className="text-sm whitespace-pre-wrap">{val}</p>
+                  </div>
+                );
+              })}
+
+              <div className="flex items-center gap-2 pt-1">
+                <Button variant="outline" size="sm" onClick={() => { setFichaData(null); setArchivos([]); }}>
+                  Volver a subir
+                </Button>
+                <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700 text-white gap-2" onClick={handleGuardar} disabled={saveMutation.isPending}>
+                  {saveMutation.isPending ? "Guardando..." : "Guardar ficha digital"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Zona de carga de archivos (dentro del formulario manual) ─────────────────
+function ZonaArchivos({ archivos, onArchivosChange }) {
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useRef();
+
+  const handleFiles = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setUploading(true);
+    toast.info(`Subiendo ${files.length} archivo(s)...`);
+    const nuevos = [];
+    for (const file of files) {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      nuevos.push({ url: file_url, nombre: file.name });
+    }
+    onArchivosChange([...archivos, ...nuevos]);
+    setUploading(false);
+    e.target.value = "";
+  };
+
+  return (
+    <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3 space-y-2">
+      <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+        <Files className="w-3.5 h-3.5" /> Adjuntar archivo(s) como respaldo
+      </p>
       {archivos.length > 0 && (
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           {archivos.map((archivo, idx) => (
-            <div key={idx} className="flex items-center gap-2 bg-white border rounded-lg px-3 py-1.5">
-              <FileText className="w-4 h-4 text-primary shrink-0" />
+            <div key={idx} className="flex items-center gap-2 bg-white border rounded px-2 py-1">
+              <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
               <span className="text-xs truncate text-muted-foreground flex-1">{archivo.nombre}</span>
-              <a href={archivo.url} target="_blank" rel="noopener noreferrer" className="shrink-0">
-                <ExternalLink className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
+              <a href={archivo.url} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="w-3 h-3 text-muted-foreground hover:text-primary" />
               </a>
-              <button type="button" onClick={() => handleRemove(idx)} className="shrink-0 text-muted-foreground hover:text-destructive transition-colors">
-                <X className="w-3.5 h-3.5" />
+              <button type="button" onClick={() => onArchivosChange(archivos.filter((_, i) => i !== idx))}>
+                <X className="w-3 h-3 text-muted-foreground hover:text-destructive" />
               </button>
             </div>
           ))}
         </div>
       )}
-
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="gap-1.5 w-full"
-        onClick={() => inputRef.current?.click()}
-        disabled={uploading}
-      >
-        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-        {uploading ? "Subiendo..." : archivos.length > 0 ? "Agregar más archivos" : "Seleccionar fotos o PDFs"}
+      <Button type="button" variant="outline" size="sm" className="gap-1.5 w-full h-7 text-xs" onClick={() => inputRef.current?.click()} disabled={uploading}>
+        {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+        {uploading ? "Subiendo..." : "Seleccionar archivo(s)"}
       </Button>
-
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*,.pdf"
-        multiple
-        className="hidden"
-        onChange={handleFiles}
-      />
-
-      {archivos.length > 0 && (
-        <Button
-          type="button"
-          size="sm"
-          className="w-full gap-2 bg-purple-600 hover:bg-purple-700 text-white"
-          onClick={handleExtract}
-          disabled={extracting}
-        >
-          {extracting
-            ? <><Loader2 className="w-4 h-4 animate-spin" /> Extrayendo datos con IA...</>
-            : <><Sparkles className="w-4 h-4" /> Extraer datos automáticamente con IA</>
-          }
-        </Button>
-      )}
-
-      <p className="text-[11px] text-muted-foreground">
-        Sube una o varias fotos/PDFs (incluidos PDFs multipágina) y la IA completará los campos automáticamente. Los archivos quedan guardados como respaldo.
-      </p>
+      <input ref={inputRef} type="file" accept="image/*,.pdf" multiple className="hidden" onChange={handleFiles} />
     </div>
   );
 }
@@ -235,21 +355,7 @@ function FormDialog({ open, onClose, residents, editing, residentFixed }) {
     set("resident_name", r?.preferred_name || r?.full_name || "");
   };
 
-  const handleExtracted = (datos) => {
-    setForm(prev => ({
-      ...prev,
-      fecha_examen: datos.fecha_examen || prev.fecha_examen,
-      hemograma: datos.hemograma || prev.hemograma,
-      glicemia: datos.glicemia || prev.glicemia,
-      perfil_lipidico: datos.perfil_lipidico || prev.perfil_lipidico,
-      hepatico: datos.hepatico || prev.hepatico,
-      renal: datos.renal || prev.renal,
-      tiroides: datos.tiroides || prev.tiroides,
-      observaciones: datos.observaciones
-        ? (prev.observaciones ? prev.observaciones + "\n" + datos.observaciones : datos.observaciones)
-        : prev.observaciones,
-    }));
-  };
+
 
   const mutation = useMutation({
     mutationFn: (data) => editing
@@ -309,11 +415,10 @@ function FormDialog({ open, onClose, residents, editing, residentFixed }) {
             </div>
           )}
 
-          {/* Zona adjuntos múltiples + IA */}
+          {/* Zona adjuntos */}
           <ZonaArchivos
             archivos={archivos}
             onArchivosChange={setArchivos}
-            onExtracted={handleExtracted}
           />
 
           {/* Fechas */}
@@ -466,6 +571,7 @@ function ExamenCard({ examen, onEdit, onDelete }) {
 export default function TabExamenesBioquimicos({ residents, residentFixed }) {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  const [showSubirPDF, setShowSubirPDF] = useState(false);
   const [editing, setEditing] = useState(null);
   const [filterResidente, setFilterResidente] = useState(residentFixed?.id || "todos");
 
@@ -519,9 +625,14 @@ export default function TabExamenesBioquimicos({ residents, residentFixed }) {
             </SelectContent>
           </Select>
         )}
-        <Button size="sm" className="gap-1.5 ml-auto" onClick={() => { setEditing(null); setShowForm(true); }}>
-          <Plus className="w-3.5 h-3.5" /> Nuevo examen
-        </Button>
+        <div className="flex gap-2 ml-auto">
+          <Button size="sm" variant="outline" className="gap-1.5 border-purple-300 text-purple-700 hover:bg-purple-50" onClick={() => setShowSubirPDF(true)}>
+            <Sparkles className="w-3.5 h-3.5" /> Transcribir con IA
+          </Button>
+          <Button size="sm" className="gap-1.5" onClick={() => { setEditing(null); setShowForm(true); }}>
+            <Plus className="w-3.5 h-3.5" /> Registro manual
+          </Button>
+        </div>
       </div>
 
       {filtered.length === 0 ? (
@@ -546,6 +657,13 @@ export default function TabExamenesBioquimicos({ residents, residentFixed }) {
           residentFixed={residentFixed}
         />
       )}
+
+      <SubirPDFDialog
+        open={showSubirPDF}
+        onClose={() => setShowSubirPDF(false)}
+        residents={residents}
+        residentFixed={residentFixed}
+      />
     </div>
   );
 }
