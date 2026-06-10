@@ -152,19 +152,26 @@ export default function DailyLogs() {
     queryFn: () => base44.entities.Resident.filter({ status: "activo" }),
   });
 
+  const sendAlertIfImportant = async (registro, tipo) => {
+    if (!registro.is_important) return;
+    base44.functions.invoke("alertaRegistroImportante", { registro, tipo }).catch(() => {});
+  };
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.DailyLog.create(data),
-    onSuccess: () => {
+    onSuccess: (created, variables) => {
       queryClient.invalidateQueries({ queryKey: ["daily-logs"] });
       setShowForm(false);
+      sendAlertIfImportant(variables, variables.log_type || activeTab);
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.DailyLog.update(id, data),
-    onSuccess: () => {
+    onSuccess: (updated, variables) => {
       queryClient.invalidateQueries({ queryKey: ["daily-logs"] });
       setEditing(null);
+      sendAlertIfImportant(variables.data, variables.data.log_type || editing?.log_type);
     },
   });
 
