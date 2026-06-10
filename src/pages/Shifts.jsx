@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageHeader from "@/components/shared/PageHeader";
 import TurnoCuidadoras from "@/components/turnos/TurnoCuidadoras";
+import TurnoTens from "@/components/turnos/TurnoTens";
 
 const sendShiftEmail = async (shiftData, staffMembers) => {
   const member = staffMembers.find(s => s.full_name === shiftData.staff_name);
@@ -107,7 +108,7 @@ export default function Shifts() {
         <TabsList className="mb-6">
           <TabsTrigger value="profesionales">🩺 Profesionales de Salud</TabsTrigger>
           <TabsTrigger value="cuidadoras">🤝 Cuidadoras</TabsTrigger>
-          <TabsTrigger value="tens" disabled>💉 TENS (próximamente)</TabsTrigger>
+          <TabsTrigger value="tens">💉 TENS</TabsTrigger>
         </TabsList>
 
         {/* ---- TAB PROFESIONALES ---- */}
@@ -179,7 +180,7 @@ export default function Shifts() {
 
         {/* ---- TAB TENS ---- */}
         <TabsContent value="tens">
-          <div className="text-center py-16 text-muted-foreground">Próximamente: cuadro de turnos TENS</div>
+          <TurnoTens />
         </TabsContent>
       </Tabs>
 
