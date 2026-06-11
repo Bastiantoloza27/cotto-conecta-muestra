@@ -28,10 +28,11 @@
         "colacion_manana",
         "almuerzo",
         "once",
+        "hidratacion",
         "cena",
         "colacion_nocturna"
       ],
-      "description": "Tipo de comida registrada"
+      "description": "Tipo de comida o momento de hidrataci\u00f3n registrada"
     },
     "porcion_consumida": {
       "type": "string",
@@ -43,10 +44,6 @@
         "completo"
       ],
       "description": "Fracci\u00f3n del plato consumida"
-    },
-    "gramos_consumidos": {
-      "type": "number",
-      "description": "Gramos consumidos (opcional)"
     },
     "hidratacion": {
       "type": "string",

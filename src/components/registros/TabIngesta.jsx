@@ -16,6 +16,7 @@ const COMIDAS = [
   { key: "colacion_manana",   emoji: "🍎", label: "Colación",         turno: "manana", opcional: false },
   { key: "almuerzo",          emoji: "☀️", label: "Almuerzo",         turno: "tarde",  opcional: false },
   { key: "once",              emoji: "🍵", label: "Once",             turno: "tarde",  opcional: false },
+  { key: "hidratacion",       emoji: "💧", label: "Hidratación",      turno: "tarde",  opcional: false, soloHidratacion: true },
   { key: "cena",              emoji: "🌙", label: "Cena",             turno: "noche",  opcional: false },
   { key: "colacion_nocturna", emoji: "🌛", label: "Colación Nocturna",turno: "noche",  opcional: true  },
 ];
@@ -59,20 +60,29 @@ function TarjetaComida({ comida, registro, onEdit, onDelete }) {
         )}
       </div>
 
-      {tieneRegistro && porcionInfo ? (
+      {tieneRegistro ? (
         <div className="space-y-1">
-          <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${porcionInfo.color}`}>
-            {porcionInfo.emoji} {porcionInfo.label}
-          </span>
-          {registro.gramos_consumidos && (
-            <p className="text-[11px] text-muted-foreground">⚖️ {registro.gramos_consumidos}g</p>
-          )}
-          {registro.hidratacion && registro.hidratacion !== "ninguna" && (
-            <p className="text-[11px] text-muted-foreground">💧 Hidrat.: {registro.hidratacion}</p>
+          {comida.soloHidratacion ? (
+            registro.hidratacion ? (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-300">
+                💧 {registro.hidratacion.charAt(0).toUpperCase() + registro.hidratacion.slice(1)}
+              </span>
+            ) : <p className="text-[11px] text-muted-foreground/50">—</p>
+          ) : (
+            <>
+              {porcionInfo && (
+                <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${porcionInfo.color}`}>
+                  {porcionInfo.emoji} {porcionInfo.label}
+                </span>
+              )}
+              {registro.hidratacion && registro.hidratacion !== "ninguna" && (
+                <p className="text-[11px] text-muted-foreground">💧 Hidrat.: {registro.hidratacion}</p>
+              )}
+            </>
           )}
         </div>
       ) : (
-        <p className="text-[11px] text-muted-foreground/50">{tieneRegistro ? "—" : "Sin registrar"}</p>
+        <p className="text-[11px] text-muted-foreground/50">Sin registrar</p>
       )}
     </div>
   );

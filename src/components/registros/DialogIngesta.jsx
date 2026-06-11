@@ -28,6 +28,7 @@ const TIPO_COMIDA = [
   { valor: "colacion_manana",   emoji: "🍎", label: "Colación" },
   { valor: "almuerzo",          emoji: "☀️", label: "Almuerzo" },
   { valor: "once",              emoji: "🍵", label: "Once" },
+  { valor: "hidratacion",       emoji: "💧", label: "Hidratación" },
   { valor: "cena",              emoji: "🌙", label: "Cena" },
   { valor: "colacion_nocturna", emoji: "🌛", label: "Colación Nocturna" },
 ];
@@ -133,8 +134,11 @@ export default function DialogIngesta({ open, onClose, resident, turno, tipoComi
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
+  const esHidratacion = tipoComida === "hidratacion";
+
   const handleSave = async () => {
-    if (!form.porcion_consumida) { toast.error("Selecciona la porción consumida"); return; }
+    if (!esHidratacion && !form.porcion_consumida) { toast.error("Selecciona la porción consumida"); return; }
+    if (esHidratacion && !form.hidratacion) { toast.error("Selecciona el nivel de hidratación"); return; }
     await onSave(form, registro?.id);
     onClose();
   };
@@ -156,14 +160,16 @@ export default function DialogIngesta({ open, onClose, resident, turno, tipoComi
         </DialogHeader>
 
         <div className="space-y-6 py-1">
-          {/* Plato visual interactivo */}
-          <div>
-            <Label className="text-sm font-semibold mb-3 block text-center">¿Cuánto consumió? — Toca el plato</Label>
-            <PlatoVisual
-              porcion={form.porcion_consumida || "0"}
-              onChange={(v) => set("porcion_consumida", v)}
-            />
-          </div>
+          {/* Plato visual interactivo (solo si no es registro de hidratación) */}
+          {!esHidratacion && (
+            <div>
+              <Label className="text-sm font-semibold mb-3 block text-center">¿Cuánto consumió? — Toca el plato</Label>
+              <PlatoVisual
+                porcion={form.porcion_consumida || "0"}
+                onChange={(v) => set("porcion_consumida", v)}
+              />
+            </div>
+          )}
 
           {/* Hidratación */}
           <div>
