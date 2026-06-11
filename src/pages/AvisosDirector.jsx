@@ -50,6 +50,8 @@ export default function AvisosDirector() {
     queryFn: () => base44.auth.me(),
   });
 
+  const isAdmin = user?.role === "admin";
+
   const { data: avisos = [], isLoading } = useQuery({
     queryKey: ["avisos-director"],
     queryFn: () => base44.entities.AvisoDirector.list("-created_date", 100),
@@ -416,14 +418,16 @@ export default function AvisosDirector() {
                 <div className="flex items-center gap-2 shrink-0 flex-wrap">
                   {aviso.estado === "borrador" && (
                     <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs h-7"
-                        onClick={() => openEdit(aviso)}
-                      >
-                        <Pencil className="w-3 h-3 mr-1" /> Editar
-                      </Button>
+                      {isAdmin && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs h-7"
+                          onClick={() => openEdit(aviso)}
+                        >
+                          <Pencil className="w-3 h-3 mr-1" /> Editar
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="outline"
@@ -435,7 +439,7 @@ export default function AvisosDirector() {
                       </Button>
                     </>
                   )}
-                  {aviso.estado === "enviado" && (
+                  {aviso.estado === "enviado" && isAdmin && (
                     <Button
                       size="sm"
                       variant="ghost"
@@ -445,14 +449,16 @@ export default function AvisosDirector() {
                       <Archive className="w-3 h-3 mr-1" /> Archivar
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => { if (confirm("¿Eliminar este aviso?")) deleteMutation.mutate(aviso.id); }}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
+                  {isAdmin && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => { if (confirm("¿Eliminar este aviso?")) deleteMutation.mutate(aviso.id); }}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>
