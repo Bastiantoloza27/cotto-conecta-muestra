@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Package, AlertTriangle, AlertCircle, Pill, ShoppingBasket, Sparkles } from "lucide-react";
+import { Plus, Package, AlertTriangle, AlertCircle, Pill, ShoppingBasket, Sparkles, Shirt } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,9 +12,10 @@ import InventoryFormDialog from "@/components/inventory/InventoryFormDialog";
 import { toast } from "sonner";
 
 const CATEGORIAS = [
-  { key: "farmacos",    label: "Fármacos",     icon: Pill,           emoji: "💊", color: "text-purple-700", bg: "bg-purple-50 border-purple-200" },
-  { key: "alimentacion", label: "Alimentación", icon: ShoppingBasket, emoji: "🍽️", color: "text-green-700",  bg: "bg-green-50 border-green-200" },
-  { key: "aseo",        label: "Artículos de Aseo", icon: Sparkles,   emoji: "🧴", color: "text-blue-700",   bg: "bg-blue-50 border-blue-200" },
+  { key: "farmacos",    label: "Fármacos",        icon: Pill,           emoji: "💊", color: "text-purple-700", bg: "bg-purple-50 border-purple-200" },
+  { key: "alimentacion", label: "Alimentación",   icon: ShoppingBasket, emoji: "🍽️", color: "text-green-700",  bg: "bg-green-50 border-green-200" },
+  { key: "aseo",        label: "Artículos de Aseo", icon: Sparkles,     emoji: "🧴", color: "text-blue-700",   bg: "bg-blue-50 border-blue-200" },
+  { key: "vestuario",   label: "Vestuario",        icon: Shirt,          emoji: "👕", color: "text-orange-700", bg: "bg-orange-50 border-orange-200" },
 ];
 
 export default function Inventory() {
@@ -87,7 +88,7 @@ export default function Inventory() {
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
       <PageHeader
         title="Inventario"
-        subtitle="Control de fármacos, alimentación y artículos de aseo"
+        subtitle="Control de fármacos, alimentación, aseo y vestuario"
         action={handleNew}
         actionLabel="Agregar insumo"
         actionIcon={Plus}
@@ -114,7 +115,7 @@ export default function Inventory() {
       )}
 
       {/* Tarjetas resumen de categorías */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {statsPorCategoria.map(cat => {
           const Icon = cat.icon;
           const isActive = activeCategory === cat.key;

@@ -11,13 +11,14 @@
       "enum": [
         "farmacos",
         "alimentacion",
-        "aseo"
+        "aseo",
+        "vestuario"
       ],
       "description": "Categor\u00eda principal"
     },
     "subcategory": {
       "type": "string",
-      "description": "Subcategor\u00eda o tipo (ej: antibi\u00f3ticos, l\u00e1cteos, desinfectantes)"
+      "description": "Subcategor\u00eda o tipo (ej: antibi\u00f3ticos, l\u00e1cteos, desinfectantes, ropa interior)"
     },
     "current_stock": {
       "type": "number",
@@ -36,7 +37,27 @@
     },
     "unit": {
       "type": "string",
-      "description": "Unidad de medida (ej: unid., kg, litros, cajas)"
+      "description": "Unidad de medida (ej: unid., kg, litros, cajas, prendas)"
+    },
+    "talla": {
+      "type": "string",
+      "description": "Talla (solo para vestuario, ej: S, M, L, XL, 38, 40...)"
+    },
+    "tipo_prenda": {
+      "type": "string",
+      "enum": [
+        "poleron",
+        "pantalon",
+        "camiseta",
+        "ropa_interior",
+        "calcetines",
+        "zapatos",
+        "pijama",
+        "bata",
+        "delantal",
+        "otro"
+      ],
+      "description": "Tipo de prenda (solo para vestuario)"
     },
     "location": {
       "type": "string",

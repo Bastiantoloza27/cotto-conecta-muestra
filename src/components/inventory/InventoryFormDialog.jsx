@@ -51,7 +51,8 @@ export default function InventoryFormDialog({ open, onClose, onSave, item }) {
                 <SelectContent>
                   <SelectItem value="farmacos">💊 Fármacos</SelectItem>
                   <SelectItem value="alimentacion">🍽️ Alimentación</SelectItem>
-                  <SelectItem value="aseo">🧴 Aseo</SelectItem>
+                  <SelectItem value="aseo">🧴 Artículos de Aseo</SelectItem>
+                  <SelectItem value="vestuario">👕 Vestuario</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -60,6 +61,34 @@ export default function InventoryFormDialog({ open, onClose, onSave, item }) {
               <Input value={form.subcategory || ""} onChange={e => set("subcategory", e.target.value)} placeholder="Ej: Antibióticos" />
             </div>
           </div>
+
+          {/* Campos específicos de vestuario */}
+          {form.category === "vestuario" && (
+            <div className="grid grid-cols-2 gap-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <div>
+                <Label>👕 Tipo de prenda</Label>
+                <Select value={form.tipo_prenda || ""} onValueChange={v => set("tipo_prenda", v)}>
+                  <SelectTrigger className="text-sm h-9"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="poleron">Polerón / Polar</SelectItem>
+                    <SelectItem value="pantalon">Pantalón</SelectItem>
+                    <SelectItem value="camiseta">Camiseta / Polera</SelectItem>
+                    <SelectItem value="ropa_interior">Ropa interior</SelectItem>
+                    <SelectItem value="calcetines">Calcetines / Medias</SelectItem>
+                    <SelectItem value="zapatos">Zapatos / Zapatillas</SelectItem>
+                    <SelectItem value="pijama">Pijama</SelectItem>
+                    <SelectItem value="bata">Bata</SelectItem>
+                    <SelectItem value="delantal">Delantal</SelectItem>
+                    <SelectItem value="otro">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>📐 Talla</Label>
+                <Input value={form.talla || ""} onChange={e => set("talla", e.target.value)} placeholder="S, M, L, XL, 38..." />
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>

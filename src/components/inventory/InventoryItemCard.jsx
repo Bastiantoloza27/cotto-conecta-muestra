@@ -29,9 +29,15 @@ export default function InventoryItemCard({ item, onEdit, onDelete }) {
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold truncate">{item.name}</p>
-          {item.subcategory && (
+          {item.category === "vestuario" && (item.tipo_prenda || item.talla) ? (
+            <p className="text-[10px] text-muted-foreground">
+              {item.tipo_prenda ? item.tipo_prenda.replace("_", " ") : ""}
+              {item.tipo_prenda && item.talla ? " · " : ""}
+              {item.talla ? `Talla ${item.talla}` : ""}
+            </p>
+          ) : item.subcategory ? (
             <p className="text-[10px] text-muted-foreground">{item.subcategory}</p>
-          )}
+          ) : null}
         </div>
         <div className="flex items-center gap-0.5 shrink-0">
           <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => onEdit(item)}>
