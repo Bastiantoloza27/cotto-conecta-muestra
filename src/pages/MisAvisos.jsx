@@ -217,9 +217,11 @@ export default function MisAvisos() {
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">Comunicaciones del equipo</p>
         </div>
-        <Button onClick={() => setShowNuevoAviso(true)} className="gap-2">
-          <Plus className="w-4 h-4" /> Enviar aviso
-        </Button>
+        {isAdmin && (
+          <Button onClick={() => setShowNuevoAviso(true)} className="gap-2">
+            <Plus className="w-4 h-4" /> Enviar aviso
+          </Button>
+        )}
       </div>
 
       {misAvisos.length === 0 ? (
@@ -312,16 +314,18 @@ export default function MisAvisos() {
         </DialogContent>
       </Dialog>
 
-      {/* Nuevo aviso dialog */}
-      <NuevoAvisoDialog
-        open={showNuevoAviso}
-        onClose={() => setShowNuevoAviso(false)}
-        onEnviar={handleEnviarAviso}
-        onBorrador={handleBorradorAviso}
-        allUsers={allUsers}
-        staffMembers={staffMembers}
-        sending={sending}
-      />
+      {/* Nuevo aviso dialog (solo admin) */}
+      {isAdmin && (
+        <NuevoAvisoDialog
+          open={showNuevoAviso}
+          onClose={() => setShowNuevoAviso(false)}
+          onEnviar={handleEnviarAviso}
+          onBorrador={handleBorradorAviso}
+          allUsers={allUsers}
+          staffMembers={staffMembers}
+          sending={sending}
+        />
+      )}
     </div>
   );
 }
