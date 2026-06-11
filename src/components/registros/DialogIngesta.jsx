@@ -165,25 +165,6 @@ export default function DialogIngesta({ open, onClose, resident, turno, tipoComi
             />
           </div>
 
-          {/* Gramos (opcional) */}
-          <div className="bg-muted/40 rounded-xl p-3">
-            <Label className="text-sm font-semibold mb-1 block">
-              ⚖️ Gramos consumidos <span className="text-muted-foreground font-normal text-xs">(opcional)</span>
-            </Label>
-            <div className="flex items-center gap-2">
-              <Input
-              type="number"
-              min="0"
-              max="2000"
-              value={form.gramos_consumidos ?? ""}
-              onChange={e => set("gramos_consumidos", e.target.value === "" ? null : Number(e.target.value))}
-              placeholder="ej: 150"
-              className="text-center max-w-[120px]"
-              />
-              <span className="text-sm text-muted-foreground">gramos</span>
-            </div>
-          </div>
-
           {/* Hidratación */}
           <div>
             <Label className="text-sm font-semibold mb-2 block">💧 Hidratación</Label>
