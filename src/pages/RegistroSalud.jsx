@@ -573,27 +573,45 @@ export default function RegistroSalud() {
       )}
 
       <Tabs value={tab} onValueChange={setTab}>
-        {/* Mobile: 2 rows (3+2). Desktop: single row */}
-        <div className="mb-5 block sm:hidden">
-          <TabsList className="w-full grid grid-cols-3 mb-1">
-            <TabsTrigger value="deposiciones" className="gap-1 text-xs px-1">
-              <ClipboardList className="w-3.5 h-3.5 shrink-0" /> Deposic.
-            </TabsTrigger>
-            <TabsTrigger value="signos" className="gap-1 text-xs px-1">
-              <Activity className="w-3.5 h-3.5 shrink-0" /> S. Vitales
-            </TabsTrigger>
-            <TabsTrigger value="ingesta" className="gap-1 text-xs px-1">
-              <Utensils className="w-3.5 h-3.5 shrink-0" /> Ingesta
-            </TabsTrigger>
-          </TabsList>
-          <TabsList className="w-full grid grid-cols-2">
-            <TabsTrigger value="examenes" className="gap-1 text-xs px-1">
-              <FlaskConical className="w-3.5 h-3.5 shrink-0" /> Exámenes
-            </TabsTrigger>
-            <TabsTrigger value="intervenciones" className="gap-1 text-xs px-1">
-              <Stethoscope className="w-3.5 h-3.5 shrink-0" /> Interv.
-            </TabsTrigger>
-          </TabsList>
+        {/* Mobile: grid 3+2. Desktop: single TabsList */}
+        <div className="mb-5 sm:hidden">
+          <div className="grid grid-cols-3 gap-1 mb-1">
+            {[
+              { value: "deposiciones", icon: ClipboardList, label: "Deposic." },
+              { value: "signos", icon: Activity, label: "S. Vitales" },
+              { value: "ingesta", icon: Utensils, label: "Ingesta" },
+            ].map(({ value, icon: Icon, label }) => (
+              <button
+                key={value}
+                onClick={() => setTab(value)}
+                className={`flex items-center justify-center gap-1 px-2 py-2 rounded-md text-xs font-medium transition-colors border ${
+                  tab === value
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-muted text-muted-foreground border-transparent hover:bg-muted/80"
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5 shrink-0" /> {label}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-1">
+            {[
+              { value: "examenes", icon: FlaskConical, label: "Exámenes" },
+              { value: "intervenciones", icon: Stethoscope, label: "Intervenciones" },
+            ].map(({ value, icon: Icon, label }) => (
+              <button
+                key={value}
+                onClick={() => setTab(value)}
+                className={`flex items-center justify-center gap-1 px-2 py-2 rounded-md text-xs font-medium transition-colors border ${
+                  tab === value
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-muted text-muted-foreground border-transparent hover:bg-muted/80"
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5 shrink-0" /> {label}
+              </button>
+            ))}
+          </div>
         </div>
         <TabsList className="mb-5 hidden sm:flex w-auto">
           <TabsTrigger value="deposiciones" className="gap-1.5">
