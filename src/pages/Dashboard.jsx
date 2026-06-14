@@ -74,9 +74,9 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-6 lg:p-8 max-w-7xl mx-auto">
       {/* Header with video background */}
-      <div className="mb-8 relative rounded-2xl overflow-hidden">
+      <div className="mb-5 sm:mb-8 relative rounded-xl sm:rounded-2xl overflow-hidden">
         <video
           src="https://media.base44.com/videos/public/6a10daaa13888870642a70ef/f9e9d64a2_VIDEOCENACOTOLENGO2025-22_5_20267_41pm.mp4"
           autoPlay
@@ -88,35 +88,35 @@ export default function Dashboard() {
         {/* Dark overlay for readability */}
         <div className="absolute inset-0 bg-black/55" />
         {/* Content */}
-        <div className="relative z-10 flex items-start justify-between gap-4 p-6 sm:p-8">
+        <div className="relative z-10 flex items-center justify-between gap-4 p-4 sm:p-8 min-h-[100px] sm:min-h-[auto]">
           <div>
-            <p className="text-sm text-white/70">
+            <p className="text-xs sm:text-sm text-white/70">
               {format(new Date(), "EEEE d 'de' MMMM, yyyy", { locale: es })}
             </p>
-            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-1 text-white">
+            <h1 className="text-xl sm:text-3xl font-semibold tracking-tight mt-0.5 text-white">
               {greeting()} 👋
             </h1>
-            <p className="text-sm text-white/70 mt-1">
+            <p className="text-xs sm:text-sm text-white/70 mt-0.5">
               Resumen del día en la comunidad
             </p>
           </div>
           <img
             src="https://media.base44.com/images/public/6a10daaa13888870642a70ef/2440d15f9_image.png"
             alt="Pequeño Cottolengo Quintero"
-            className="w-16 h-16 sm:w-20 sm:h-20 object-contain shrink-0"
+            className="w-14 h-14 sm:w-20 sm:h-20 object-contain shrink-0"
           />
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-5 sm:mb-8">
         <StatCard label="Residentes activos" value={residents.length} icon={Users} />
         <StatCard label="Actividades hoy" value={activities.length} icon={Calendar} />
         <StatCard label="Informes médicos" value={informesMedicos.length} icon={Stethoscope} />
         <StatCard label="En lista de espera" value={waitingAdmissions.length} icon={ClipboardPlus} />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Recent logs - Main column */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">

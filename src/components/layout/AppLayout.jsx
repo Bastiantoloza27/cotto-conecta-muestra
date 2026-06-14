@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
+import BottomNav from "./BottomNav";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -13,7 +14,7 @@ export default function AppLayout() {
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile header */}
-        <header className="lg:hidden flex items-center h-14 px-4 border-b border-border bg-card/80 backdrop-blur-sm">
+        <header className="lg:hidden flex items-center h-14 px-4 border-b border-border bg-card/80 backdrop-blur-sm shrink-0">
           <Button
             variant="ghost"
             size="icon"
@@ -29,12 +30,17 @@ export default function AppLayout() {
           />
           <span className="text-sm font-semibold ml-2">Pequeño Cottolengo</span>
         </header>
-        <main className="flex-1 overflow-y-auto">
+
+        {/* Main content - with bottom padding on mobile for bottom nav */}
+        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0">
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>
         </main>
       </div>
+
+      {/* Bottom navigation bar - mobile only */}
+      <BottomNav onMenuOpen={() => setSidebarOpen(true)} />
     </div>
   );
 }

@@ -79,44 +79,46 @@ function LogTimeline({ logs, onEdit, onDelete }) {
   if (logs.length === 0) return null;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {Object.entries(grouped).sort(([a], [b]) => b.localeCompare(a)).map(([date, entries]) => (
         <div key={date}>
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-2 h-2 rounded-full bg-primary" />
-            <h3 className="text-sm font-semibold text-muted-foreground">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3">
+            <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
+            <h3 className="text-xs sm:text-sm font-semibold text-muted-foreground capitalize">
               {date !== "Sin fecha" ? format(new Date(date + "T12:00:00"), "EEEE d/MM/yyyy") : date}
             </h3>
             <div className="flex-1 h-px bg-border" />
           </div>
-          <div className="space-y-2 ml-4 border-l-2 border-border pl-4">
+          <div className="space-y-2 ml-3 sm:ml-4 border-l-2 border-border pl-3 sm:pl-4">
             {entries.map((log) => (
-              <Card key={log.id} className="p-4 hover:shadow-sm transition-shadow">
-                <div className="flex items-start gap-3">
-                  <span className="text-lg">{ALL_CATEGORY_EMOJIS[log.category] || "📝"}</span>
+              <Card key={log.id} className="p-3 sm:p-4 hover:shadow-sm transition-shadow">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <span className="text-base sm:text-lg shrink-0">{ALL_CATEGORY_EMOJIS[log.category] || "📝"}</span>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium">{log.resident_name || "General"}</span>
-                      <Badge variant="secondary" className="text-[10px] capitalize">{log.category?.replace(/_/g, " ")}</Badge>
-                      {log.mood && <MoodBadge mood={log.mood} />}
-                      {log.is_important && <Badge className="bg-amber-100 text-amber-800 text-[10px] border-amber-200">⚡ Importante</Badge>}
+                    <div className="flex items-start justify-between gap-1">
+                      <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                        <span className="text-sm font-medium">{log.resident_name || "General"}</span>
+                        <Badge variant="secondary" className="text-[10px] capitalize">{log.category?.replace(/_/g, " ")}</Badge>
+                        {log.mood && <MoodBadge mood={log.mood} />}
+                        {log.is_important && <Badge className="bg-amber-100 text-amber-800 text-[10px] border-amber-200">⚡</Badge>}
+                      </div>
+                      <div className="flex gap-0.5 shrink-0 -mt-0.5">
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onEdit(log)}>
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive"
+                          onClick={() => { if (confirm("¿Eliminar este registro?")) onDelete(log.id); }}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
                     </div>
                     {log.title && <p className="text-sm font-medium mt-1">{log.title}</p>}
-                    <p className="text-sm text-muted-foreground mt-1">{log.description}</p>
-                    <div className="flex items-center gap-2 mt-2 text-[11px] text-muted-foreground">
+                    <p className="text-sm text-muted-foreground mt-1 leading-snug">{log.description}</p>
+                    <div className="flex items-center gap-2 mt-1.5 text-[11px] text-muted-foreground flex-wrap">
                       {log.time && <span>🕐 {log.time}</span>}
                       {log.shift && <span>· Turno {log.shift}</span>}
                       {log.registered_by && <span>· 👤 {log.registered_by}</span>}
                     </div>
-                  </div>
-                  <div className="flex gap-1 shrink-0">
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onEdit(log)}>
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive"
-                      onClick={() => { if (confirm("¿Eliminar este registro?")) onDelete(log.id); }}>
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
                   </div>
                 </div>
               </Card>
@@ -206,7 +208,7 @@ export default function DailyLogs() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
+    <div className="p-3 sm:p-6 lg:p-8 max-w-4xl mx-auto">
       <PageHeader
         title="Bitácora"
         subtitle="Registro continuo del cuidado en comunidad"
@@ -214,24 +216,24 @@ export default function DailyLogs() {
         actionLabel="Nuevo registro"
         actionIcon={Plus}
       />
-      <div className="flex justify-end mb-2">
-        <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => setShowIncidentForm(true)}>
-          <AlertTriangle className="w-4 h-4 mr-1" /> Reportar incidente
+      <div className="flex justify-between items-center mb-2 gap-2">
+        <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10 text-xs h-8" onClick={() => setShowIncidentForm(true)}>
+          <AlertTriangle className="w-3.5 h-3.5 mr-1" /> Reportar incidente
         </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6">
-        <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="cuidadora" className="flex-1 sm:flex-none">🤲 Cuidadoras</TabsTrigger>
-          <TabsTrigger value="tens" className="flex-1 sm:flex-none">🩺 TENS</TabsTrigger>
-          <TabsTrigger value="psicosocial" className="flex-1 sm:flex-none">🧩 Psicosocial</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-4 sm:mb-6">
+        <TabsList className="w-full">
+          <TabsTrigger value="cuidadora" className="flex-1 text-xs sm:text-sm">🤲 Cuidadoras</TabsTrigger>
+          <TabsTrigger value="tens" className="flex-1 text-xs sm:text-sm">🩺 TENS</TabsTrigger>
+          <TabsTrigger value="psicosocial" className="flex-1 text-xs sm:text-sm">🧩 Psicosocial</TabsTrigger>
         </TabsList>
 
         {/* Shared filter */}
-        <div className="flex gap-3 mt-4 items-center">
+        <div className="flex gap-2 mt-3 items-center">
           <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-52">
+            <SelectTrigger className="flex-1 sm:w-52">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
