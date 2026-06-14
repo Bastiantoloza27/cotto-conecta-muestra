@@ -515,17 +515,17 @@ export default function RegistroSalud() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold flex items-center gap-2">
-            <ClipboardList className="w-6 h-6 text-primary" /> Registro de Salud
+      <div className="flex items-start justify-between gap-3 mb-4 sm:mb-6">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-semibold flex items-center gap-2">
+            <ClipboardList className="w-5 h-5 sm:w-6 sm:h-6 text-primary shrink-0" /> Registro de Salud
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">Deposiciones y Signos Vitales diarios</p>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 hidden sm:block">Deposiciones y Signos Vitales diarios</p>
         </div>
         <div className="flex gap-2 shrink-0">
           {tab === "deposiciones" && (
-            <Button variant="outline" size="sm" onClick={handleDescargarInforme} className="gap-1.5">
-              <Download className="w-4 h-4" /> Informe deposición
+            <Button variant="outline" size="sm" onClick={handleDescargarInforme} className="gap-1.5 text-xs h-8 px-2 sm:px-3">
+              <Download className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Informe</span>
             </Button>
           )}
           {tab === "signos" && (
@@ -538,8 +538,8 @@ export default function RegistroSalud() {
               const root = createRoot(div);
               root.render(<InformeSignosVitalesImprimible residents={residents} signosVitales={signosVitales} date={selectedDate} />);
               setTimeout(() => printWindow.print(), 700);
-            }} className="gap-1.5">
-              <Download className="w-4 h-4" /> Informe signos
+            }} className="gap-1.5 text-xs h-8 px-2 sm:px-3">
+              <Download className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Informe</span>
             </Button>
           )}
         </div>
@@ -573,7 +573,29 @@ export default function RegistroSalud() {
       )}
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="mb-5 w-full sm:w-auto">
+        {/* Mobile: 2 rows (3+2). Desktop: single row */}
+        <div className="mb-5 block sm:hidden">
+          <TabsList className="w-full grid grid-cols-3 mb-1">
+            <TabsTrigger value="deposiciones" className="gap-1 text-xs px-1">
+              <ClipboardList className="w-3.5 h-3.5 shrink-0" /> Deposic.
+            </TabsTrigger>
+            <TabsTrigger value="signos" className="gap-1 text-xs px-1">
+              <Activity className="w-3.5 h-3.5 shrink-0" /> S. Vitales
+            </TabsTrigger>
+            <TabsTrigger value="ingesta" className="gap-1 text-xs px-1">
+              <Utensils className="w-3.5 h-3.5 shrink-0" /> Ingesta
+            </TabsTrigger>
+          </TabsList>
+          <TabsList className="w-full grid grid-cols-2">
+            <TabsTrigger value="examenes" className="gap-1 text-xs px-1">
+              <FlaskConical className="w-3.5 h-3.5 shrink-0" /> Exámenes
+            </TabsTrigger>
+            <TabsTrigger value="intervenciones" className="gap-1 text-xs px-1">
+              <Stethoscope className="w-3.5 h-3.5 shrink-0" /> Interv.
+            </TabsTrigger>
+          </TabsList>
+        </div>
+        <TabsList className="mb-5 hidden sm:flex w-auto">
           <TabsTrigger value="deposiciones" className="gap-1.5">
             <ClipboardList className="w-4 h-4" /> Deposiciones
           </TabsTrigger>
