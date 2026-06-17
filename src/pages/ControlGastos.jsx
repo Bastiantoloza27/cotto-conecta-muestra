@@ -341,6 +341,9 @@ function VistaDirector({ user, readOnly = false }) {
   );
 }
 
+// Emails con acceso completo de director (pueden aprobar/rechazar)
+const EMAILS_DIRECTOR = ["aaguayo@cottolengo.cl", "antonioaguayo@cottolengo.cl"];
+
 // ─── PÁGINA PRINCIPAL ──────────────────────────────────────────────────────────
 export default function ControlGastos() {
   const { isAdmin, loading } = useRole();
@@ -351,7 +354,7 @@ export default function ControlGastos() {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
-  if (loading) {
+  if (loading || !user) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-6 h-6 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
@@ -359,11 +362,19 @@ export default function ControlGastos() {
     );
   }
 
-  if (!isAdmin) return <VistaPersonal user={user} />;
+  const esDirector = EMAILS_DIRECTOR.some(e => e.toLowerCase() === user?.email?.toLowerCase());
 
+  // Usuario regular
+  if (!isAdmin && !esDirector) return <VistaPersonal user={user} />;
+
+  // Director sin rol admin: vista completa sin tab switcher
+  if (!isAdmin && esDirector) {
+    return <VistaDirector user={user} readOnly={false} />;
+  }
+
+  // Admin: pestañas
   return (
     <div>
-      {/* Pestañas admin */}
       <div className="border-b bg-card px-4 pt-4 flex gap-1">
         <button
           onClick={() => setVistaActiva("director")}
