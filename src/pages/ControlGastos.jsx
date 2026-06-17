@@ -342,7 +342,7 @@ function VistaDirector({ user, readOnly = false }) {
 }
 
 // Emails con acceso completo de director (pueden aprobar/rechazar)
-const EMAILS_DIRECTOR = ["aaguayo@cottolengo.cl", "antonioaguayo@cottolengo.cl"];
+const EMAILS_DIRECTOR = ["aguayosuarez9@gmail.com"];
 
 // ─── PÁGINA PRINCIPAL ──────────────────────────────────────────────────────────
 export default function ControlGastos() {
