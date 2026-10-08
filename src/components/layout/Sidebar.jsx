@@ -16,6 +16,7 @@ const NAV_GROUPS_USER = [
       { label: "Inicio", icon: LayoutDashboard, path: "/" },
       { label: "Avisos", icon: Megaphone, path: "/mis-avisos", badgeKey: "avisos" },
       { label: "¿Qué hay de nuevo?", icon: Sparkles, path: "/novedades" },
+      { label: "Prevención de Riesgos", icon: HardHat, path: "/prevencion" },
     ]
   },
   {
@@ -57,7 +58,6 @@ const NAV_GROUPS_USER = [
       { label: "Evidencia SENADIS", icon: BarChart3, path: "/senadis" },
       { label: "Control de Gastos", icon: Wallet, path: "/gastos" },
       { label: "Reuniones de Equipo", icon: UsersRound, path: "/reuniones" },
-      { label: "Prevención de Riesgos", icon: HardHat, path: "/prevencion" },
     ]
   }
 ];
@@ -69,6 +69,7 @@ const NAV_GROUPS_ADMIN = [
       { label: "Inicio", icon: LayoutDashboard, path: "/" },
       { label: "Avisos", icon: Megaphone, path: "/mis-avisos", badgeKey: "avisos" },
       { label: "¿Qué hay de nuevo?", icon: Sparkles, path: "/novedades" },
+      { label: "Prevención de Riesgos", icon: HardHat, path: "/prevencion" },
     ]
   },
   {
@@ -110,7 +111,6 @@ const NAV_GROUPS_ADMIN = [
       { label: "Evidencia SENADIS", icon: BarChart3, path: "/senadis" },
       { label: "Control de Gastos", icon: Wallet, path: "/gastos" },
       { label: "Reuniones de Equipo", icon: UsersRound, path: "/reuniones" },
-      { label: "Prevención de Riesgos", icon: HardHat, path: "/prevencion" },
     ]
   },
   {
