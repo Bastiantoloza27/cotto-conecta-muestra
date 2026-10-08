@@ -32,6 +32,7 @@ import Novedades from '@/pages/Novedades';
 import MisAvisos from '@/pages/MisAvisos';
 import ConfiguracionSlackPage from '@/pages/ConfiguracionSlackPage';
 import AdminRoute from '@/components/AdminRoute';
+import PrevencionRiesgos from '@/pages/PrevencionRiesgos';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -82,6 +83,7 @@ const AuthenticatedApp = () => {
         <Route path="/gastos" element={<ControlGastos />} />
         <Route path="/reuniones" element={<Reuniones />} />
         <Route path="/novedades" element={<Novedades />} />
+        <Route path="/prevencion" element={<PrevencionRiesgos />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

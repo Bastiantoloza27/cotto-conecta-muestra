@@ -1,0 +1,114 @@
+{
+  "name": "DocumentoPrevencion",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string"
+    },
+    "codigo": {
+      "type": "string",
+      "description": "C\u00f3digo del documento (ej: D-001-PR)"
+    },
+    "descripcion": {
+      "type": "string"
+    },
+    "carpeta": {
+      "type": "string",
+      "enum": [
+        "programa_prevencion",
+        "salud_ocupacional",
+        "emergencias",
+        "protocolos",
+        "procedimientos",
+        "instructivos",
+        "registros",
+        "planes_contingencia"
+      ],
+      "default": "protocolos"
+    },
+    "version": {
+      "type": "string",
+      "default": "1"
+    },
+    "archivo_uri": {
+      "type": "string",
+      "description": "URI privado del archivo"
+    },
+    "archivo_nombre": {
+      "type": "string"
+    },
+    "vigencia_desde": {
+      "type": "string",
+      "format": "date"
+    },
+    "proxima_revision": {
+      "type": "string",
+      "format": "date"
+    },
+    "estado": {
+      "type": "string",
+      "enum": [
+        "en_revision",
+        "aprobado",
+        "rechazado",
+        "devuelto"
+      ],
+      "default": "en_revision"
+    },
+    "comentario_director": {
+      "type": "string"
+    },
+    "autor_nombre": {
+      "type": "string"
+    },
+    "historial": {
+      "type": "string",
+      "description": "JSON array [{fecha, usuario, accion, comentario}]"
+    }
+  },
+  "required": [
+    "titulo",
+    "carpeta"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.estado": "aprobado"
+        },
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
