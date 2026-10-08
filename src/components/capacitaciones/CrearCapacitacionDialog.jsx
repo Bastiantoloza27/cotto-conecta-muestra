@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Settings, FolderOpen, ClipboardCheck, Loader2 } from "lucide-react";
 import PreguntasEditor from "./PreguntasEditor";
 import AsignarPersonas from "./AsignarPersonas";
+import RecursosEditor from "./RecursosEditor";
+import GenerarPreguntas from "./GenerarPreguntas";
 import { TIPOS_CAP } from "./utils";
 
 const PASOS = [{ label: "Configuración", Icon: Settings }, { label: "Recursos", Icon: FolderOpen }, { label: "Evaluación", Icon: ClipboardCheck }];
@@ -18,19 +20,17 @@ export default function CrearCapacitacionDialog({ open, onOpenChange, onSaved })
   const [f, setF] = useState({ tipo: "seguridad", intentos: 3, duracion_min: 30, porcentaje_aprobacion: 75 });
   const [personas, setPersonas] = useState([]);
   const [preguntas, setPreguntas] = useState([]);
-  const [file, setFile] = useState(null);
+  const [recursos, setRecursos] = useState([]);
   const [saving, setSaving] = useState(false);
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
 
   const guardar = async () => {
     setSaving(true);
     const me = await base44.auth.me();
-    let rec = {};
-    if (file) rec = { recurso_uri: (await base44.integrations.Core.UploadPrivateFile({ file })).file_uri, recurso_nombre: file.name };
-    const cap = await base44.entities.Capacitacion.create({ ...f, ...rec, preguntas: JSON.stringify(preguntas), creador_nombre: me.full_name });
+    const cap = await base44.entities.Capacitacion.create({ ...f, recursos: JSON.stringify(recursos), preguntas: JSON.stringify(preguntas), creador_nombre: me.full_name });
     if (personas.length) await base44.entities.AsignacionCapacitacion.bulkCreate(personas.map((p) => ({ capacitacion_id: cap.id, capacitacion_nombre: cap.nombre, usuario_email: p.email, usuario_nombre: p.nombre })));
     setSaving(false);
-    setPaso(0); setF({ tipo: "seguridad", intentos: 3, duracion_min: 30, porcentaje_aprobacion: 75 }); setPersonas([]); setPreguntas([]); setFile(null);
+    setPaso(0); setF({ tipo: "seguridad", intentos: 3, duracion_min: 30, porcentaje_aprobacion: 75 }); setPersonas([]); setPreguntas([]); setRecursos([]);
     onSaved(); onOpenChange(false);
   };
 
@@ -66,15 +66,13 @@ export default function CrearCapacitacionDialog({ open, onOpenChange, onSaved })
         )}
 
         {paso === 1 && (
-          <div className="space-y-3">
-            <div><Label>Enlace a video o material (YouTube, Drive, etc.)</Label><Input placeholder="https://..." value={f.recurso_url || ""} onChange={(e) => set("recurso_url", e.target.value)} /></div>
-            <div><Label>Archivo de apoyo (PDF, presentación)</Label><Input type="file" onChange={(e) => setFile(e.target.files[0])} /></div>
-          </div>
+          <RecursosEditor recursos={recursos} onChange={setRecursos} />
         )}
 
         {paso === 2 && (
           <div className="space-y-3">
             <div className="w-48"><Label>% mínimo para aprobar</Label><Input type="number" value={f.porcentaje_aprobacion} onChange={(e) => set("porcentaje_aprobacion", +e.target.value)} /></div>
+            <GenerarPreguntas form={f} recursos={recursos} onGeneradas={(g) => setPreguntas([...preguntas, ...g])} />
             <PreguntasEditor preguntas={preguntas} onChange={setPreguntas} />
           </div>
         )}

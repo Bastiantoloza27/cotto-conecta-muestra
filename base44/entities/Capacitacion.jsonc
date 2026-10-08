@@ -36,13 +36,17 @@
       "type": "number",
       "default": 75
     },
+    "recursos": {
+      "type": "string",
+      "description": "JSON [{titulo, tipo: 'link'|'archivo', url?, uri?, nombre_archivo?}]"
+    },
     "recurso_url": {
       "type": "string",
-      "description": "Enlace a video o material"
+      "description": "Enlace a video o material (legado)"
     },
     "recurso_uri": {
       "type": "string",
-      "description": "Archivo privado de material"
+      "description": "Archivo privado de material (legado)"
     },
     "recurso_nombre": {
       "type": "string"
