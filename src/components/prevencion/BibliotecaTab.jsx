@@ -4,11 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Download, ArrowLeft, FileText } from "lucide-react";
 import { CARPETAS, abrirArchivo } from "./constants";
+import VistaPreviaDialog from "./VistaPreviaDialog";
 
 export default function BibliotecaTab({ docs }) {
   const aprobados = docs.filter((d) => d.estado === "aprobado");
   const [carpeta, setCarpeta] = useState(null);
   const [q, setQ] = useState("");
+  const [ver, setVer] = useState(null);
 
   const lista = aprobados.filter((d) =>
     (q ? `${d.titulo} ${d.codigo || ""}`.toLowerCase().includes(q.toLowerCase()) : d.carpeta === carpeta)
@@ -43,19 +45,20 @@ export default function BibliotecaTab({ docs }) {
           )}
           {lista.length === 0 && <Card className="p-8 text-center text-sm text-muted-foreground">No hay documentos aquí todavía</Card>}
           {lista.map((d) => (
-            <Card key={d.id} className="p-3 flex items-center gap-3">
+            <Card key={d.id} className="p-3 flex items-center gap-3 cursor-pointer hover:shadow-sm hover:border-primary/40" onClick={() => setVer(d)}>
               <FileText className="w-8 h-8 text-primary shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold truncate">{d.titulo}</p>
                 <p className="text-xs text-muted-foreground">{d.codigo} · v{d.version}{d.vigencia_desde && ` · Vigente desde ${d.vigencia_desde}`}</p>
               </div>
               {d.archivo_uri && (
-                <Button size="sm" className="gap-1" onClick={() => abrirArchivo(d.archivo_uri)}><Download className="w-4 h-4" />Abrir</Button>
+                <Button size="sm" className="gap-1" onClick={(e) => { e.stopPropagation(); abrirArchivo(d.archivo_uri); }}><Download className="w-4 h-4" />Abrir</Button>
               )}
             </Card>
           ))}
         </div>
       )}
+      {ver && <VistaPreviaDialog doc={ver} onClose={() => setVer(null)} />}
     </div>
   );
 }
