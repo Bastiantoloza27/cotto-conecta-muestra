@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import StatCard from "@/components/shared/StatCard";
 import MoodBadge from "@/components/shared/MoodBadge";
 import MiniCalendar from "@/components/dashboard/MiniCalendar";
+import UVIndexCard from "@/components/dashboard/UVIndexCard";
 
 const today = format(new Date(), "yyyy-MM-dd");
 
@@ -115,6 +116,8 @@ export default function Dashboard() {
         <StatCard label="Informes médicos" value={informesMedicos.length} icon={Stethoscope} />
         <StatCard label="En lista de espera" value={waitingAdmissions.length} icon={ClipboardPlus} />
       </div>
+
+      <UVIndexCard />
 
       <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Recent logs - Main column */}
