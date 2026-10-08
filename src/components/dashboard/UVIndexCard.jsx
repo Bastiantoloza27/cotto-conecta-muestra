@@ -62,7 +62,10 @@ export default function UVIndexCard() {
           <Sun className="w-5 h-5 text-amber-500" /> UV {max} · <span className={lvl.text}>{lvl.label}</span>
         </DialogTitle>
       </DialogHeader>
-      <p className="text-sm text-muted-foreground">Recomendaciones para hoy en Quintero:</p>
+      <div className="flex items-end gap-2">
+        <img src="https://media.base44.com/images/public/6a399c6df931c47ca576e02e/6e263e822_generated_image.png" alt="Prevencionista" className="w-20 h-20 object-contain shrink-0 animate-bounce" style={{ animationDuration: "2s" }} />
+        <div className="relative bg-muted rounded-xl rounded-bl-none px-3 py-2 text-sm">¡Hola! Estas son mis recomendaciones para hoy en Quintero:</div>
+      </div>
       <ul className="space-y-2">
         {ADVICE[lvl.label].map((a) => (
           <li key={a} className="text-sm flex gap-2"><span className={`w-2 h-2 rounded-full ${lvl.color} mt-1.5 shrink-0`} />{a}</li>
