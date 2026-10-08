@@ -5,12 +5,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, X, Undo2, FileDown } from "lucide-react";
+import { Check, X, Undo2, FileDown, Eye } from "lucide-react";
+import VistaPreviaDialog from "./VistaPreviaDialog";
 import { CARPETAS, ESTADOS, parseHistorial, addHistorial, abrirArchivo } from "./constants";
 
 export default function RevisionDialog({ doc, onClose, isAdmin, onSaved }) {
   const [comentario, setComentario] = useState("");
   const [saving, setSaving] = useState(false);
+  const [preview, setPreview] = useState(false);
   if (!doc) return null;
 
   const resolver = async (estado, accion) => {
@@ -40,9 +42,10 @@ export default function RevisionDialog({ doc, onClose, isAdmin, onSaved }) {
         </div>
         {doc.descripcion && <p className="text-sm text-muted-foreground">{doc.descripcion}</p>}
         {doc.archivo_uri && (
-          <Button variant="outline" onClick={() => abrirArchivo(doc.archivo_uri)} className="gap-2">
-            <FileDown className="w-4 h-4" />Abrir {doc.archivo_nombre}
-          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button onClick={() => setPreview(true)} className="gap-2"><Eye className="w-4 h-4" />Vista previa</Button>
+            <Button variant="outline" onClick={() => abrirArchivo(doc.archivo_uri)} className="gap-2"><FileDown className="w-4 h-4" />Descargar</Button>
+          </div>
         )}
         {doc.comentario_director && (
           <div className="bg-muted rounded-lg p-3 text-sm"><p className="text-xs font-semibold mb-1">Comentario del Director</p>{doc.comentario_director}</div>
@@ -72,6 +75,7 @@ export default function RevisionDialog({ doc, onClose, isAdmin, onSaved }) {
           </div>
         </div>
       </DialogContent>
+      {preview && <VistaPreviaDialog doc={doc} onClose={() => setPreview(false)} />}
     </Dialog>
   );
 }
