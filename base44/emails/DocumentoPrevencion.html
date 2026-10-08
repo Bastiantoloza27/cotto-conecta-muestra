@@ -1,0 +1,55 @@
+<mjml>
+  <mj-head>
+    <mj-title>{{asunto}}</mj-title>
+    <mj-preview>{{titulo}}: {{estado}}</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="Arial, Helvetica, sans-serif" />
+      <mj-section background-color="#ffffff" padding="0 36px" />
+      <mj-text color="#1f1a2e" font-size="15px" line-height="1.6" padding="0" />
+      <mj-button background-color="#5b3a96" color="#ffffff" border-radius="6px" font-weight="700" inner-padding="14px 28px" align="left" />
+      <mj-class name="label" color="#6b7280" font-size="12px" text-transform="uppercase" letter-spacing="1px" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#f4f1f8">
+    <mj-section background-color="#2e1f4d" padding="20px 36px">
+      <mj-column>
+        <mj-text color="#ffffff" font-size="18px" font-weight="700">Cotto-Conecta · Prevención de Riesgos</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section background-color="{{color}}" padding="6px 36px"><mj-column><mj-text color="#ffffff" font-size="13px" font-weight="700" text-transform="uppercase" letter-spacing="1px">{{estado}}</mj-text></mj-column></mj-section>
+    <mj-section padding="36px 36px 8px">
+      <mj-column>
+        <mj-text font-size="26px" font-weight="700" line-height="1.25">{{encabezado}}</mj-text>
+        <mj-text color="#6b7280" padding="10px 0 0">{{mensaje}}</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section padding="20px 36px">
+      <mj-column background-color="#f7f4fb" border-radius="8px" padding="18px">
+        <mj-text mj-class="label">Documento</mj-text>
+        <mj-text font-size="17px" font-weight="700" padding="2px 0 12px">{{titulo}}</mj-text>
+        <mj-table font-size="14px" color="#1f1a2e" padding="0">
+          <tr><td style="padding:4px 0;color:#6b7280;width:40%">Código</td><td style="padding:4px 0">{{codigo}}</td></tr>
+          <tr><td style="padding:4px 0;color:#6b7280">Carpeta</td><td style="padding:4px 0">{{carpeta}}</td></tr>
+          <tr><td style="padding:4px 0;color:#6b7280">Versión</td><td style="padding:4px 0">{{version}}</td></tr>
+          <tr><td style="padding:4px 0;color:#6b7280">Autor</td><td style="padding:4px 0">{{autor}}</td></tr>
+        </mj-table>
+      </mj-column>
+    </mj-section>
+    <mj-section padding="0 36px 20px">
+      <mj-column border-left="4px solid {{color}}" padding="4px 0 4px 14px">
+        <mj-text mj-class="label">Comentario del Director</mj-text>
+        <mj-text font-style="italic" padding="4px 0 0">{{comentario}}</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section padding="8px 36px 40px">
+      <mj-column>
+        <mj-button href="https://cotto-conecta-copy-a576e02e.base44.app/prevencion">Ver en la plataforma</mj-button>
+      </mj-column>
+    </mj-section>
+    <mj-section background-color="#f4f1f8" padding="20px 36px">
+      <mj-column>
+        <mj-text color="#9ca3af" font-size="12px" align="center">Mensaje automático de Cotto-Conecta. No responder a este correo.</mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

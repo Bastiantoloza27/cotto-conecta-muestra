@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { CARPETAS, addHistorial } from "./constants";
+import { notificar } from "./notificar";
 
 // doc = documento existente para reenviar una nueva versión (opcional)
 export default function SubirDocumentoDialog({ open, onOpenChange, doc, onSaved }) {
@@ -31,8 +32,9 @@ export default function SubirDocumentoDialog({ open, onOpenChange, doc, onSaved 
       ...archivo, estado: "en_revision", autor_nombre: me.full_name,
       historial: addHistorial(doc, me.full_name, doc ? "Reenviado a revisión" : "Enviado a revisión"),
     };
-    if (doc) await base44.entities.DocumentoPrevencion.update(doc.id, data);
-    else await base44.entities.DocumentoPrevencion.create(data);
+    const saved = doc ? await base44.entities.DocumentoPrevencion.update(doc.id, data) : await base44.entities.DocumentoPrevencion.create(data);
+    await base44.functions.invoke("notificarDocumentoPrevencion", { doc_id: doc?.id || saved.id });
+    notificar("en_revision", form.titulo);
     setSaving(false);
     onSaved();
     onOpenChange(false);

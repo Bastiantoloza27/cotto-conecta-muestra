@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, X, Undo2, FileDown, Eye } from "lucide-react";
 import VistaPreviaDialog from "./VistaPreviaDialog";
+import { notificar } from "./notificar";
 import { CARPETAS, ESTADOS, parseHistorial, addHistorial, abrirArchivo } from "./constants";
 
 export default function RevisionDialog({ doc, onClose, isAdmin, onSaved }) {
@@ -22,6 +23,8 @@ export default function RevisionDialog({ doc, onClose, isAdmin, onSaved }) {
     await base44.entities.DocumentoPrevencion.update(doc.id, {
       estado, comentario_director: comentario, historial: addHistorial(doc, me.full_name, accion, comentario),
     });
+    await base44.functions.invoke("notificarDocumentoPrevencion", { doc_id: doc.id });
+    notificar(estado, doc.titulo);
     setSaving(false);
     setComentario("");
     setEditar(false);
