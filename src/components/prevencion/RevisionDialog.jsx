@@ -13,6 +13,7 @@ export default function RevisionDialog({ doc, onClose, isAdmin, onSaved }) {
   const [comentario, setComentario] = useState("");
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState(false);
+  const [editar, setEditar] = useState(false);
   if (!doc) return null;
 
   const resolver = async (estado, accion) => {
@@ -23,6 +24,7 @@ export default function RevisionDialog({ doc, onClose, isAdmin, onSaved }) {
     });
     setSaving(false);
     setComentario("");
+    setEditar(false);
     onSaved();
     onClose();
   };
@@ -33,7 +35,7 @@ export default function RevisionDialog({ doc, onClose, isAdmin, onSaved }) {
   ];
 
   return (
-    <Dialog open={!!doc} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={!!doc} onOpenChange={(o) => { if (!o) { setEditar(false); onClose(); } }}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle className="pr-6">{doc.titulo}</DialogTitle></DialogHeader>
         <Badge className={`${ESTADOS[doc.estado]?.cls} w-fit`}>{ESTADOS[doc.estado]?.label}</Badge>
@@ -51,8 +53,12 @@ export default function RevisionDialog({ doc, onClose, isAdmin, onSaved }) {
           <div className="bg-muted rounded-lg p-3 text-sm"><p className="text-xs font-semibold mb-1">Comentario del Director</p>{doc.comentario_director}</div>
         )}
 
-        {isAdmin && doc.estado === "en_revision" && (
+        {isAdmin && doc.estado !== "en_revision" && !editar && (
+          <Button variant="outline" className="w-full" onClick={() => setEditar(true)}>Modificar decisión</Button>
+        )}
+        {isAdmin && (doc.estado === "en_revision" || editar) && (
           <div className="space-y-2 border-t pt-3">
+            {doc.estado !== "en_revision" && <p className="text-xs text-muted-foreground">Cambiando decisión actual: {ESTADOS[doc.estado]?.label}</p>}
             <Textarea placeholder="Comentarios o sugerencias (requerido para devolver o rechazar)" value={comentario} onChange={(e) => setComentario(e.target.value)} />
             <div className="grid grid-cols-3 gap-2">
               <Button disabled={saving} className="bg-green-600 hover:bg-green-700 gap-1" onClick={() => resolver("aprobado", "Aprobado y publicado")}><Check className="w-4 h-4" />Aprobar</Button>
