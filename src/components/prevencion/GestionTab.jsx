@@ -40,7 +40,7 @@ export default function GestionTab({ docs, isAdmin, refetch }) {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold truncate">{d.codigo && `${d.codigo} · `}{d.titulo}</p>
                 <p className="text-xs text-muted-foreground">
-                  {CARPETAS[d.carpeta]?.emoji} {CARPETAS[d.carpeta]?.label} · v{d.version} · {d.autor_nombre} · {format(new Date(d.updated_date), "dd/MM/yyyy")}
+                  {CARPETAS[d.carpeta]?.label} · v{d.version} · {d.autor_nombre} · {format(new Date(d.updated_date), "dd/MM/yyyy")}
                 </p>
               </div>
               {d.estado === "devuelto" && (

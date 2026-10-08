@@ -1,14 +1,15 @@
 import { base44 } from "@/api/base44Client";
+import { ShieldCheck, Stethoscope, Siren, ClipboardList, Workflow, BookOpen, FolderArchive, FireExtinguisher } from "lucide-react";
 
 export const CARPETAS = {
-  programa_prevencion: { label: "Programa de Prevención", emoji: "🛡️", color: "bg-blue-50 border-blue-200 text-blue-800" },
-  salud_ocupacional: { label: "Salud Ocupacional", emoji: "🩺", color: "bg-green-50 border-green-200 text-green-800" },
-  emergencias: { label: "Emergencias", emoji: "🚨", color: "bg-red-50 border-red-200 text-red-800" },
-  protocolos: { label: "Protocolos", emoji: "📋", color: "bg-purple-50 border-purple-200 text-purple-800" },
-  procedimientos: { label: "Procedimientos", emoji: "⚙️", color: "bg-slate-50 border-slate-200 text-slate-800" },
-  instructivos: { label: "Instructivos", emoji: "📘", color: "bg-sky-50 border-sky-200 text-sky-800" },
-  registros: { label: "Registros", emoji: "🗂️", color: "bg-amber-50 border-amber-200 text-amber-800" },
-  planes_contingencia: { label: "Planes de Contingencia", emoji: "🧯", color: "bg-orange-50 border-orange-200 text-orange-800" },
+  programa_prevencion: { label: "Programa de Prevención", icon: ShieldCheck },
+  salud_ocupacional: { label: "Salud Ocupacional", icon: Stethoscope },
+  emergencias: { label: "Emergencias", icon: Siren },
+  protocolos: { label: "Protocolos", icon: ClipboardList },
+  procedimientos: { label: "Procedimientos", icon: Workflow },
+  instructivos: { label: "Instructivos", icon: BookOpen },
+  registros: { label: "Registros", icon: FolderArchive },
+  planes_contingencia: { label: "Planes de Contingencia", icon: FireExtinguisher },
 };
 
 export const ESTADOS = {

@@ -24,8 +24,8 @@ export default function PrevencionRiesgos() {
       </div>
       <Tabs defaultValue="biblioteca">
         <TabsList className="mb-4">
-          <TabsTrigger value="biblioteca">📚 Biblioteca del personal</TabsTrigger>
-          <TabsTrigger value="gestion">📝 Gestión y aprobación</TabsTrigger>
+          <TabsTrigger value="biblioteca">Biblioteca del personal</TabsTrigger>
+          <TabsTrigger value="gestion">Gestión y aprobación</TabsTrigger>
         </TabsList>
         <TabsContent value="biblioteca"><BibliotecaTab docs={docs} /></TabsContent>
         <TabsContent value="gestion"><GestionTab docs={docs} isAdmin={isAdmin} refetch={refetch} /></TabsContent>

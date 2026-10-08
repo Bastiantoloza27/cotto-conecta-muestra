@@ -51,7 +51,7 @@ export default function SubirDocumentoDialog({ open, onOpenChange, doc, onSaved 
           <div><Label>Carpeta</Label>
             <Select value={form.carpeta} onValueChange={(v) => set("carpeta", v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{Object.entries(CARPETAS).map(([k, c]) => <SelectItem key={k} value={k}>{c.emoji} {c.label}</SelectItem>)}</SelectContent>
+              <SelectContent>{Object.entries(CARPETAS).map(([k, c]) => <SelectItem key={k} value={k}>{c.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div><Label>Descripción / cambios</Label><Textarea value={form.descripcion || ""} onChange={(e) => set("descripcion", e.target.value)} /></div>

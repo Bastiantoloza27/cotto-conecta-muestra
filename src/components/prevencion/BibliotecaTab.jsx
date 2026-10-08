@@ -26,10 +26,10 @@ export default function BibliotecaTab({ docs }) {
           {Object.entries(CARPETAS).map(([k, c]) => {
             const n = aprobados.filter((d) => d.carpeta === k).length;
             return (
-              <button key={k} onClick={() => setCarpeta(k)} className={`border rounded-xl p-4 text-left hover:shadow-md transition-all ${c.color}`}>
-                <span className="text-3xl">{c.emoji}</span>
-                <p className="font-semibold text-sm mt-2">{c.label}</p>
-                <p className="text-xs opacity-70">{n} documento{n !== 1 ? "s" : ""}</p>
+              <button key={k} onClick={() => setCarpeta(k)} className="border rounded-xl p-4 text-left bg-card hover:border-primary/40 hover:shadow-md transition-all">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><c.icon className="w-5 h-5 text-primary" /></div>
+                <p className="font-semibold text-sm mt-3">{c.label}</p>
+                <p className="text-xs text-muted-foreground">{n} documento{n !== 1 ? "s" : ""}</p>
               </button>
             );
           })}
@@ -38,7 +38,7 @@ export default function BibliotecaTab({ docs }) {
         <div className="space-y-2">
           {carpeta && !q && (
             <Button variant="ghost" size="sm" className="gap-1" onClick={() => setCarpeta(null)}>
-              <ArrowLeft className="w-4 h-4" />{CARPETAS[carpeta].emoji} {CARPETAS[carpeta].label}
+              <ArrowLeft className="w-4 h-4" />{CARPETAS[carpeta].label}
             </Button>
           )}
           {lista.length === 0 && <Card className="p-8 text-center text-sm text-muted-foreground">No hay documentos aquí todavía</Card>}
