@@ -1,0 +1,78 @@
+{
+  "name": "AsignacionCapacitacion",
+  "type": "object",
+  "properties": {
+    "capacitacion_id": {
+      "type": "string"
+    },
+    "capacitacion_nombre": {
+      "type": "string"
+    },
+    "usuario_email": {
+      "type": "string"
+    },
+    "usuario_nombre": {
+      "type": "string"
+    },
+    "intentos_usados": {
+      "type": "number",
+      "default": 0
+    },
+    "mejor_puntaje": {
+      "type": "number",
+      "default": 0
+    },
+    "estado": {
+      "type": "string",
+      "enum": [
+        "pendiente",
+        "aprobada",
+        "reprobada"
+      ],
+      "default": "pendiente"
+    },
+    "fecha_aprobacion": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "capacitacion_id",
+    "usuario_email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.usuario_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.usuario_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

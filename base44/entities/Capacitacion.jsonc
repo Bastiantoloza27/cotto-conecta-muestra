@@ -1,0 +1,82 @@
+{
+  "name": "Capacitacion",
+  "type": "object",
+  "properties": {
+    "nombre": {
+      "type": "string"
+    },
+    "descripcion": {
+      "type": "string"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "induccion",
+        "seguridad",
+        "salud",
+        "emergencias",
+        "cuidado",
+        "otra"
+      ],
+      "default": "seguridad"
+    },
+    "fecha_caducidad": {
+      "type": "string",
+      "format": "date"
+    },
+    "intentos": {
+      "type": "number",
+      "default": 3
+    },
+    "duracion_min": {
+      "type": "number",
+      "default": 30
+    },
+    "porcentaje_aprobacion": {
+      "type": "number",
+      "default": 75
+    },
+    "recurso_url": {
+      "type": "string",
+      "description": "Enlace a video o material"
+    },
+    "recurso_uri": {
+      "type": "string",
+      "description": "Archivo privado de material"
+    },
+    "recurso_nombre": {
+      "type": "string"
+    },
+    "preguntas": {
+      "type": "string",
+      "description": "JSON [{pregunta, opciones:[...], correcta:index}]"
+    },
+    "creador_nombre": {
+      "type": "string"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "nombre"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
